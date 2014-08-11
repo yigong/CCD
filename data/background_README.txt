@@ -1,0 +1,1 @@
+background.mat file contains the energy[keV] and the length[# of pixels] of the tracks in 19 images. Each image has 12.30 million pixels and has 600 seconds exposure and 60 seconds readout. 
