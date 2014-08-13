@@ -76,7 +76,7 @@ def calculate_median_image(save_median_dir, file_names, save_median_flag=True, s
     else:
         median_subtracted_image_stack = image_stack - median_image
     
-    return (median_image, median_subtracted_image_stack)   
+    return (median_image, median_subtracted_image_stack, image_stack)   
 
 def init_segment_calibrate(image_stack, energy_list=[], threshold=500, plot_flag=True):
     '''segment the tracks for calibration
@@ -123,7 +123,8 @@ def init_segment_calibrate(image_stack, energy_list=[], threshold=500, plot_flag
                 energy_temp = np.sum(track_temp)
                 #1/0
                 energy_list.append(energy_temp)
-   
+    1/0    
+
         
     bin_range = (100000, 107000)
     bin_step = 100
@@ -169,7 +170,6 @@ def init_segment_calibrate(image_stack, energy_list=[], threshold=500, plot_flag
         ax2.set_title('Am_241 spectrum \n std=%.2f' % std*gain)
         # histogram on keV
         plt.show()
-    1/0    
         
     return gain
             
