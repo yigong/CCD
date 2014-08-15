@@ -3,7 +3,7 @@ from CCD.calibrate import init_segment_calibrate
 
 load_flag = 1
 if load_flag:
-    folder = '/Users/Yigong/Research/photon_diagnostics/data/08_06_14_140K/'
+    folder = '/Users/Yigong/Research/photon_diagnostics/data/08_12_14_beta_gun/'
     #folder = '/Users/Yigong/Documents/beamCCD/data/07_22_14_200K_Cs137/'
     #folder = "/Volumes/TEAM 7B/07_22_14_200K_Cs137/"
     

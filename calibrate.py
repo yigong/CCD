@@ -173,7 +173,28 @@ def init_segment_calibrate(image_stack, energy_list=[], threshold=500, plot_flag
         
     return gain
             
+def self_subtraction(file_name):
+    full_img = load_fits(file_name)
+    row_number, col_number = np.shape(full_img)
+    # load the image data into @var full_img
+    low_tmp = full_img[2:1755, 12:3518]
+    up_tmp = full_img[(row_number-2-1752-1):(row_number-2), 12:3518]
+    image_tmp = np.concatenate((low_tmp, up_tmp), axis=0)
+    
+    row_median = np.median(image_tmp, axis=1)
+    row_median_subtracted = np.zeros_like(image_tmp)
+    
+    for i in range(len(row_median)):
+        row_median_subtracted[i,:] = image_tmp[i,:] - row_median[i]
+    
+    col_median = np.median(row_median_subtracted, axis=0)
+    median_subtracted = np.zeros_like(image_tmp)
 
+    for i in range(len(row_median_subtracted[0])):
+        median_subtracted[:,i] = row_median_subtracted[:,i] - col_median[i]
+    
+    return median_subtracted
+        
 
 
 
