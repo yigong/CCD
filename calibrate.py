@@ -24,7 +24,7 @@ def calculate_median_image(save_median_dir, file_names, save_median_flag=True, s
     effective_col_number = 3506
     
     image_stack = np.zeros((len(file_names), effective_row_number, effective_col_number), 
-                           dtype=np.uint16)  
+                           dtype=np.int32)  
     # create a 3d image stack
     
     

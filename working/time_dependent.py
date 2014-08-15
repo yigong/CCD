@@ -17,7 +17,7 @@ if load_flag:
                                                         save_median_subtracted_flag=False)
 
     
-figure()
-
-for i in range(0,3000, 10):
-    plot(median_subtracted_image_stack[:, 1, i] )
+# figure()
+# 
+# for i in range(0,3000, 10):
+#     plot(median_subtracted_image_stack[:, 1, i] )

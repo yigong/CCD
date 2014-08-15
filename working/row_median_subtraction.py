@@ -4,4 +4,4 @@ for image_num in range(len(image_stack)):
     for row_num in range(len(image_temp)):
         row_median_subtraction[image_num, row_num] = image_temp[row_num] - \
         np.median(image_temp[row_num])
-        1/0
+#         1/0

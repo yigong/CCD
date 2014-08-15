@@ -39,3 +39,7 @@ def save_pickle(data, file_name):
 
 def load_pickle(file_name):
     return pickle.load(open(file_name, 'rb'))
+
+def save_mat(variable_name, value, file_name):
+    from scipy.io import savemat
+    savemat(file_name, {variable_name:value})
