@@ -170,7 +170,7 @@ def init_segment_calibrate(image_stack, energy_list=[], threshold=500, plot_flag
         ax2.set_title('Am_241 spectrum \n std=%.2f' % std*gain)
         # histogram on keV
         plt.show()
-        
+
     return gain
             
 def self_subtraction(file_name):
