@@ -33,7 +33,7 @@ def extract_tracks(image_stack, gain, threshold):
         print '%s tracks in image # %s (out of %s)' % (num_label, image_idx+1, len(image_stack))
         
         for track_idx in range(1, num_label):
-            if track_idx%2000 == 0:
+            if track_idx%1000 == 0:
                 print track_idx
             rows, cols = np.where(image_segmented == track_idx)
             row_min = np.min(rows)
@@ -42,14 +42,14 @@ def extract_tracks(image_stack, gain, threshold):
             col_max = np.max(cols)
             
             track_temp = image_temp[row_min: row_max+1, col_min: col_max+1]
-            track_list.append(track_temp * gain)
+            #track_list.append(track_temp * gain)
             
             length_list.append(len(rows))
             
             pixels_lit_up = image_temp[rows, cols]
             energy_list.append(np.sum(pixels_lit_up) * gain)
             
-            position_list.append((row_min, col_min))
+            #position_list.append((row_min, col_min))
             
             #1/0
             
