@@ -4,9 +4,9 @@ from CCD.working.electron_hit import electron_hit
 
 
 
-gamma_energy_keV = 1836
-source_distance_cm = 10
-activity_uCi = 1000
+gamma_energy_keV = 1250
+source_distance_cm = 7.5
+activity_uCi = 150
 time_min = 10
 print '-'*40
 print 'experiment setup:'
@@ -22,7 +22,7 @@ distance = source_distance_cm * 10
 activity = activity_uCi * 3.7e4
 # activity is in bq. 3.7e4 is the conversion factor.
 
-branching_ratio = 0.9998
+branching_ratio = 0.9998 * 2
 time = 60 * time_min # sec
 
 gamma_at_window = time*activity * branching_ratio* (2.5/distance)**2 *0.25

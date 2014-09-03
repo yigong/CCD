@@ -174,29 +174,48 @@ def init_segment_calibrate(image_stack, energy_list=[], threshold=500, plot_flag
 
     return gain
             
-def self_subtraction(file_name):
+def self_subtraction(file_name, save_flag=False, suffix='_corrected'):
     full_img = load_fits(file_name)
     row_number, col_number = np.shape(full_img)
     # load the image data into @var full_img
     low_tmp = full_img[2:1755, 12:3518]
+    low_row_median_subtracted, low_row_median = row_median_subtraction(low_tmp)
+    low_col_median_subtracted, low_col_median = col_median_subtraction(low_row_median_subtracted) 
+    
     up_tmp = full_img[(row_number-2-1752-1):(row_number-2), 12:3518]
-    image_tmp = np.concatenate((low_tmp, up_tmp), axis=0)
+    up_row_median_subtracted, up_row_median = row_median_subtraction(up_tmp)
+    up_col_median_subtracted, up_col_median = col_median_subtraction(up_row_median_subtracted) 
     
-    row_median = np.median(image_tmp, axis=1)
-    row_median_subtracted = np.zeros_like(image_tmp)
+    median_subtracted = np.concatenate((low_col_median_subtracted, up_col_median_subtracted), axis=0)
     
-    for i in range(len(row_median)):
-        row_median_subtracted[i,:] = image_tmp[i,:] - row_median[i]
-    
-    col_median = np.median(row_median_subtracted, axis=0)
-    median_subtracted = np.zeros_like(image_tmp)
-
-    for i in range(len(row_median_subtracted[0])):
-        median_subtracted[:,i] = row_median_subtracted[:,i] - col_median[i]
-    
+    if save_flag == True:
+        # add suffix to the save_file_name
+        split_list = file_name.split('.')
+        save_file_name = split_list[0] + suffix + '.fit'
+        save_fits(median_subtracted, save_file_name, ds9_flag=False)
+        
     return median_subtracted
         
+def row_median_subtraction(image):
+    '''return the row median subtracted image
+    '''
+    row_median = np.median(image, axis=1)
+    row_median_subtracted = np.zeros_like(image)
+    
+    for i in range(len(image)):
+        row_median_subtracted[i, :] = image[i, :] - row_median[i]
+        
+    return row_median_subtracted, row_median 
 
+def col_median_subtraction(image):
+    
+    col_median = np.median(image, axis=0)
+    col_median_subtracted = np.zeros_like(image)
+    
+    for i in range(len(image[0])):
+        col_median_subtracted[:, i] = image[:, i] - col_median[i]
+        
+    return col_median_subtracted, col_median
 
 
 

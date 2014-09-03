@@ -2,7 +2,7 @@ import pickle
 import astropy.io.fits as pyfits
 import subprocess
 
-def load_fits(file_name, ds9_flag=False):
+def load_fits(file_name, ds9_flag=False, header_out_flag=False):
     ''' load fit file
     '''
     
@@ -10,10 +10,12 @@ def load_fits(file_name, ds9_flag=False):
     
     if ds9_flag == True:
         subprocess.call(['ds9',file_name])
-    
-    return full_image
+    if header_out_flag == True:
+        return full_image, header_out_flag
+    else:
+        return full_image
 
-def save_fits(image, fileName, ds9_flag=False):
+def save_fits(image, fileName, ds9_flag=False, header_in=''):
     '''write 2d array into fit file
     Args:
         fileName: absolute path where to write the image
@@ -22,8 +24,10 @@ def save_fits(image, fileName, ds9_flag=False):
     Returns:
         nothing
     
-    '''    
-    hdu = pyfits.PrimaryHDU(image)
+    ''' 
+    if header_in == '':      
+        hdu = pyfits.PrimaryHDU(image)
+    # else add header into the new fits file
     hdu.writeto(fileName, clobber=True)
     print 'An image has been written to %s' %fileName
        
