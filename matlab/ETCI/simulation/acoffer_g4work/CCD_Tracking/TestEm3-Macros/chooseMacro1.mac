@@ -1,0 +1,15 @@
+#  Sets the Macro Path Folder and then Selects one to run
+/control/verbose 2
+/run/verbose 2
+#
+# Choose Physics List Before Initialize
+/testem/phys/addPhysics  emlivermore
+#/testem/phys/addPhysics  standardWVI
+/testem/phys/setCuts 1 um
+
+/run/initialize
+# MacroPath Location:
+#/control/macroPath /global/home/users/acoffer/ETCI/simulation/acoffer_g4work/CCD_Benchmarking/TestEm3-Macros
+/Users/amycoffer/Dropbox/Uni_Research/ETI/ETCI/simulation/acoffer_g4work/CCD_Tracking/TestEm3-Macros
+# Choose Macro To Run
+/control/execute 662KeV_pBeam_50mil.mac

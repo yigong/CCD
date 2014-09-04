@@ -1,0 +1,13 @@
+#/random/setSeeds 65786 79169
+/gps/position -1. 0 0 cm
+/gps/ene/mono 1300. keV
+/gps/ang/type iso
+/gps/ang/minphi 150 deg
+/gps/ang/maxphi 210 deg
+/gps/ang/mintheta 60 deg
+/gps/ang/maxtheta 120 deg
+/gps/particle gamma
+#
+#/grdm/nucleusLimits 241 241 95 95
+#/gps/ion 95 241 95 0
+/run/beamOn 1000

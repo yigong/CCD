@@ -1,0 +1,37 @@
+#$ cat .gitignore
+# xcode noise
+.DS_Store
+../.DS_Store
+build/*
+Build/*
+CCD_TestEm3.xcworkspace/*
+CCD_TestEm3.xcworkspace
+CCD_TestEm3.xcworkspace/xcuserdata/amycoffer.xcuserdatad/UserInterfaceState.xcuserstate
+#CCD_TestEm3-Xcode-build/*
+CCD_TestEm3-Xcode-build
+/CCD_TestEm3-Xcode-build/CMakeFiles/*
+/CCD_TestEm3-Xcode-build/Build/*
+
+/CCD_TestEm3-Xcode-build/DerivedData/*
+CCD_TestEm3-Xcode-build2
+CCD_TestEm3-Xcode-build2/*
+CCD_TestEm3-build2
+CCD_TestEm3-build2/*
+#/Applications/g4work/CCD_Benchmarking/CCD_TestEm3-Xcode-build/Build/Intermediates/*
+CCD_TestEm3Workspace.xcworkspace
+CCD_TestEm3Workspace.xcworkspace/*
+/CCD_TestEm3-Xcode-build/TestEm3.xcodeproj/*
+/CCD_TestEm3-Xcode-build/TestEm3.build/*
+/CCD_TestEm3-Xcode-build/TestEm3.*
+/CCD_TestEm3Workspace.xcworkspace/xcuserdata/amycoffer.xcuserdatad/UserInterfaceState.xcuserstate
+*.pbxuser
+*.mode1v3
+CCD_TestEm3-build
+CCD_TestEm3-build/*
+#/CCD_TestEm3-build/*
+
+# old skool
+.svn
+
+# osx noise
+.profile

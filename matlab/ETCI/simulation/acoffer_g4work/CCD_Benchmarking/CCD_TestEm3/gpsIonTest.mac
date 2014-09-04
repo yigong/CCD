@@ -1,0 +1,52 @@
+# $Id: run01.mac,v 1.19 2009-09-17 20:06:26 maire Exp $
+#
+# Macro file for "exampleN03.cc" 
+# (can be run in batch, without graphic)
+#
+# Lead-liquidArgon 50 layers; electron 1 GeV
+#
+/control/verbose 2
+/run/verbose 2
+#
+#/testem/phys/addPhysics  emlivermore
+#
+#/testem/phys/setCuts 1 um
+#
+#/run/initialize
+#/gun/particle e-
+#/gun/energy 1 GeV
+
+# SOURCE
+/gps/particle ion
+# Format:  /gps/ion <Z A Q E>
+/gps/energy 0. MeV
+/gps/ion 56 133 0 0. 
+#/gps/ion 56 133 0  517.
+/gps/position -10 0 0 cm
+#/gps/direction 1 0 0
+
+# Source Volume Location
+# Add SetSourceVolumePosition
+#/testem/det/setSourcePosition -10 0 0 cm
+#/testem/det/update  
+/grdm/decayDirection 1 0 0  #* Supply the direction vector for decay products
+#/grdm/decayHalfAngle 20 deg #* Supply maximum angle from direction vector for decay products
+
+/analysis/setFileName Ba133_20_test8
+/analysis/h1/set 1 100 0. 400. keV
+/analysis/h1/set 2 100 0. 400. keV
+/analysis/h1/set 3 100 0. 400. keV
+#/analysis/h1/set 4 100 0. 400. keV
+#/analysis/h1/set 5 100 0. 400. keV
+
+/analysis/h1/set 11 32   0.   32.  none	#long. profile in Si absor1
+/analysis/h1/set 12 32   0.   32.  none	#long. profile in Si absor2
+/analysis/h1/set 13 32   0.   32.  none #long. profile in Si absor3
+
+/analysis/h1/set 21 102  0.   102. none	#energy flow
+/analysis/h1/set 22 102  0.   102. none	#lateral energy leakage
+
+#
+/testem/event/printModulo 1000
+#
+/run/beamOn 10

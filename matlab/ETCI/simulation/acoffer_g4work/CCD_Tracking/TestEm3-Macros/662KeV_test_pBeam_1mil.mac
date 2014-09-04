@@ -1,0 +1,60 @@
+# $Id: run01.mac,v 1.19 2009-09-17 20:06:26 maire Exp $
+#
+# Macro file for "exampleN03.cc" 
+# (can be run in batch, without graphic)
+#
+#/control/verbose 2
+#/run/verbose 4
+# Now set in 'chooseMacro1.mac'
+#/testem/phys/addPhysics  emlivermore
+#/testem/phys/setCuts 1 um
+/run/initialize
+# Set StepMax in Calrimeter Layers
+/testem/stepMax/absorber 1 100 nm
+/testem/stepMax/absorber 2 100 nm
+/testem/stepMax/absorber 3 100 nm
+/testem/det/setSourcePosition -187.07 -29.02 140.85 mm
+# Save Visulization?
+#/control/execute vis.mac
+
+# GPS SOURCE
+#/gps/particle ion
+# Format:  /gps/ion <Z A Q E>
+#/gps/energy 0. MeV
+#/gps/ion 56 133 0 0. 
+#/gps/ion 56 133 0  517.
+#/gps/position -187.07 -29.02 140.85 mm
+#/gps/direction 1 0 0
+# Gamma-Source
+/gps/particle gamma
+/gps/energy 661.657 keV
+/gps/position -925.2782 -8.3933 374.5824 mm
+/gps/direction 0.92718 0.0041723 -0.37458 
+# Source Volume Location
+# Add SetSourceVolumePosition
+/testem/det/setSourcePosition -20 0 0 cm
+#/testem/det/update  
+# Radioactive Decay Parameters
+#/grdm/decayDirection 1 0 0  #* Supply the direction vector for decay products
+#/grdm/decayHalfAngle 20 deg #* Supply maximum angle from direction vector for decay products
+
+/analysis/setFileName 662KeV_test5_nps5mil
+/analysis/h1/set 1 170 0. 680. keV
+/analysis/h1/set 2 170 0. 680. keV
+/analysis/h1/set 3 170 0. 680. keV
+#/analysis/h1/set 4 100 0. 400. keV
+#/analysis/h1/set 5 100 0. 400. keV
+
+/analysis/h1/set 11 32   0.   32.  none	#long. profile in Si absor1
+/analysis/h1/set 12 32   0.   32.  none	#long. profile in Si absor2
+/analysis/h1/set 13 32   0.   32.  none #long. profile in Si absor3
+
+/analysis/h1/set 21 102  0.   102. none	#energy flow
+/analysis/h1/set 22 102  0.   102. none	#lateral energy leakage
+
+#
+/testem/event/printModulo 200000
+#
+/run/beamOn 5000000
+
+

@@ -1,0 +1,14 @@
+This directory contains run_scripts and source. Only an example run_script was provided.
+
+Dependencies for the project:
++cmake
++root
++qt (possibly)
+
+=geant (almost goes without saying?)
+
+make sure to change the CMakeLists.txt file for your installed libraries
+
+One also requires the additional data libraries for geant.
+
+rp@berkeley.edu

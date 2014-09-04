@@ -1,0 +1,37 @@
+#$ cat .gitignore
+# To Update and Commit changes to .gitignor:
+# git rm -r --cached .
+# git add . 
+# git commit -m ".gitignore is now updated"
+
+# xcode noise
+.DS_Store
+*.DS_Store
+../../.DS_Store
+../.DS_Store
+../../diffusion/.DS_Store
+CCD_Benchmarking/.DS_Store
+CCD_Benchmarking/CCD_TestEm3-Xcode-build/.DS_Store
+CCD_Benchmarking/CCD_TestEm3-Xcode-build/Debug/
+CCD_Benchmarking/CCD_TestEm3.xcworkspace/*
+CCD_Benchmarking/CCD_TestEm3.xcworkspace
+CCD_Benchmarking/CCD_TestEm3.xcworkspace/xcuserdata/amycoffer.xcuserdatad/UserInterfaceState.xcuserstate
+data/*
+data
+build/*
+Build/*
+
+CCD_Benchmarking/CCD_TestEm3-Xcode-build/CMakeFiles/*
+CCD_Benchmarking/CCD_TestEm3-Xcode-build/Build/*
+CCD_Benchmarking/CCD_TestEm3-Xcode-build/DerivedData/*
+CCD_Benchmarking/CCD_TestEm3-Xcode-build/CCD_TestEm3.xcworkspace
+CCD_Benchmarking/CCD_TestEm3-Xcode-build/CCD_TestEm3.xcworkspace/*
+CCD_Benchmarking/CCD_TestEm3-Xcode-build/TestEm3.xcodeproj/*
+CCD_Benchmarking/CCD_TestEm3-Xcode-build/TestEm3.*
+CCD_Benchmarking/CCD_TestEm3.xcworkspace/xcuserdata/amycoffer.xcuserdatad/UserInterfaceState.xcuserstate
+CCD_Benchmarking/CCD_TestEm3.xcworkspace/contents.xcworkspacedata
+CCD_Benchmarking/CCD_TestEm3.xcworkspace/*
+CCD_Benchmarking/CCD_TestEm3.xcworkspace
+
+# osx noise
+.profile

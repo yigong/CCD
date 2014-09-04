@@ -1,0 +1,54 @@
+# $Id: run01.mac,v 1.19 2009-09-17 20:06:26 maire Exp $
+#
+# Macro file for "exampleN03.cc" 
+# (can be run in batch, without graphic)
+#
+#/control/verbose 2
+#/run/verbose 4
+# Now set in 'chooseMacro1.mac'
+#/testem/phys/addPhysics  emlivermore
+#/testem/phys/setCuts 1 um
+/testem/det/setSourcePosition -20 0 0 cm
+
+/run/initialize
+# Source Volume Location
+# Add SetSourceVolumePosition
+#/testem/det/setSourcePosition -187.07 -29.02 140.85 mm
+#/testem/det/setSourcePosition -10 0 0 cm
+#/testem/det/update
+# Set StepMax in Calrimeter Layers
+/testem/stepMax/absorber 1 100 nm
+/testem/stepMax/absorber 2 100 nm
+/testem/stepMax/absorber 3 100 nm
+#/testem/det/setSourcePosition -187.07 -29.02 140.85 mm
+# Test Setting Atomic Deexcitation:
+/process/em/deexcitation World true true true
+/process/em/fluo true
+/process/em/auger true
+/process/em/pixe true
+
+# Save Visulization?
+#/control/execute vis.mac
+
+# GPS SOURCE
+#/gps/particle ion
+# Format:  /gps/ion <Z A Q E>
+#/gps/energy 0. MeV
+#/gps/ion 56 133 0 0. 
+#/gps/ion 56 133 0  517.
+#/gps/position -187.07 -29.02 140.85 mm
+#/gps/direction 1 0 0
+# Gamma-Source
+/gps/particle gamma
+/gps/energy 661.657 keV
+/gps/position -925.2782 -8.3933 374.5824 mm
+/gps/direction 0.92718 0.0041723 -0.37458 
+#/grdm/decayDirection 1 0 0  #* Supply the direction vector for decay products
+#/grdm/decayHalfAngle 20 deg #* Supply maximum angle from direction vector for decay products
+#
+/SimulationOutput/FileLocation /Users/amycoffer/Dropbox/Uni_Research/ETI/ETCI/simulation/acoffer_g4work/CCD_Tracking/temp_data/pBeam_662KeV_TM_100nm_stepAveTM_March2014/
+/SimulationOutput/FileName 662KeV_pBeam_100nmSM_MarchTM_10k_03.dat
+#
+/testem/event/printModulo 5000
+/run/beamOn 10000
+

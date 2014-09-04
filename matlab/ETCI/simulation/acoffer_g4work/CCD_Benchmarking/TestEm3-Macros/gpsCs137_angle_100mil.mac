@@ -1,0 +1,50 @@
+/control/verbose 2
+/run/verbose 2
+#
+#/testem/phys/addPhysics  emlivermore
+#/testem/phys/setCuts 1 um
+# Set StepMax in Calrimeter Layers
+/testem/stepMax/absorber 1 100 nm
+/testem/stepMax/absorber 2 100 nm
+/testem/stepMax/absorber 3 100 nm
+
+/testem/det/setSourcePosition -121.58 -26.12 156.01 mm
+#/testem/det/setSourcePosition -10 0 0 cm
+/run/initialize
+/testem/det/update
+# SOURCE
+/gps/particle ion
+# Format:  /gps/ion <Z A Q E>
+/gps/energy 0. MeV
+# Cs-137
+/gps/ion 55 137 0 0. 
+#/gps/ion 56 133 0  517.
+/gps/position -121.58 -26.12 156.01 mm
+#/gps/direction 1 0 0
+
+# Source Volume Location
+# Add SetSourceVolumePosition
+#/testem/det/setSourcePosition -10 0 0 cm
+#/testem/det/update  
+/grdm/decayDirection 1 0 0  #* Supply the direction vector for decay products
+/grdm/decayHalfAngle 180 deg #* Supply maximum angle from direction vector for decay products
+
+/analysis/setFileName Cs137_angle_100mil_test4
+/analysis/h1/setAscii 2
+/analysis/h1/set 1 170 0. 680. keV
+/analysis/h1/set 2 340 0. 680. keV
+/analysis/h1/set 3 170 0. 680. keV
+#/analysis/h1/set 4 100 0. 400. keV
+#/analysis/h1/set 5 100 0. 400. keV
+
+/analysis/h1/set 11 32   0.   32.  none	#long. profile in Si absor1
+/analysis/h1/set 12 32   0.   32.  none	#long. profile in Si absor2
+/analysis/h1/set 13 32   0.   32.  none #long. profile in Si absor3
+
+/analysis/h1/set 21 102  0.   102. none	#energy flow
+/analysis/h1/set 22 102  0.   102. none	#lateral energy leakage
+
+#
+/testem/event/printModulo 1000000
+#
+/run/beamOn 100000000

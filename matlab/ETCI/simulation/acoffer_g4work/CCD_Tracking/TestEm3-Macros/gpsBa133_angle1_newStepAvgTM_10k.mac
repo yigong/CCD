@@ -1,0 +1,42 @@
+
+/control/verbose 2
+/run/verbose 2
+#
+#/testem/phys/addPhysics  emlivermore
+#/testem/phys/setCuts 1 um
+#/testem/det/setSourcePosition -187.07 -29.02 140.85 mm
+/testem/det/setSourcePosition -187.07 29.02 140.85 mm
+#/testem/det/update
+/run/initialize
+#/control/execute vis.mac
+
+# Set StepMax in Calrimeter Layers
+/testem/stepMax/absorber 1 100 nm
+/testem/stepMax/absorber 2 100 nm
+/testem/stepMax/absorber 3 100 nm
+#/testem/det/update
+# SOURCE
+/gps/particle ion
+# Format:  /gps/ion <Z A Q E>
+/gps/energy 0. MeV
+/gps/ion 56 133 0 0. 
+
+/gps/position -187.07 29.02 140.85 mm
+#/gps/direction 1 0 0
+#/gps/direction 0.79281 -0.12299 -0.59693
+# Source Volume Location
+# Add SetSourceVolumePosition
+#/testem/det/update  
+
+/grdm/decayDirection 0.79281 -0.12299 -0.59693 #1 0 0  #* Supply the direction vector for decay products
+#/grdm/decayHalfAngle 45 deg #* Supply maximum angle from direction vector for decay products
+
+#/SimulationOutput/FileLocation /global/scratch/acoffer/g4Data/CCD_Tracking/Ba133_angle1/
+/SimulationOutput/FileLocation /Users/amycoffer/Dropbox/Uni_Research/ETI/ETCI/simulation/acoffer_g4work/CCD_Tracking/temp_data/Ba133_ang1_Feb2014/
+/SimulationOutput/FileName gpsBa133_100nm_StepAvgTM_20140227_10k_08.dat
+
+#
+/testem/event/printModulo 10000
+#
+#/run/beamOn 100000000
+/run/beamOn 10000

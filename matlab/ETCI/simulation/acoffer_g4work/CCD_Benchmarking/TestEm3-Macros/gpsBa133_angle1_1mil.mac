@@ -1,0 +1,44 @@
+#
+/control/verbose 2
+/run/verbose 2
+#
+/testem/phys/addPhysics  emlivermore
+/testem/phys/setCuts 1 um
+/testem/det/setSourcePosition -187.07 -29.02 140.85 mm
+#/testem/det/setSourcePosition -10 0 0 cm
+/run/initialize
+/testem/det/update
+# SOURCE
+/gps/particle ion
+# Format:  /gps/ion <Z A Q E>
+/gps/energy 0. MeV
+/gps/ion 56 133 0 0. 
+/gps/position -187.07 29.02 140.85 mm
+#/gps/direction 1 0 0
+
+# Source Volume Location
+# Add SetSourceVolumePosition
+#/testem/det/update  
+
+#/grdm/decayDirection 1 0 0  #* Supply the direction vector for decay products
+/grdm/decayHalfAngle 180 deg #* Supply maximum angle from direction vector for decay products
+
+/analysis/setFileName Ba133_20_test8
+/analysis/h1/setAscii 2
+/analysis/h1/set 1 200 0. 400. keV
+/analysis/h1/set 2 200 0. 400. keV
+/analysis/h1/set 3 200 0. 400. keV
+#/analysis/h1/set 4 100 0. 400. keV
+#/analysis/h1/set 5 100 0. 400. keV
+
+/analysis/h1/set 11 32   0.   32.  none	#long. profile in Si absor1
+/analysis/h1/set 12 32   0.   32.  none	#long. profile in Si absor2
+/analysis/h1/set 13 32   0.   32.  none #long. profile in Si absor3
+
+/analysis/h1/set 21 102  0.   102. none	#energy flow
+/analysis/h1/set 22 102  0.   102. none	#lateral energy leakage
+
+#
+/testem/event/printModulo 100000
+#
+/run/beamOn 100000000

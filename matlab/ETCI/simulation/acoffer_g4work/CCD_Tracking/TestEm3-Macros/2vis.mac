@@ -1,0 +1,107 @@
+# $Id: vis.mac,v 1.6 2007/06/13 10:36:39 maire Exp $
+#
+# Macro file for the initialization phase of "exampleN03.cc"
+# when running in interactive mode
+#
+# Sets some default verbose
+#
+/control/saveHistory
+/run/verbose 2
+/tracking/verbose 2
+
+# Physics Choice
+/testem/phys/addPhysics  emlivermore
+/testem/phys/setCuts 1 um
+
+
+/run/initialize
+# Start Visulization 
+#/vis/initialize
+#
+# create empty scene
+#
+/vis/scene/create fileNameTest
+# Write a geometry
+/vis/viewer/flush
+#
+# Create a scene handler for a specific graphics system
+# (Edit the next line(s) to choose another graphic system)
+#
+# Use this open statement to get an .eps and .prim files
+# suitable for viewing in DAWN.
+#/vis/open DAWNFILE
+#
+# Use this open statement instead for OpenGL in immediate mode.
+#/vis/open OGLIX
+#
+# Use this open statement instead to get a HepRep version 1 file
+# suitable for viewing in WIRED.
+/vis/open HepRepFile
+#
+# Use this open statement instead to get a HepRep version 2 file
+# suitable for viewing in WIRED.
+#/vis/open HepRepXML
+#
+# Output an empty detector
+#/vis/viewer/flush
+
+#/vis/viewer/set/autoRefresh false
+#/vis/verbose errors
+# Draw geometry:
+/vis/drawVolume
+#/vis/viewer/zoom 1.4
+# Draw smooth trajectories at end of event, showing trajectory points
+# as markers 2 pixels wide:
+/vis/scene/add/trajectories smooth
+/vis/modeling/trajectories/create/drawByCharge
+#
+# Draw trajectories at end of event, showing trajectory points as
+# markers of size 2 pixels
+#/vis/scene/add/trajectories
+#/vis/modeling/trajectories/create/drawByParticleID
+#/vis/modeling/trajectories/create/drawByCharge
+/vis/modeling/trajectories/drawByCharge-0/default/setDrawStepPts true
+/vis/modeling/trajectories/drawByCharge-0/default/setStepPtsSize 1
+# (if too many tracks cause core dump => /tracking/storeTrajectory 0)
+#
+# To draw gammas only
+#/vis/filtering/trajectories/create/particleFilter
+#/vis/filtering/trajectories/particleFilter-0/add gamma
+#
+# To draw charged particles only
+#/vis/filtering/trajectories/particleFilter-0/invert true
+#
+# Many other options available with /vis/modeling and /vis/filtering.
+# For example, select colour by particle ID
+#/vis/modeling/trajectories/create/drawByParticleID
+#/vis/modeling/trajectories/drawByParticleID-0/set e- red
+#
+# Draw hits at end of event:
+/vis/scene/add/hits
+/vis/scene/endOfEventAction accumulate
+#
+# At end of each run, an automatic flush causes graphical output
+#/gun/energy 356 keV
+#/run/initialize
+#/run/initialize
+# SOURCE
+/gps/particle ion
+/gps/energy 0. MeV
+/gps/ion 56 133 0 0.
+/gps/position -3 0 0 cm
+#/grdm/decayDirection 1 0 0  #* Supply the direction vector for decay products
+/grdm/decayHalfAngle 45 deg #* Supply maximum angle from direction vector for decay produc    ts
+#/process/inactivate penphoto
+#/process/inactivate pencomp
+#/process/inactivate pengammacon
+#/process/eLoss/integral true
+
+/process/eLoss/fluct 0
+/run/beamOn 2
+
+# When you exit Geant4, you will find a file called scene-0.heprep.zip.
+# Unzipping this will give you three separate HepRep files suitable for
+# viewing in WIRED.
+# The first file will contain just detector geometry.
+# The second file will contain the detector plus one event.
+# The third file will contain the detector plus ten events.

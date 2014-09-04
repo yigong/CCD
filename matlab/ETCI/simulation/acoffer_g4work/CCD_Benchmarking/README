@@ -1,0 +1,36 @@
+LRC Source Files for Geant4 Simulations
+---------------------------------------
+Created 2/28/2013
+---------------------------------------
+
+-------------------------
+03/01/2013
+-------------------------
+Building Geant4-9.6.p01
+	
+download: done
+tar: done
+cmake: done
+install: done
+Set up git:... git use for examples and running code
+-------------------------
+
+3/13/2013 - 
+
+	Build Example:	TestEM3
+		copy to g4work: done
+		build: 
+		run:	
+		Test Interactivly with PBS scrips using qsub
+		Test Batch Job:
+	Create Git Repository:
+	Start Adding Modifications on TestEm3 on MacPro... migrate to LRC and Run
+----------------------------
+3/19/2013
+	
+	Creating CCD Simulations w/ git version control.
+	CCD_TestEm3 file commited to git repository here on LRC.
+
+-------------------------------
+
+

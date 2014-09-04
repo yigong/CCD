@@ -1,0 +1,32 @@
+Here I am testing DiffuseTrack5 for different pixel sizes, and making some quick figures for IEEE 2012 abstract/summary.
+
+Using data from images.mat:
+>> load ../../../cmaps.mat
+>> figure   %stretch to wide horizontal size
+>> for i=1:50; subplot(1,3,1); surf(T5{i}.img,'linestyle','none'); view(2); axis equal; colormap(cmaphotlog); subplot(1,3,2); surf(T105{i}.img,'linestyle','none'); view(2); axis equal; colormap(cmaphotlog); subplot(1,3,3); surf(T20{i}.img,'linestyle','none'); view(2); axis equal; colormap(cmaphotlog); pause; end
+
+alg_results_all.mat:
+
+ab* includes 4 rows, each listing: (1) alpha_measured, (2) alpha_true, (3) beta_measured, (4) beta_true, respectively.
+where * means
+5 = 5 um
+105 = 10.5 um
+20 = 20 um
+
+dab* includes 2 rows, (1) da = alpha_measured - alpha_true, (2) db = beta_measured - beta_true. 
+da is on [-180, 180].
+
+>> [n1,x] = hist(dab5(1,:),-180:5:180);
+>> [n2,x] = hist(dab105(1,:),-180:5:180);
+>> [n3,x] = hist(dab20(1,:),-180:5:180);
+>> figure; plot(x,n1,'r'); hold on; plot(x,n2,'k'); plot(x,n3,'b')
+>> [n4,x] = hist(dab5(2,:),-180:5:180);
+>> [n5,x] = hist(dab105(2,:),-180:5:180);
+>> [n6,x] = hist(dab20(2,:),-180:5:180);
+>> figure; plot(x,n4,'r'); hold on; plot(x,n5,'k'); plot(x,n6,'b')
+
+interesting_tracks_5um_advantage.mat:
+>> f = find(abs(dab105(1,:))>45 & abs(dab5(1,:))<30);
+
+(resize plot to extend horizontally, during pause..)
+>> i=f(13); figure; pause; subplot(1,2,1); surf(H105{i}.img,'linestyle','none'); axis equal; view(2); colormap(cmaphotlog); subplot(1,2,2); surf(H5{i}.img,'linestyle','none'); view(2); axis equal; colormap(cmaphotlog);

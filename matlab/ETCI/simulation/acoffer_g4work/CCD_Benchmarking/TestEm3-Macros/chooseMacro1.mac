@@ -1,0 +1,16 @@
+#  Sets the Macro Path Folder and then Selects one to run
+/control/verbose 2
+/run/verbose 2
+#
+#/testem/phys/addPhysics  emlivermore
+# Using Cuts Set within the compiled code.. 
+#/testem/phys/setCuts 5 cm
+
+#/run/initialize
+# Output Files name
+#/analysis/setFileName test3_662KeV_1um_1k
+
+/control/macroPath /Users/amycoffer/Dropbox/Uni_Research/ETI/ETCI/simulation/acoffer_g4work/CCD_Benchmarking/TestEm3-Macros
+/control/execute 662KeV_pBeam_100mil.mac
+#/control/execute Cs137_test_100k.mac
+#/control/execute 2bvis.mac
