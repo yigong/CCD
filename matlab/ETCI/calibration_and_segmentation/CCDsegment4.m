@@ -53,6 +53,14 @@ function [T,E,maskImage] = CCDsegment4(varargin)
 % 
 % Default options:
 %   Mode = 'Postcal'
+%   useBWLabel = False
+%   edgeVeto = True
+%   maskFlag = False
+%   maxSegments = 10000
+%   pixelSize = 10.5
+%   neighborLayers = 1
+%   numPixelsThreshold = 1
+%   useSmoothing = False
 %   PixelThreshold = 4
 %   NeighborLayers = 1
 %   EdgeVeto = true
@@ -85,83 +93,48 @@ if opts.maskFlag && opts.edgeVeto
 end
 
 
-%% 
+ 
 maskImage = false(size(imageOriginal));
 %measure dimensions from the CCD image given
 [dim1,dim2] = size(imageOriginal);
 
-if opts.quadrantStraddleVeto
-    %Segment each quadrant separately.
-    if opts.preCalMode
-        %list energy values separately by quadrant, not all in one list.
-        %   because each quadrant will have a slightly different gain value.
-        E = cell(1,4);
-        T = cell(1,4);  %for each quadrant
-        
-        for quadrantIndex = 1:4     %each quadrant
-            %get quadrant image and indices
-            [xOffset, yOffset, imageQuadrantOriginal] = ...
-                CCDsegment4_GetQuadrant(dim1, dim2, imageOriginal, quadrantIndex);
-            
-            %smooth, if desired
-            if opts.useSmoothing
-                imageQuadrant = CCDsegment4_Smooth(opts, imageQuadrantOriginal);
-            else
-                imageQuadrant = imageQuadrantOriginal;
-            end
-            
-            %determine threshold based on noise level
-            threshold = CCDsegment4_GetPreCalThreshold(imageQuadrant,threshold);
-            
-            if opts.useBWLabel
-                [T{quadrantIndex}, E{quadrantIndex}, ind, maskImage] = ...
-                    CCDsegment4_bwlabel(imageQuadrant, imageQuadrantOriginal, xOffset, yOffset, threshold, ...
-                    opts, T{quadrantIndex}, E{quadrantIndex}, 1);
-            else
-                [T{quadrantIndex}, E{quadrantIndex}, ind, maskImage] = ...
-                    CCDsegment4_bwconncomp(imageQuadrant, imageQuadrantOriginal, xOffset, yOffset, threshold, ...
-                    opts, T{quadrantIndex}, E{quadrantIndex}, 1);
-            end
-            
-            %cut off any extra cells or NaN's from T{quadrantIndex} and E{quadrantIndex}.
-            T{quadrantIndex} = T{quadrantIndex}(1:ind-1);
-            E{quadrantIndex} = E{quadrantIndex}(1:ind-1);
-        end        
-    else    % [CCDsegment4: currently quadrantStraddleVeto==PreCalMode so this doesn't ever happen]
-        %energy values from all quadrants will all be in one list
-        E = [];
-        T = cell(0,1);
-        %keep an index of where we are in T and E
-        ind = 1;
-        
-        for quadrantIndex = 1:4
-            %get quadrant image and indices
-            [xOffset, yOffset, imageQuadrantOriginal] = ...
-                CCDsegment4_GetQuadrant(dim1, dim2, imageOriginal, quadrantIndex);
-            
-            %smooth, if desired
-            if opts.useSmoothing
-                imageQuadrant = CCDsegment4_Smooth(opts, imageQuadrantOriginal);
-            else
-                imageQuadrant = imageQuadrantOriginal;
-            end
-            
-            if UseBWLabel
-                [T, E, ind, maskImage] = ...
-                    CCDsegment4_bwlabel(imageQuadrant, xOffset, yOffset, threshold, ...
-                    opts, T, E, ind);
-            else
-                [T, E, ind, maskImage] = ...
-                    CCDsegment4_bwconncomp(imageQuadrant, xOffset, yOffset, threshold, ...
-                    opts, T, E, ind);
-            end
+
+if opts.preCalMode
+    %list energy values separately by quadrant, not all in one list.
+    %   because each quadrant will have a slightly different gain value.
+    E = cell(1,2);
+    T = cell(1,2);  %for each quadrant
+
+    for quadrantIndex = 1:2     %each quadrant
+        %get quadrant image and indices
+        [xOffset, yOffset, imageQuadrantOriginal] = ...
+            CCDsegment4_GetQuadrant(dim1, dim2, imageOriginal, quadrantIndex);
+
+        %smooth, if desired
+        if opts.useSmoothing
+            imageQuadrant = CCDsegment4_Smooth(opts, imageQuadrantOriginal);
+        else
+            imageQuadrant = imageQuadrantOriginal;
         end
+
+        threshold_input = threshold;
+        %determine threshold based on noise level
+        threshold = CCDsegment4_GetPreCalThreshold(imageQuadrant,threshold);
+
         
-        %cut off any extra cells or NaN's from T and E.
-        T = T(1:ind-1);
-        E = E(1:ind-1);
-    end
-    
+        else
+            [T{quadrantIndex}, E{quadrantIndex}, ind, maskImage] = ...
+                CCDsegment4_bwconncomp(imageQuadrant, imageQuadrantOriginal, xOffset, yOffset, threshold, ...
+                opts, T{quadrantIndex}, E{quadrantIndex}, 1);
+        end
+
+        %cut off any extra cells or NaN's from T{quadrantIndex} and E{quadrantIndex}.
+         T{quadrantIndex} = T{quadrantIndex}(1:ind-1);
+         E{quadrantIndex} = E{quadrantIndex}(1:ind-1);
+
+        threshold = threshold_input;
+    end        
+  
 else
     %segment entire image at once
     
@@ -169,29 +142,32 @@ else
     E = [];
     T = cell(0,1);
     ind = 1;
+    gain = opts.gain;
+    image_bottom = imageOriginal(1:dim1/2,:)* gain(1);
+    image_top = imageOriginal(dim1/2+1:end, :)* gain(2);
     
-    %smooth, if desired
-    if opts.useSmoothing
-        imageFull = CCDsegment4_Smooth(opts, imageOriginal);
-    else
-        imageFull = imageOriginal;
+    for quadrantIndex = 1:2
+        [xOffset, yOffset, imageQuadrantOriginal] = ...
+            CCDsegment4_GetQuadrant(dim1, dim2, imageOriginal, quadrantIndex);
+        imageQuadrant = imageQuadrantOriginal;
+        threshold_keV(quadrantIndex) = CCDsegment4_GetPreCalThreshold(imageQuadrant,threshold);
+        
     end
     
-    if opts.useBWLabel
-        [T, E, ind, maskImage] = ...
-            CCDsegment4_bwlabel(imageFull, imageOriginal, 1, 1, threshold, ...
-            opts, T, E, ind);
-    else
-        [T, E, ind, maskImage] = ...
-            CCDsegment4_bwconncomp(imageFull, imageOriginal, 1, 1, threshold, ...
-            opts, T, E, ind);
-    end
+    
+    
+    imageFull = [image_bottom; image_top];
+    imageOriginal = imageFull;
+    
+    [T, E, ind, maskImage] = ...
+        CCDsegment4_bwconncomp(imageFull, imageOriginal, 1, 1, threshold, ...
+        opts, T, E, ind);
     
     %cut off any extra cells or NaN's from T and E.
     T = T(1:ind-1);
     E = E(1:ind-1);
-    
 end
+    
 
 %{
     %~~~~~

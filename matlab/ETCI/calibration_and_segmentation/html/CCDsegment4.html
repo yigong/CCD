@@ -1,0 +1,665 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>CCDsegment4</title><meta name="generator" content="MATLAB 8.1"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2014-09-09"><meta name="DC.source" content="CCDsegment4.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> [T,E,maskImage] = CCDsegment4(varargin)
+<span class="comment">% function [T,E] = CCDsegment4(img,th)</span>
+<span class="comment">% function [T,E] = CCDsegment4(img,th,'Mode',modestr)</span>
+<span class="comment">% function [T,E] = CCDsegment4(img,th,'PixelThreshold',NumPixelsThreshold)</span>
+<span class="comment">% function [T,E] = CCDsegment4(img,th,'NeighborLayers',NeighborLayers)</span>
+<span class="comment">% function [T,E] = CCDsegment4(img,th,'EdgeVeto',edgeVeto)</span>
+<span class="comment">% function [T,E] = CCDsegment4(img,th,'Subarray',[w,h,colc,rowc])</span>
+<span class="comment">% function [T,E] = CCDsegment4(img,th,'pixelSize',pixelSize)</span>
+<span class="comment">% function [T,E] = CCDsegment4(img,th,'UseBWLabel')</span>
+<span class="comment">% function [T,E,mask] = CCDsegment4(...,'MaskFlag',maskFlag)</span>
+<span class="comment">%</span>
+<span class="comment">%Requires the Image Processing toolbox.</span>
+<span class="comment">% 12/4/12, CCDsegment4: now adjusting neighbor behavior for small pixels.</span>
+<span class="comment">%</span>
+<span class="comment">%Inputs:</span>
+<span class="comment">% img: input image array; should come from CCDcal_median or similar.</span>
+<span class="comment">%   The black level should be normalized to 0. In 'precal' mode, the image</span>
+<span class="comment">%   should be in detector units (gain = 1); in 'postcal' mode, the image should</span>
+<span class="comment">%   be in keV.</span>
+<span class="comment">% th: energy threshold for segmentation. Units defined by mode.</span>
+<span class="comment">%     Precal mode: units are [sigma of black level noise]; try 6 or so.</span>
+<span class="comment">%     Postcal mode: units are keV. Try 0.1 for normal images.</span>
+<span class="comment">%       **In April 2010 I showed 0.1 keV on my ARI poster, to achieve the 0.571 keV Am-241 resolution.</span>
+<span class="comment">%         This is 5.3 sigma of standard noise.</span>
+<span class="comment">%       In October 2012 on my IEEE poster, I reached a limit of around 3.3 sigma noise for smaller pixels</span>
+<span class="comment">%         and higher noise levels. But this was very rough.</span>
+<span class="comment">%</span>
+<span class="comment">% modestr: either 'precal' or 'postcal'</span>
+<span class="comment">%   'Precal' indicates that the gain of the device was unknown, so the images</span>
+<span class="comment">%   are in detector units, and are not necessarily the same from quadrant to quadrant.</span>
+<span class="comment">%   'Postcal' (default) means that the image is calibrated in keV.</span>
+<span class="comment">% pixth: number indicating minimum number of pixels allowed in a segmented track.</span>
+<span class="comment">%   If a track is found with n_pixels &lt; pixth, it will not be stored.</span>
+<span class="comment">% NeighborLayers: The number of layers of neighboring pixels to add to the track.</span>
+<span class="comment">%   Added with bwmorph 'dilate' operation.</span>
+<span class="comment">%   One layer of neighbors has been found to improve energy resolution</span>
+<span class="comment">%   in the Am-241 photopeak for experimental tracks (10.5um, 19eV sigma noise).</span>
+<span class="comment">%*NeighborFlag operation is still allowed, for backwards compatibility. (sets NeighborLayers=1)</span>
+<span class="comment">% edgeveto: logical; true means that tracks which touch the edge of the image will be vetoed.</span>
+<span class="comment">% subarray: [w,h,colc,rowc] parameters to compensate for subarray readout of the CCD.</span>
+<span class="comment">%   Use if the Subarray parameters were set in the acquisition software.</span>
+<span class="comment">%   The parameters are used in CCDsegment3 to label x and y coordinates correctly</span>
+<span class="comment">%   (in the coordinate system of the full device).</span>
+<span class="comment">%     w = box width, h = box height, colc = box column center, rowc = box rows center</span>
+<span class="comment">%     The bias width is assumed to have been set to zero</span>
+<span class="comment">% MaskFlag: also output a logical array showing mask, including pixels above</span>
+<span class="comment">%   the low threshold and their neighbors (if NeighborFlag).</span>
+<span class="comment">% maxSegments: if more than maxSegments different segments are found,</span>
+<span class="comment">%   abort. (for smaller pixels and noisier images, when a large image might give 5000 segments)</span>
+<span class="comment">% pixelSize: in um. Determines the number of layers of neighboring pixels to use. max(1,round(pixelSize/10.5))</span>
+<span class="comment">%   If NeighborLayers and NumPixelsThreshold are manually defined, then pixelSize is unnecessary.</span>
+<span class="comment">% UseBWLabel: use CCDsegment3's bwlabel call instead of the new, better bwconncomp.</span>
+<span class="comment">%</span>
+<span class="comment">% Default options:</span>
+<span class="comment">%   Mode = 'Postcal'</span>
+<span class="comment">%   PixelThreshold = 4</span>
+<span class="comment">%   NeighborLayers = 1</span>
+<span class="comment">%   EdgeVeto = true</span>
+<span class="comment">%   MaskFlag = false</span>
+<span class="comment">%   maxSegments = 500</span>
+<span class="comment">%</span>
+<span class="comment">%Outputs:</span>
+<span class="comment">% T: cell array of structures.</span>
+<span class="comment">%   T{i}.img: image of track i.</span>
+<span class="comment">%   T{i}.E: total track energy = sum(T{i}.img(:))</span>
+<span class="comment">%   T{i}.x: The x offset of the track, in pixels.</span>
+<span class="comment">%       Here, x is the first array index; +x is up in physical space.</span>
+<span class="comment">%       The first row in the track image, T{i}.img(1,:),</span>
+<span class="comment">%       is the (x+1)th row in the full device image, img(x,:).</span>
+<span class="comment">%   T{i}.y: The y offset of the track, in pixels.</span>
+<span class="comment">%       Here, y is the second array index; +y is ... (need to double check which direction) in physical space.</span>
+<span class="comment">%       The first column in the track image, T{i}.img(:,1),</span>
+<span class="comment">%       is the (y+1)th column in the full device image, img(y,:).</span>
+<span class="comment">%   T{i}.edgeflag: marks if the track was neighboring the</span>
+<span class="comment">%       edge regions blacked out by CCDcal.</span>
+<span class="comment">% E: list of energies. Either by quadrant (precal mode) or for the entire image.</span>
+<span class="comment">% mask: binary mask of track pixels &amp; neighbors.</span>
+
+<span class="comment">%input handling</span>
+[imageOriginal, threshold, opts] = CCDsegment4_InputHandling(nargin, varargin(:));
+
+<span class="keyword">if</span> opts.maskFlag &amp;&amp; opts.edgeVeto
+    error(<span class="string">'Maskflag and Edgeveto should not be used together...'</span>)
+    <span class="comment">%why? no good reason. These flags are old and outdated I think. #futurework</span>
+<span class="keyword">end</span>
+
+
+
+maskImage = false(size(imageOriginal));
+<span class="comment">%measure dimensions from the CCD image given</span>
+[dim1,dim2] = size(imageOriginal);
+
+<span class="keyword">if</span> opts.quadrantStraddleVeto
+    <span class="comment">%Segment each quadrant separately.</span>
+    <span class="keyword">if</span> opts.preCalMode
+        <span class="comment">%list energy values separately by quadrant, not all in one list.</span>
+        <span class="comment">%   because each quadrant will have a slightly different gain value.</span>
+        E = cell(1,2);
+        T = cell(1,2);  <span class="comment">%for each quadrant</span>
+
+        <span class="keyword">for</span> quadrantIndex = 1:2     <span class="comment">%each quadrant</span>
+            <span class="comment">%get quadrant image and indices</span>
+            [xOffset, yOffset, imageQuadrantOriginal] = <span class="keyword">...</span>
+                CCDsegment4_GetQuadrant(dim1, dim2, imageOriginal, quadrantIndex);
+
+            <span class="comment">%smooth, if desired</span>
+            <span class="keyword">if</span> opts.useSmoothing
+                imageQuadrant = CCDsegment4_Smooth(opts, imageQuadrantOriginal);
+            <span class="keyword">else</span>
+                imageQuadrant = imageQuadrantOriginal;
+            <span class="keyword">end</span>
+
+            threshold_input = threshold;
+            <span class="comment">%determine threshold based on noise level</span>
+            threshold = CCDsegment4_GetPreCalThreshold(imageQuadrant,threshold);
+
+            <span class="keyword">if</span> opts.useBWLabel
+                [T{quadrantIndex}, E{quadrantIndex}, ind, maskImage] = <span class="keyword">...</span>
+                    CCDsegment4_bwlabel(imageQuadrant, imageQuadrantOriginal, xOffset, yOffset, threshold, <span class="keyword">...</span>
+                    opts, T{quadrantIndex}, E{quadrantIndex}, 1);
+            <span class="keyword">else</span>
+                [T{quadrantIndex}, E{quadrantIndex}, ind, maskImage] = <span class="keyword">...</span>
+                    CCDsegment4_bwconncomp(imageQuadrant, imageQuadrantOriginal, xOffset, yOffset, threshold, <span class="keyword">...</span>
+                    opts, T{quadrantIndex}, E{quadrantIndex}, 1);
+            <span class="keyword">end</span>
+
+            <span class="comment">%cut off any extra cells or NaN's from T{quadrantIndex} and E{quadrantIndex}.</span>
+             T{quadrantIndex} = T{quadrantIndex}(1:ind-1);
+             E{quadrantIndex} = E{quadrantIndex}(1:ind-1);
+
+            threshold = threshold_input;
+        <span class="keyword">end</span>
+    <span class="keyword">else</span>    <span class="comment">% [CCDsegment4: currently quadrantStraddleVeto==PreCalMode so this doesn't ever happen]</span>
+        <span class="comment">%energy values from all quadrants will all be in one list</span>
+        E = [];
+        T = cell(0,1);
+        <span class="comment">%keep an index of where we are in T and E</span>
+        ind = 1;
+
+        <span class="keyword">for</span> quadrantIndex = 1:4
+            <span class="comment">%get quadrant image and indices</span>
+            [xOffset, yOffset, imageQuadrantOriginal] = <span class="keyword">...</span>
+                CCDsegment4_GetQuadrant(dim1, dim2, imageOriginal, quadrantIndex);
+
+            <span class="comment">%smooth, if desired</span>
+            <span class="keyword">if</span> opts.useSmoothing
+                imageQuadrant = CCDsegment4_Smooth(opts, imageQuadrantOriginal);
+            <span class="keyword">else</span>
+                imageQuadrant = imageQuadrantOriginal;
+            <span class="keyword">end</span>
+
+            <span class="keyword">if</span> UseBWLabel
+                [T, E, ind, maskImage] = <span class="keyword">...</span>
+                    CCDsegment4_bwlabel(imageQuadrant, xOffset, yOffset, threshold, <span class="keyword">...</span>
+                    opts, T, E, ind);
+            <span class="keyword">else</span>
+                [T, E, ind, maskImage] = <span class="keyword">...</span>
+                    CCDsegment4_bwconncomp(imageQuadrant, xOffset, yOffset, threshold, <span class="keyword">...</span>
+                    opts, T, E, ind);
+            <span class="keyword">end</span>
+        <span class="keyword">end</span>
+
+        <span class="comment">%cut off any extra cells or NaN's from T and E.</span>
+        T = T(1:ind-1);
+        E = E(1:ind-1);
+    <span class="keyword">end</span>
+
+<span class="keyword">else</span>
+    <span class="comment">%segment entire image at once</span>
+
+    <span class="comment">%initialize</span>
+    E = [];
+    T = cell(0,1);
+    ind = 1;
+
+    <span class="comment">%smooth, if desired</span>
+    <span class="keyword">if</span> opts.useSmoothing
+        imageFull = CCDsegment4_Smooth(opts, imageOriginal);
+    <span class="keyword">else</span>
+        imageFull = imageOriginal;
+    <span class="keyword">end</span>
+
+    <span class="keyword">if</span> opts.useBWLabel
+        [T, E, ind, maskImage] = <span class="keyword">...</span>
+            CCDsegment4_bwlabel(imageFull, imageOriginal, 1, 1, threshold, <span class="keyword">...</span>
+            opts, T, E, ind);
+    <span class="keyword">else</span>
+        [T, E, ind, maskImage] = <span class="keyword">...</span>
+            CCDsegment4_bwconncomp(imageFull, imageOriginal, 1, 1, threshold, <span class="keyword">...</span>
+            opts, T, E, ind);
+    <span class="keyword">end</span>
+
+    <span class="comment">%cut off any extra cells or NaN's from T and E.</span>
+    T = T(1:ind-1);
+    E = E(1:ind-1);
+
+<span class="keyword">end</span>
+
+<span class="comment">%{
+</span><span class="comment">    %~~~~~
+</span><span class="comment">    %create binary image. This is a logical array, where "true" marks
+</span><span class="comment">    %   pixels above the threshold, and "false" marks pixels below.
+</span><span class="comment">    lg = imageFull &gt; threshold;
+</span><span class="comment">
+</span><span class="comment">    %if we want to output the mask, we do it here...
+</span><span class="comment">    if maskFlag
+</span><span class="comment">        maskImage = bwmorph(lg,'dilate');    %mark neighbors too
+</span><span class="comment">        %this makes the assumption that neighborflag is true.
+</span><span class="comment">    end
+</span><span class="comment">
+</span><span class="comment">    %label regions (tracks).
+</span><span class="comment">    %bwlabel marks contiguous groupings of "true" values with a unique number.
+</span><span class="comment">    %   L is an image with numbers indicating the segmented groupings;
+</span><span class="comment">    %   num is the total number of groups.
+</span><span class="comment">    [imageRegionsMask,numRegions] = bwlabel(lg,8);
+</span><span class="comment">
+</span><span class="comment">    if numRegions &gt; maxSegments
+</span><span class="comment">        %abort
+</span><span class="comment">        T = cell(0,1);
+</span><span class="comment">        E = [];
+</span><span class="comment">        return
+</span><span class="comment">    end
+</span><span class="comment">
+</span><span class="comment">    T = cell(1,numRegions);
+</span><span class="comment">    E = nan(1,numRegions);
+</span><span class="comment">
+</span><span class="comment">    for j=1:numRegions     %each track
+</span><span class="comment">        if sum(imageRegionsMask(:)==j) &lt; NumPixelsThreshold     %there are not enough pixels in this grouping.
+</span><span class="comment">            continue    %skip to the next group
+</span><span class="comment">        end
+</span><span class="comment">        %otherwise, get a list of coordinates of the elements in this segmented group.
+</span><span class="comment">        [regionRows,regionCols] = find(imageRegionsMask==j);
+</span><span class="comment">
+</span><span class="comment">        if edgeVeto &amp;&amp; any(regionRows==1 | regionCols==1 | regionRows==dim1 | regionCols==dim2)
+</span><span class="comment">            %if any elements of this group are at the edge of the image,
+</span><span class="comment">            %   apply the edge veto if active.
+</span><span class="comment">            continue    %skip to the next group
+</span><span class="comment">        elseif any(regionRows==1 | regionCols==1 | regionRows==dim1 | regionCols==dim2)
+</span><span class="comment">            %if any elements of this group are at the edge of the image,
+</span><span class="comment">            %   make a note of it with edgeflag.
+</span><span class="comment">            edgeflag = true;
+</span><span class="comment">        else
+</span><span class="comment">            %not at the edge.
+</span><span class="comment">            edgeflag = false;
+</span><span class="comment">        end
+</span><span class="comment">
+</span><span class="comment">        %mark neighbors if neighborflag is true.
+</span><span class="comment">        if NeighborLayers &gt; 0
+</span><span class="comment">            regionMaskFull = bwmorph(imageRegionsMask==j,'dilate');   %save pixels above threshold, as well as neighboring pixels (8-conn)
+</span><span class="comment">        else
+</span><span class="comment">            regionMaskFull = imageRegionsMask==j;    %no neighbors
+</span><span class="comment">        end
+</span><span class="comment">
+</span><span class="comment">        %get a list of coordinates of the elements in this group (now, including neighbors)
+</span><span class="comment">        [regionRows,regionCols] = find(regionMaskFull);
+</span><span class="comment">
+</span><span class="comment">        %build the track image: it is padded with zeros outside the track.
+</span><span class="comment">        T{m}.img = zeros(max(regionRows)-min(regionRows)+1,max(regionCols)-min(regionCols)+1);  %create appropriately sized array
+</span><span class="comment">
+</span><span class="comment">        regionMaskTrimmed = regionMaskFull(min(regionRows):max(regionRows),min(regionCols):max(regionCols));
+</span><span class="comment">        %"marksub" shows the pixels of the track in a rectangle the size of the track image
+</span><span class="comment">        T{m}.img(regionMaskTrimmed) = imageFull(regionMaskFull);     %copy marked pixels
+</span><span class="comment">
+</span><span class="comment">        %record the other information of the track.
+</span><span class="comment">        T{m}.E = sum(T{m}.img(:));  %save energy of this track
+</span><span class="comment">        T{m}.x = min(regionRows)-1;            %rows are x dimension (vertical up)
+</span><span class="comment">        T{m}.y = min(regionCols)-1;            %columns are y dimension (horizontal away from collimator)
+</span><span class="comment">        %-1 compensates for being the offset (not the first row/column)
+</span><span class="comment">%         T{m}.q = NaN;             %which quadrant
+</span><span class="comment">        T{m}.edgeflag = edgeflag;   %whether this track is at the edge
+</span><span class="comment">                                    %   (if edgeveto is true, then this will only be false)
+</span><span class="comment">        E(m) = T{m}.E;  %in postcal mode, all energies are saved in the same list
+</span><span class="comment">
+</span><span class="comment">        if ~isempty(subArrayParams)
+</span><span class="comment">            %subarray readout
+</span><span class="comment">            %adjust x and y to the coordinate system of the entire device, instead of the subarray.
+</span><span class="comment">            T{m}.y = T{m}.y + (subArrayParams(3)-subArrayParams(1)/2);  %columns
+</span><span class="comment">            T{m}.x = T{m}.x + (subArrayParams(4)-subArrayParams(2)/2);  %rows
+</span><span class="comment">        end
+</span><span class="comment">        m = m+1;
+</span><span class="comment">    end
+</span><span class="comment">
+</span><span class="comment">    findNan = find(isnan(E),1);
+</span><span class="comment">    if ~isempty(findNan)
+</span><span class="comment">        %delete skipped ones
+</span><span class="comment">        Tnew = cell(1,findNan-1);
+</span><span class="comment">        for k=1:findNan-1
+</span><span class="comment">            Tnew{k} = T{k};
+</span><span class="comment">        end
+</span><span class="comment">        T = Tnew;
+</span><span class="comment">        E = E(1:findNan-1);
+</span><span class="comment">    end
+</span><span class="comment">end
+</span><span class="comment">%}</span>
+</pre><pre class="codeoutput">Error using CCDsegment4_InputHandling (line 16)
+Need at least two input arguments.
+
+Error in CCDsegment4 (line 80)
+[imageOriginal, threshold, opts] = CCDsegment4_InputHandling(nargin, varargin(:));
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+function [T,E,maskImage] = CCDsegment4(varargin)
+% function [T,E] = CCDsegment4(img,th)
+% function [T,E] = CCDsegment4(img,th,'Mode',modestr)
+% function [T,E] = CCDsegment4(img,th,'PixelThreshold',NumPixelsThreshold)
+% function [T,E] = CCDsegment4(img,th,'NeighborLayers',NeighborLayers)
+% function [T,E] = CCDsegment4(img,th,'EdgeVeto',edgeVeto)
+% function [T,E] = CCDsegment4(img,th,'Subarray',[w,h,colc,rowc])
+% function [T,E] = CCDsegment4(img,th,'pixelSize',pixelSize)
+% function [T,E] = CCDsegment4(img,th,'UseBWLabel')
+% function [T,E,mask] = CCDsegment4(...,'MaskFlag',maskFlag)
+%
+%Requires the Image Processing toolbox.
+% 12/4/12, CCDsegment4: now adjusting neighbor behavior for small pixels.
+%
+%Inputs:
+% img: input image array; should come from CCDcal_median or similar.
+%   The black level should be normalized to 0. In 'precal' mode, the image
+%   should be in detector units (gain = 1); in 'postcal' mode, the image should
+%   be in keV.
+% th: energy threshold for segmentation. Units defined by mode.
+%     Precal mode: units are [sigma of black level noise]; try 6 or so.
+%     Postcal mode: units are keV. Try 0.1 for normal images.
+%       **In April 2010 I showed 0.1 keV on my ARI poster, to achieve the 0.571 keV Am-241 resolution.
+%         This is 5.3 sigma of standard noise.
+%       In October 2012 on my IEEE poster, I reached a limit of around 3.3 sigma noise for smaller pixels
+%         and higher noise levels. But this was very rough.
+%
+% modestr: either 'precal' or 'postcal'
+%   'Precal' indicates that the gain of the device was unknown, so the images
+%   are in detector units, and are not necessarily the same from quadrant to quadrant.
+%   'Postcal' (default) means that the image is calibrated in keV.
+% pixth: number indicating minimum number of pixels allowed in a segmented track.
+%   If a track is found with n_pixels < pixth, it will not be stored.
+% NeighborLayers: The number of layers of neighboring pixels to add to the track.
+%   Added with bwmorph 'dilate' operation.
+%   One layer of neighbors has been found to improve energy resolution
+%   in the Am-241 photopeak for experimental tracks (10.5um, 19eV sigma noise).
+%*NeighborFlag operation is still allowed, for backwards compatibility. (sets NeighborLayers=1)
+% edgeveto: logical; true means that tracks which touch the edge of the image will be vetoed.
+% subarray: [w,h,colc,rowc] parameters to compensate for subarray readout of the CCD. 
+%   Use if the Subarray parameters were set in the acquisition software.
+%   The parameters are used in CCDsegment3 to label x and y coordinates correctly
+%   (in the coordinate system of the full device).
+%     w = box width, h = box height, colc = box column center, rowc = box rows center
+%     The bias width is assumed to have been set to zero
+% MaskFlag: also output a logical array showing mask, including pixels above 
+%   the low threshold and their neighbors (if NeighborFlag).
+% maxSegments: if more than maxSegments different segments are found,
+%   abort. (for smaller pixels and noisier images, when a large image might give 5000 segments)
+% pixelSize: in um. Determines the number of layers of neighboring pixels to use. max(1,round(pixelSize/10.5))
+%   If NeighborLayers and NumPixelsThreshold are manually defined, then pixelSize is unnecessary.
+% UseBWLabel: use CCDsegment3's bwlabel call instead of the new, better bwconncomp. 
+% 
+% Default options:
+%   Mode = 'Postcal'
+%   PixelThreshold = 4
+%   NeighborLayers = 1
+%   EdgeVeto = true
+%   MaskFlag = false
+%   maxSegments = 500
+%
+%Outputs:
+% T: cell array of structures.
+%   T{i}.img: image of track i.
+%   T{i}.E: total track energy = sum(T{i}.img(:))
+%   T{i}.x: The x offset of the track, in pixels.
+%       Here, x is the first array index; +x is up in physical space.
+%       The first row in the track image, T{i}.img(1,:), 
+%       is the (x+1)th row in the full device image, img(x,:).
+%   T{i}.y: The y offset of the track, in pixels.
+%       Here, y is the second array index; +y is ... (need to double check which direction) in physical space.
+%       The first column in the track image, T{i}.img(:,1),
+%       is the (y+1)th column in the full device image, img(y,:).
+%   T{i}.edgeflag: marks if the track was neighboring the 
+%       edge regions blacked out by CCDcal.
+% E: list of energies. Either by quadrant (precal mode) or for the entire image.
+% mask: binary mask of track pixels & neighbors.
+
+%input handling
+[imageOriginal, threshold, opts] = CCDsegment4_InputHandling(nargin, varargin(:));
+    
+if opts.maskFlag && opts.edgeVeto
+    error('Maskflag and Edgeveto should not be used together...')
+    %why? no good reason. These flags are old and outdated I think. #futurework
+end
+
+
+ 
+maskImage = false(size(imageOriginal));
+%measure dimensions from the CCD image given
+[dim1,dim2] = size(imageOriginal);
+
+if opts.quadrantStraddleVeto
+    %Segment each quadrant separately.
+    if opts.preCalMode
+        %list energy values separately by quadrant, not all in one list.
+        %   because each quadrant will have a slightly different gain value.
+        E = cell(1,2);
+        T = cell(1,2);  %for each quadrant
+        
+        for quadrantIndex = 1:2     %each quadrant
+            %get quadrant image and indices
+            [xOffset, yOffset, imageQuadrantOriginal] = ...
+                CCDsegment4_GetQuadrant(dim1, dim2, imageOriginal, quadrantIndex);
+            
+            %smooth, if desired
+            if opts.useSmoothing
+                imageQuadrant = CCDsegment4_Smooth(opts, imageQuadrantOriginal);
+            else
+                imageQuadrant = imageQuadrantOriginal;
+            end
+            
+            threshold_input = threshold;
+            %determine threshold based on noise level
+            threshold = CCDsegment4_GetPreCalThreshold(imageQuadrant,threshold);
+            
+            if opts.useBWLabel
+                [T{quadrantIndex}, E{quadrantIndex}, ind, maskImage] = ...
+                    CCDsegment4_bwlabel(imageQuadrant, imageQuadrantOriginal, xOffset, yOffset, threshold, ...
+                    opts, T{quadrantIndex}, E{quadrantIndex}, 1);
+            else
+                [T{quadrantIndex}, E{quadrantIndex}, ind, maskImage] = ...
+                    CCDsegment4_bwconncomp(imageQuadrant, imageQuadrantOriginal, xOffset, yOffset, threshold, ...
+                    opts, T{quadrantIndex}, E{quadrantIndex}, 1);
+            end
+            
+            %cut off any extra cells or NaN's from T{quadrantIndex} and E{quadrantIndex}.
+             T{quadrantIndex} = T{quadrantIndex}(1:ind-1);
+             E{quadrantIndex} = E{quadrantIndex}(1:ind-1);
+            
+            threshold = threshold_input;
+        end        
+    else    % [CCDsegment4: currently quadrantStraddleVeto==PreCalMode so this doesn't ever happen]
+        %energy values from all quadrants will all be in one list
+        E = [];
+        T = cell(0,1);
+        %keep an index of where we are in T and E
+        ind = 1;
+        
+        for quadrantIndex = 1:4
+            %get quadrant image and indices
+            [xOffset, yOffset, imageQuadrantOriginal] = ...
+                CCDsegment4_GetQuadrant(dim1, dim2, imageOriginal, quadrantIndex);
+            
+            %smooth, if desired
+            if opts.useSmoothing
+                imageQuadrant = CCDsegment4_Smooth(opts, imageQuadrantOriginal);
+            else
+                imageQuadrant = imageQuadrantOriginal;
+            end
+            
+            if UseBWLabel
+                [T, E, ind, maskImage] = ...
+                    CCDsegment4_bwlabel(imageQuadrant, xOffset, yOffset, threshold, ...
+                    opts, T, E, ind);
+            else
+                [T, E, ind, maskImage] = ...
+                    CCDsegment4_bwconncomp(imageQuadrant, xOffset, yOffset, threshold, ...
+                    opts, T, E, ind);
+            end
+        end
+        
+        %cut off any extra cells or NaN's from T and E.
+        T = T(1:ind-1);
+        E = E(1:ind-1);
+    end
+    
+else
+    %segment entire image at once
+    
+    %initialize
+    E = [];
+    T = cell(0,1);
+    ind = 1;
+    
+    %smooth, if desired
+    if opts.useSmoothing
+        imageFull = CCDsegment4_Smooth(opts, imageOriginal);
+    else
+        imageFull = imageOriginal;
+    end
+    
+    if opts.useBWLabel
+        [T, E, ind, maskImage] = ...
+            CCDsegment4_bwlabel(imageFull, imageOriginal, 1, 1, threshold, ...
+            opts, T, E, ind);
+    else
+        [T, E, ind, maskImage] = ...
+            CCDsegment4_bwconncomp(imageFull, imageOriginal, 1, 1, threshold, ...
+            opts, T, E, ind);
+    end
+    
+    %cut off any extra cells or NaN's from T and E.
+    T = T(1:ind-1);
+    E = E(1:ind-1);
+    
+end
+
+%{
+    %~~~~~
+    %create binary image. This is a logical array, where "true" marks
+    %   pixels above the threshold, and "false" marks pixels below.
+    lg = imageFull > threshold;
+    
+    %if we want to output the mask, we do it here...
+    if maskFlag
+        maskImage = bwmorph(lg,'dilate');    %mark neighbors too
+        %this makes the assumption that neighborflag is true.
+    end
+
+    %label regions (tracks).
+    %bwlabel marks contiguous groupings of "true" values with a unique number.
+    %   L is an image with numbers indicating the segmented groupings;
+    %   num is the total number of groups.
+    [imageRegionsMask,numRegions] = bwlabel(lg,8);
+    
+    if numRegions > maxSegments
+        %abort
+        T = cell(0,1);
+        E = [];
+        return
+    end
+    
+    T = cell(1,numRegions);
+    E = nan(1,numRegions);
+    
+    for j=1:numRegions     %each track
+        if sum(imageRegionsMask(:)==j) < NumPixelsThreshold     %there are not enough pixels in this grouping.
+            continue    %skip to the next group
+        end
+        %otherwise, get a list of coordinates of the elements in this segmented group.
+        [regionRows,regionCols] = find(imageRegionsMask==j);
+        
+        if edgeVeto && any(regionRows==1 | regionCols==1 | regionRows==dim1 | regionCols==dim2)
+            %if any elements of this group are at the edge of the image,
+            %   apply the edge veto if active.
+            continue    %skip to the next group
+        elseif any(regionRows==1 | regionCols==1 | regionRows==dim1 | regionCols==dim2)
+            %if any elements of this group are at the edge of the image,
+            %   make a note of it with edgeflag.
+            edgeflag = true;
+        else
+            %not at the edge.
+            edgeflag = false;
+        end
+        
+        %mark neighbors if neighborflag is true.
+        if NeighborLayers > 0
+            regionMaskFull = bwmorph(imageRegionsMask==j,'dilate');   %save pixels above threshold, as well as neighboring pixels (8-conn)
+        else
+            regionMaskFull = imageRegionsMask==j;    %no neighbors
+        end
+        
+        %get a list of coordinates of the elements in this group (now, including neighbors)
+        [regionRows,regionCols] = find(regionMaskFull);
+        
+        %build the track image: it is padded with zeros outside the track.
+        T{m}.img = zeros(max(regionRows)-min(regionRows)+1,max(regionCols)-min(regionCols)+1);  %create appropriately sized array
+        
+        regionMaskTrimmed = regionMaskFull(min(regionRows):max(regionRows),min(regionCols):max(regionCols));
+        %"marksub" shows the pixels of the track in a rectangle the size of the track image
+        T{m}.img(regionMaskTrimmed) = imageFull(regionMaskFull);     %copy marked pixels
+        
+        %record the other information of the track.
+        T{m}.E = sum(T{m}.img(:));  %save energy of this track
+        T{m}.x = min(regionRows)-1;            %rows are x dimension (vertical up)
+        T{m}.y = min(regionCols)-1;            %columns are y dimension (horizontal away from collimator)
+        %-1 compensates for being the offset (not the first row/column)
+%         T{m}.q = NaN;             %which quadrant
+        T{m}.edgeflag = edgeflag;   %whether this track is at the edge
+                                    %   (if edgeveto is true, then this will only be false)
+        E(m) = T{m}.E;  %in postcal mode, all energies are saved in the same list
+        
+        if ~isempty(subArrayParams)
+            %subarray readout
+            %adjust x and y to the coordinate system of the entire device, instead of the subarray.
+            T{m}.y = T{m}.y + (subArrayParams(3)-subArrayParams(1)/2);  %columns
+            T{m}.x = T{m}.x + (subArrayParams(4)-subArrayParams(2)/2);  %rows
+        end
+        m = m+1;
+    end
+    
+    findNan = find(isnan(E),1);
+    if ~isempty(findNan)
+        %delete skipped ones
+        Tnew = cell(1,findNan-1);
+        for k=1:findNan-1
+            Tnew{k} = T{k};
+        end
+        T = Tnew;
+        E = E(1:findNan-1);
+    end
+end
+%}
+
+##### SOURCE END #####
+--></body></html>

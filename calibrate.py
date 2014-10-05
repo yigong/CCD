@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+from scipy.optimize import curve_fit
+
 from CCD.gaussian_fit import gaussian_no_background
 
 from CCD.io import load_fits
@@ -94,7 +96,6 @@ def init_segment_calibrate(image_stack, energy_list=[], threshold=500, plot_flag
     from skimage.morphology import binary_dilation
     from skimage.measure import label
     
-    from scipy.optimize import curve_fit
     
     calibrate_energy = 59.5
     
@@ -217,6 +218,67 @@ def col_median_subtraction(image):
         
     return col_median_subtracted, col_median
 
+def Am241_calibration(energy, plot_flag=False):
+    CALIBRATE_ENERGY = 59.54
+    # energy is an array
+    bin_range = (104000, 114000)
+    bin_step = 100
+    bins_temp = np.arange(bin_range[0], bin_range[1]+bin_step, bin_step)
+    # setup the bins
+    
+    counts, bins = np.histogram(energy, bins=bins_temp)
+    # histogram
+    
+    bins = bins[1:] - (bins[1] - bins[0])/2
+    
+    
+    in_range_bool = np.logical_and(energy>bin_range[0], energy<bin_range[1])
+    energy_in_range = energy[in_range_bool]
+    # crop the histogram based on the range
+    
+    fit_guess = [np.size(energy_in_range), np.median(energy_in_range), 
+                 (np.median(energy_in_range)-np.min(energy_in_range))/3]
+    sigma = 1./counts
+    fitting_parameter, fitting_parameter_cov = curve_fit(gaussian_no_background,
+                                                        bins, counts, p0=fit_guess, sigma=sigma)
+    centroid = fitting_parameter[1]
+    std = fitting_parameter[2]
+    FWHM = std * 2.35
+    # fit the histogram with guassian curve
+    
+    gain = CALIBRATE_ENERGY/centroid
+    
+    
+    if plot_flag == True:
+        fig, (ax1, ax2) = plt.subplots(1,2)
+        ax1.hist(energy, bins=bins_temp)
+        ax1.plot(bins, gaussian_no_background(bins, *fitting_parameter), 'rx-')
+        ax1.set_xlabel('track energy (ADC)')
+        ax1.set_ylabel('counts')
+        ax1.set_title('centroid=%.1f \n FWHM=%.2f' % (centroid, FWHM))
+        # histogram on ADC unit
+        
+        energy_kev = energy * gain
+        bins_kev = bins_temp * gain
+        ax2.hist(energy_kev, bins=bins_kev)
+        ax2.set_title('std=%.2f' % std*gain)
+
+        ax2.set_xlabel('track energy (keV)')
+        ax2.set_ylabel('counts')
+        # histogram on keV
+        plt.show()
+    
+    result = {}
+    result['centroid'] = centroid
+    result['FWHM_ADC'] = FWHM
+    result['gain'] = gain
+    result['FWHM_keV'] = FWHM * gain
+
+    print 'The histogram is centered at %(centroid).4e with FWHM = %(FWHM_ADC).4e' % result
+    print 'The CCD has a gain of %(gain).4e' % result
+    print 'FWHM at 59.5 keV is %(FWHM_keV).4e keV' % result 
+
+    return result
 
 
 

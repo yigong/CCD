@@ -3,12 +3,20 @@ function [T, E, ind, maskImage] = CCDsegment4_bwconncomp(imagePortion, imagePort
 %
 % Operated by CCDsegment4.
 
-%create binary image.
-binImage = imagePortion > threshold;
+if length(threshold) == 2
+    [dim1, dim2] = size(imagePortion);
+    %create binary image.
+    binImage_bottom = imagePortion(1:dim1/2, :) > threshold(1);
+    binImage_top = imagePortion(dim1/2+1:end, :) > threshold(2);
+    binImage = [binImage_bottom; binImage_top];
+else 
+    binImage = imagePortion > threshold;
+end
+
 %add layers of neighboring pixels, except the last layer.
 %   this matches CCDsegment3 behavior, and prevents unnecessary restrictions
 %   on larger pixel sizes, while keeping small-pixel, noisy tracks contiguous.
-binImage = bwmorph(binImage,'dilate',max(0,opts.neighborLayers-1)); %in case neighborLayers==0.
+binImage = bwmorph(binImage,'dilate',max(1,opts.neighborLayers)); %in case neighborLayers==0.
 
 %set up mask. tracks will be added one by one, after they are validated.
 maskImage = false(size(binImage));

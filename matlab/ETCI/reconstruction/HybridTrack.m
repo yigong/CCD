@@ -63,6 +63,10 @@ function Output = HybridTrack(originalImageKev,varargin)
 % and the correct end can be identified more accurately.
 %If the lowthresh is too high, the initial end may be cut off.
 
+%%%%%%%%%%%%%%%
+%%%% input %%%%
+%%%%%%%%%%%%%%%
+
 Options = HtConstructOptions(nargin,varargin);
 % this includes the ridge-following options, in a subroutine.
 
@@ -70,9 +74,14 @@ Options = HtConstructOptions(nargin,varargin);
 [trackEnergy, preparedImageKev, Options] = ...
     HtPrepareImage(originalImageKev, Options);
 
+%%%%%%%%%%%%%%%
+%%%% ends %%%%%
+%%%%%%%%%%%%%%%
+
 % low threshold, thinning, identify ends.
 EdgeSegments = HtChooseInitialEnd(preparedImageKev, Options);
 
+%%% exception
 if isnan(EdgeSegments.chosenIndex)
     % no end found
     % exit unsuccessfully
@@ -83,8 +92,14 @@ if isnan(EdgeSegments.chosenIndex)
     return
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% ridge following %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % ridge following
 Ridge = HtRidgeFollow(EdgeSegments, Options, preparedImageKev);
+
+%%% exception
 if isfield(Ridge,'err') && strcmpi(Ridge.err,'infinite loop')
     Output.img = preparedImageKev;
     Output.Etot = sum(preparedImageKev(:));
@@ -95,11 +110,21 @@ if isfield(Ridge,'err') && strcmpi(Ridge.err,'infinite loop')
     return
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% compute direction %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 [Measurement, Ridge] = HtComputeDirection(trackEnergy, Ridge, Options);
 
+%%%%%%%%%%%%%%%%
+%%%% output %%%%
+%%%%%%%%%%%%%%%%
 Output = ...
     HtSetOutput(preparedImageKev, Options, EdgeSegments, Ridge, Measurement);
 
+%%%%%%%%%%%%%%
+%%%% plot %%%%
+%%%%%%%%%%%%%%
 % plots #13-15
 if Options.PlotStyle.multiple(13)
     % all ridge points, measurement highlighted
@@ -1515,27 +1540,28 @@ function Output = HtSetOutput(preparedImageKev, Options, EdgeSegments, Ridge, ..
 % function Output = HtSetOutput(preparedImageKev, Options, EdgeSegments, Ridge, ...
 %     Measurement)
 
-Output.img = preparedImageKev;
-Output.Etot = sum(preparedImageKev(:));
+Output.img = preparedImageKev; % image with 0 padding
+Output.Etot = sum(preparedImageKev(:)); % E total, summing all the pixels up
 % Output.ThSS = thetaStepSizeRadians;
-Output.pixsize = Options.pixelSizeUm;
+Output.pixsize = Options.pixelSizeUm; % record the pixel size
 
-Output.ends = length(EdgeSegments.energiesKev);
-Output.Eend = EdgeSegments.energiesKev(EdgeSegments.chosenIndex);
-Output.thin = EdgeSegments.thinnedImage;
-Output.lt = EdgeSegments.lowThresholdUsed;
-Output.EdgeSegments = EdgeSegments;
+Output.ends = length(EdgeSegments.energiesKev); % number of ends
+Output.Eend = EdgeSegments.energiesKev(EdgeSegments.chosenIndex); % energy of the choosen ends
+Output.thin = EdgeSegments.thinnedImage; % thinned image 
+Output.lt = EdgeSegments.lowThresholdUsed; % threhold being used
+Output.EdgeSegments = EdgeSegments; % ends structure
 
-Output.x = Ridge.positionPix(:,1);
-Output.y = Ridge.positionPix(:,2);
-Output.w = Ridge.fwhmUm;
-Output.a0 = Ridge.alphaDegrees;
-Output.dE = Ridge.dedxKevUm;
-Output.Ridge = Ridge;
+Output.x = Ridge.positionPix(:,1); % ridge row value
+Output.y = Ridge.positionPix(:,2); % ridge col value
+Output.w = Ridge.fwhmUm; % width of the chosen cut, for diffusion
+Output.a0 = Ridge.alphaDegrees; % measured alpha along the ridge
+Output.dE = Ridge.dedxKevUm; % measured dedx(s)
+Output.Ridge = Ridge; % ridge structure
 
-Output.alpha = Measurement.alphaDegrees;
-Output.beta = Measurement.betaDegrees;
-Output.Measurement = Measurement;   %dedxReference, dedxMeasured, indices
+Output.alpha = Measurement.alphaDegrees; % estimated alpha 
+Output.beta = Measurement.betaDegrees; % estimated beta
+Output.Measurement = Measurement;   % measured structure
+%dedxReference, dedxMeasured, indices
 
 
 

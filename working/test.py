@@ -1,0 +1,6 @@
+figure()
+hist(df_filtered['back-projection'], bins=arange(-10,10.5,1), histtype='step', align='mid')
+xlabel('Back-projection position at mylar film (mm)', fontsize='x-large')
+ylim([0,9])
+ylabel('counts', fontsize='x-large')
+plt.show()

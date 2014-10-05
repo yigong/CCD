@@ -1,6 +1,8 @@
 import numpy as np
 
-def compton(gamma_energy, electron_angle):
+
+
+def compton_electron(gamma_energy, electron_angle):
     
     '''calculate for a compton event for given incoming gamma-ray energy and 
        scattered electron energy.
@@ -46,6 +48,20 @@ def compton(gamma_energy, electron_angle):
 
     return result
 
+def compton_electron_array(gamma_energy, electron_angle_array):
+    
+    electron_angle_sample, electron_energy_sample = compton_gamma_array(
+                                                        gamma_energy, 
+                                                        np.linspace(np.pi, 0, 1000))
+    
+    
+    electron_energy_array = np.interp(electron_angle_array, electron_angle_sample, 
+                                   electron_energy_sample)
+    return electron_energy_array
+    
+    
+    
+
 def compton_gamma(gamma_energy, gamma_scattered_angle):
     electron_rest_mass = 511
     
@@ -71,7 +87,25 @@ def compton_gamma(gamma_energy, gamma_scattered_angle):
     
     return result
     
+def compton_gamma_array(gamma_energy, gamma_scattered_angle_array):    
+    electron_rest_mass = 511.
+    gamma_energy = float(gamma_energy)
     
+    tmp = (1 - np.cos(gamma_scattered_angle_array))/electron_rest_mass
+    
+    gamma_scattered_energy = 1/(tmp+1/gamma_energy)
+    
+    ratio = gamma_energy/gamma_scattered_energy
+    cot_electron_angle = (ratio - np.cos(gamma_scattered_angle_array))/np.sin(gamma_scattered_angle_array)
+    electron_scattered_angle = np.arctan(1/cot_electron_angle)
+    
+    electron_energy = gamma_energy-gamma_scattered_energy
+    if gamma_scattered_angle_array[0] == np.pi:
+        electron_scattered_angle[-1] = np.pi/2
+    if gamma_scattered_angle_array[-1] == 0:
+        electron_scattered_angle[0] = 0
+    return electron_scattered_angle, electron_energy    
+
 
 def Klein_Nishina_pdf(gamma_energy,num_samples):
     ''' sampling Klein Nishina from cos(theta)
@@ -94,4 +128,51 @@ def Klein_Nishina_pdf(gamma_energy,num_samples):
     return pdf, cos_polar
     
     
+def energy_deposit():
+    from CCD.io import read_file
     
+    E_electron_tmp, dEdx_tmp = read_file('/Users/Yigong/Google Drive/Research/CCD/working/dEdx')
+    E_electron_tmp, density_effect = read_file('/Users/Yigong/Google Drive/Research/CCD/working/density_effect')
+    dEdx = dEdx_tmp
+    dxdE = 1e4/(dEdx*2329) # um/keV
+    dxdE_decrease = dxdE[::-1]
+    E_electron_decrease = E_electron_tmp[::-1] * 1e3
+    E_deposit = np.zeros_like(E_electron_decrease)
+    
+    for i, electron_init in enumerate(E_electron_decrease):
+        escape_flag = False
+        for j, electron_final in enumerate(E_electron_decrease[i+1:]):
+            interg_array =  dxdE_decrease[i:j+1]
+            interg = np.trapz(interg_array)
+            if interg > 650:
+                break
+        if electron_final == E_electron_decrease[-1]:
+            E_deposit[i] = electron_init
+        else:
+            E_deposit[i] = electron_init - electron_final
+    
+    dEdx = dEdx_tmp * (1-density_effect)
+    dxdE = 1e4/(dEdx*2329) # um/keV
+    dxdE_decrease = dxdE[::-1]
+    E_electron_decrease = E_electron_tmp[::-1] * 1e3
+    E_deposit_corrected = np.zeros_like(E_electron_decrease)
+    
+    for i, electron_init in enumerate(E_electron_decrease):
+        escape_flag = False
+        for j, electron_final in enumerate(E_electron_decrease[i+1:]):
+            interg_array =  dxdE_decrease[i:j+1]
+            interg = np.trapz(interg_array)
+            if interg > 650:
+                break
+        if electron_final == E_electron_decrease[-1]:
+            E_deposit_corrected[i] = electron_init
+        else:
+            E_deposit_corrected[i] = electron_init - electron_final
+    
+    
+    
+    
+    return E_electron_decrease, E_deposit, E_deposit_correcte
+        
+            
+        

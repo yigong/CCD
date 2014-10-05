@@ -32,12 +32,21 @@ while i<=nargin     %each argument
             if strcmpi(varargin{i+1},'precal')
                 opts.preCalMode = true;
                 opts.quadrantStraddleVeto = true;    %veto tracks crossing quadrant edges, if we are performing a calibration
-            elseif strcmpi(curarg,'postcal')
+            elseif strcmpi(varargin{i+1},'postcal')
                 opts.preCalMode = false;
             else
                 error('Could not understand given mode. Mode should be ''precal'' or ''postcal'' ')
             end
             i = i+2;
+            
+        case 'gain'
+            if nargin > i && isvector(varargin{i+1}) && length(varargin{i+1})==2
+                opts.gain = varargin{i+1};
+                i=i+2;
+            else
+                error('Could not understand NeighborLayers input.')
+            end
+            
         case 'pixelthreshold'
             if isnumeric(varargin{i+1}) && length(varargin{i+1})==1
                 opts.numPixelsThreshold = varargin{i+1};
@@ -90,7 +99,7 @@ while i<=nargin     %each argument
             end
         case 'maxsegments'
             if isnumeric(varargin{i+1}) || islogical(varargin{i+1})
-                opts.maxSegments = logical(varargin{i+1});
+                opts.maxSegments = (varargin{i+1});
                 i=i+2;
             else
                 error('Could not understand the maxSegments argument.')
@@ -153,6 +162,9 @@ end
 if ~isfield(opts,'preCalMode')
     opts.preCalMode = false;
 end
+if ~isfield(opts,'gain')
+    opts.gain = [1, 1];
+end
 if ~isfield(opts,'useBWLabel')
     opts.useBWLabel = false; %use BWConnComp instead
 end
@@ -166,7 +178,7 @@ if ~isfield(opts,'maskFlag')
     opts.maskFlag = false;
 end
 if ~isfield(opts,'maxSegments')
-    opts.maxSegments = 500;
+    opts.maxSegments = 10000;
 end
 if ~isfield(opts,'pixelSize')
     opts.pixelSize = 10.5;
@@ -175,7 +187,7 @@ if ~isfield(opts,'NeighborLayers')
 	opts.neighborLayers = max(1, round(10.5/opts.pixelSize));
 end
 if ~isfield(opts,'NumPixelsThreshold')
-    opts.numPixelsThreshold = 4; %function of pixel size?
+    opts.numPixelsThreshold = 1; %function of pixel size?
 end
 if ~isfield(opts,'useSmoothing')
     if opts.pixelSize >= 7.5  %something between 10 and 5
