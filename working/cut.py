@@ -1,4 +1,7 @@
-edata = eData('./recon_tracks_45000.mat')
+#from CCD.working.track_analysis import eData
+
+
+#edata = eData('./recon_tracks_2hr.mat')
 edata.betaMapping()
 edata.alphaMapping()
 edata.energyMapping()
@@ -23,7 +26,7 @@ print '%s tracks are left.'%(len(edata.diffusivity))
 
 
 # end = 2
-edata.cutData(edata.ends_num == 2)
+edata.cutData(np.logical_or(edata.ends_num==2, edata.ends_num==3))
 figure()
 ax = gca()
 ax.plot(bins[1:], counts, drawstyle='steps', c='g', alpha=0.4, label='no cut')
@@ -127,7 +130,7 @@ back_project_flag = np.zeros_like(edata.diffusivity, dtype=bool)
 back_project_flag = np.logical_and(edata.back_projection>-2.5, edata.back_projection<2.5)
 edata.cutData(back_project_flag)
 
-close('all')
+#close('all')
 
 edata.pixelCoordinate()
 edata.pointBack()

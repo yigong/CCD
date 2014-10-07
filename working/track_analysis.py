@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.io import loadmat
 import pandas as pd
+from CCD.plot import image2d
+
 
 class DataCutter:
     ''' A class for cutting data arrays that are members of an inherited class
@@ -47,15 +49,14 @@ class DataCutter:
                 print '%s, '%(var, ), ar.shape
             else:
                 print '%s not found'%(var)
-                
-                
+                                
 class eData(DataCutter):
     edge = 4
 
     def __init__(self, filename):
         ''' Loading reconstructed electron tracks data '''
         
-
+        
         recon_array = loadmat(filename)['recon_tracks'][0]
         print 'Loaded %s. There are %s tracks.'%(filename, len(recon_array))
         dtype_names = recon_array.dtype.names
@@ -103,7 +104,101 @@ class eData(DataCutter):
         for attr in dataFrame.columns:
             setattr(self, attr, dataFrame[attr].values)
             self.cutVars.append(attr)
-    
+
+    def betaMapping(self):
+        from CCD.physics import compton_electron_array
+
+        lower_left = [self.edge+0.5*10.5/1000, -1753.5*10.5/1000] # [dim0, dim1]
+        px_size = 10.5/1000
+        
+        ndim0 = ndim1 = 3506
+        dim0_vector, dim1_vector = np.meshgrid(np.arange(ndim0), np.arange(ndim0), indexing='ij')
+        pos_window_coord = np.zeros([ndim0, ndim1])
+        pos_window_coord_dim0 = lower_left[0] + dim0_vector*px_size
+        pos_window_coord_dim1 = lower_left[1] + dim1_vector*px_size
+        
+        pos_window_coord = np.sqrt(pos_window_coord_dim0**2 +\
+                                       pos_window_coord_dim1**2)
+        
+        
+        self.beta_min_map = (np.arctan(1/pos_window_coord)) 
+        self.beta_mean_map = (np.arctan(3.5/pos_window_coord))
+        self.beta_max_map = (np.arctan(6/pos_window_coord))
+        self.xVector = dim0_vector
+        self.yVector = dim1_vector
+        
+    def alphaMapping(self):
+        lower_left = [self.edge+0.5*10.5/1000, -1753.5*10.5/1000] # [dim0, dim1]
+        px_size = 10.5/1000
+        
+        ndim0 = ndim1 = 3506
+        dim0_vector, dim1_vector = np.meshgrid(np.arange(ndim0), np.arange(ndim0), indexing='ij')
+        pos_window_coord = np.zeros([ndim0, ndim1])
+        
+        pos_window_coord_dim0 = lower_left[0] + dim0_vector*px_size
+        pos_window_coord_dim1 = lower_left[1] + dim1_vector*px_size
+        # alpha map calculated from geometry
+        alpha_mean_map = np.arctan(-pos_window_coord_dim1/pos_window_coord_dim0)
+        
+        
+        beta_sample = np.linspace(10, 40, 7)*np.pi/180.
+        alpha_sigma_sample = np.array([9.80, 10.01, 10.52, 11.62, 12.96, 15.02, 18.15])
+        
+        alpha_sigma_map = np.interp(self.beta_mean_map.flatten(), beta_sample, alpha_sigma_sample).reshape((ndim0, ndim1))
+        # for gaussian 95% --> 2 sigma each side
+        self.alpha_min_map = alpha_mean_map - 2*alpha_sigma_map
+        self.alpha_max_map = alpha_mean_map + 2*alpha_sigma_map
+        self.alpha_mean_map = alpha_mean_map
+        
+    def energyMapping(self):
+        from CCD.physics import compton_electron_array
+        from CCD.misc.unit_convertion import radius_to_degree
+        from mpl_toolkits.axes_grid1 import make_axes_locatable
+        
+        lower_left = [self.edge+0.5*10.5/1000, -1753.5*10.5/1000] # [dim0, dim1]
+        px_size = 10.5/1000
+        
+        ndim0 = ndim1 = 3506
+        dim0_vector, dim1_vector = np.meshgrid(np.arange(ndim0), np.arange(ndim0), indexing='ij')
+        pos_window_coord = np.zeros([ndim0, ndim1])
+        pos_window_coord_dim0 = lower_left[0] + dim0_vector*px_size
+        pos_window_coord_dim1 = lower_left[1] + dim1_vector*px_size
+        
+        # pos_window_coord = np.sqrt(pos_window_coord_dim0**2 +\
+        #                                pos_window_coord_dim1**2)
+        opposite = np.sqrt(3.5**2 + pos_window_coord_dim1**2)
+        adjacent = pos_window_coord_dim0 
+        self.phi_min_map = (np.arctan((opposite-2.5)/adjacent)) 
+        self.phi_mean_map = (np.arctan(opposite/adjacent))
+        self.phi_max_map = (np.arctan((opposite+2.5)/adjacent))
+        
+        self.energy_min_map = compton_electron_array(1173.2, self.phi_max_map.flatten()).reshape((ndim0, ndim1))
+        self.energy_mean_map = compton_electron_array(1332.5, self.phi_mean_map.flatten()).reshape((ndim0, ndim1))
+        self.energy_max_map = compton_electron_array(1332.5, self.phi_min_map.flatten()).reshape((ndim0, ndim1))
+ 
+    def pixelCoordinate(self):
+        ''' add attributes self.x/y/zEvent, which represent the position of the initial
+            pixel in the detector coordinate system.
+        '''
+           
+        pxSize = 10.5/1000
+        x0 = self.edge + (0.5)*pxSize
+        y0 = (-1753+0.5)*pxSize
+        z0 = 0
+        xEvent = []
+        yEvent = []
+        zEvent = []
+        for [row, col] in self.init_pos:
+            x = x0 + row*pxSize
+            y = y0 + col*pxSize
+            z = z0 + 0
+            xEvent.append(x)
+            yEvent.append(y)
+            zEvent.append(z)
+        self.xEvent = np.array(xEvent)
+        self.yEvent = np.array(yEvent)
+        self.zEvent = np.array(zEvent)
+               
     def pointBack(self):
         ''' Use electron trajectory to point back where Compton scattering happening on the
             window. add attribute self.x/y/zWindow to the instance.
@@ -135,7 +230,7 @@ class eData(DataCutter):
         for (x, y, z) in zip(self.xWindow-self.xEvent, self.yWindow-self.yEvent, \
                              self.zWindow-self.zEvent):
             betaTmp = np.arctan(z/np.sqrt(x**2+y**2))
-            phiTmp = np.arctan(sqrt(y**2+z**2)/np.abs(x))
+            phiTmp = np.arctan(np.sqrt(y**2+z**2)/np.abs(x))
             beta.append(betaTmp)
             phi.append(phiTmp)
         self.beta = beta
@@ -150,137 +245,75 @@ class eData(DataCutter):
         
         self.gammaEnergy = Etrack*m0C2/(cosPhi*sigmaC-Etrack)
     
+    def on_mouse(self, event):
+        event_row = int(event.ydata+0.5)
+        event_col = int(event.xdata+0.5)
+        
+        iTrack = (self.image_segmented_filtered[event_row, event_col])
+        info = "Pixel row,col:{}, {}\n".format(event_row, event_col)
+        if iTrack != -1:
+            #track_info = recon_tracks[segment_idx]
+            alpha_radius = -1 * self.alpha[iTrack]/180.*np.pi
+            end_idx = self.ends_idx[iTrack] 
+            [end_row, end_col] = self.ends_pos[iTrack][end_idx]
+             
+            print self.image_filtered[event_row, event_col]
+            # draw an arrow at the end 
+            arrow_length = 10
+            self.ax.annotate("", xy=(end_col+arrow_length*np.sin(alpha_radius), end_row-arrow_length*np.cos(alpha_radius)),
+                        xytext=(end_col, end_row), xycoords='data', arrowprops=dict(arrowstyle='->',color='g' ) )
+            # add info
             
-    def pixelCoordinate(self):
-        ''' add attributes self.x/y/zEvent, which represent the position of the initial
-            pixel in the detector coordinate system.
-        '''
-           
-        pxSize = 10.5/1000
-        x0 = self.edge + (0.5+i)*pxSize
-        y0 = (-1753+0.5)*pxSize
-        z0 = 0
-        xEvent = []
-        yEvent = []
-        zEvent = []
-        for [row, col] in self.init_pos:
-            x = x0 + row*pxSize
-            y = y0 + col*pxSize
-            z = z0 + 0
-            xEvent.append(x)
-            yEvent.append(y)
-            zEvent.append(z)
-        self.xEvent = np.array(xEvent)
-        self.yEvent = np.array(yEvent)
-        self.zEvent = np.array(zEvent)
-               
-    def alphaMapping(self):
-        lower_left = [self.edge+0.5*10.5/1000, -1753.5*10.5/1000] # [dim0, dim1]
-        px_size = 10.5/1000
-        
-        ndim0 = ndim1 = 3506
-        dim0_vector, dim1_vector = np.meshgrid(np.arange(ndim0), np.arange(ndim0), indexing='ij')
-        pos_window_coord = np.zeros([ndim0, ndim1])
-        
-        pos_window_coord_dim0 = lower_left[0] + dim0_vector*px_size
-        pos_window_coord_dim1 = lower_left[1] + dim1_vector*px_size
-        # alpha map calculated from geometry
-        alpha_mean_map = np.arctan(-pos_window_coord_dim1/pos_window_coord_dim0)
-        
-        
-        beta_sample = np.linspace(10, 40, 7)*np.pi/180.
-        alpha_sigma_sample = np.array([9.80, 10.01, 10.52, 11.62, 12.96, 15.02, 18.15])
-        
-        alpha_sigma_map = np.interp(self.beta_mean_map.flatten(), beta_sample, alpha_sigma_sample).reshape((ndim0, ndim1))
-        # for gaussian 95% --> 2 sigma each side
-        self.alpha_min_map = alpha_mean_map - 2*alpha_sigma_map
-        self.alpha_max_map = alpha_mean_map + 2*alpha_sigma_map
-        
-    def betaMapping(self):
-        from CCD.physics import compton_electron_array
+            if self.back_projection[iTrack] != None:
+                print_tmp = """backprojection: %.1f mm
+alpha: %.1f degree
+energy: %.1f keV
+length: %s pixels
+diffusivity: %.1f um
+init segment: %s
+num of ends : %s
+""" % (self.back_projection[iTrack], self.alpha[iTrack],\
+       self.track_energy[iTrack], self.length[iTrack],\
+       self.diffusivity[iTrack], self.init_pos[iTrack],\
+       self.ends_num[iTrack])
+            else:
+                print_tmp = """backprojection: wrong direction
+alpha: %.1f degree
+energy: %.1f keV
+length: %s pixels
+diffusivity: %.1f um
+init segment: %s
+num of ends : %s
+""" % (self.alpha[iTrack],\
+       self.track_energy[iTrack], self.length[iTrack],\
+       self.diffusivity[iTrack], self.init_pos[iTrack],\
+       self.ends_num[iTrack])
+            
+            info = info + print_tmp      
+        else:
+            #info = "Pixel row,col: %s, %s" % (event_row, event_col)
+            print iTrack
+            
+        self.text.set_text(info)
+        self.fig.canvas.draw()       
 
-        lower_left = [self.edge+0.5*10.5/1000, -1753.5*10.5/1000] # [dim0, dim1]
-        px_size = 10.5/1000
+    def plotInteractive(self):
         
-        ndim0 = ndim1 = 3506
-        dim0_vector, dim1_vector = np.meshgrid(np.arange(ndim0), np.arange(ndim0), indexing='ij')
-        pos_window_coord = np.zeros([ndim0, ndim1])
-        pos_window_coord_dim0 = lower_left[0] + dim0_vector*px_size
-        pos_window_coord_dim1 = lower_left[1] + dim1_vector*px_size
+        image_filtered = np.zeros((3506, 3506))
+        image_segmented_filtered = -1 * np.ones_like(image_filtered)
+        image_segmented_filtered = image_segmented_filtered.astype(np.int16)
+        for i, [rows, cols] in enumerate(edata.track_position):
+             image_filtered[rows, cols] += edata.track_1d[i]
+             image_segmented_filtered[rows, cols] = int(i)
+        fig, ax = image2d(image_filtered)
+        text = fig.text(0.8,0.5,'track_info')
+        ax.set_title('filtered image')
+        fig.show()
+        self.image_filtered = image_filtered
+        self.image_segmented_filtered = image_segmented_filtered
+        self.text = text
+        self.fig = fig
+        self.ax = ax 
         
-        pos_window_coord = np.sqrt(pos_window_coord_dim0**2 +\
-                                       pos_window_coord_dim1**2)
-        
-        
-        self.beta_min_map = (np.arctan(1/pos_window_coord)) 
-        self.beta_mean_map = (np.arctan(3.5/pos_window_coord))
-        self.beta_max_map = (np.arctan(6/pos_window_coord))
-        
-    def energyMapping(self):
-        from CCD.physics import compton_electron_array
-        from CCD.misc.unit_convertion import radius_to_degree
-        from mpl_toolkits.axes_grid1 import make_axes_locatable
-        
-        lower_left = [self.edge+0.5*10.5/1000, -1753.5*10.5/1000] # [dim0, dim1]
-        px_size = 10.5/1000
-        
-        ndim0 = ndim1 = 3506
-        dim0_vector, dim1_vector = np.meshgrid(np.arange(ndim0), np.arange(ndim0), indexing='ij')
-        pos_window_coord = np.zeros([ndim0, ndim1])
-        pos_window_coord_dim0 = lower_left[0] + dim0_vector*px_size
-        pos_window_coord_dim1 = lower_left[1] + dim1_vector*px_size
-        
-        # pos_window_coord = np.sqrt(pos_window_coord_dim0**2 +\
-        #                                pos_window_coord_dim1**2)
-        opposite = np.sqrt(3.5**2 + pos_window_coord_dim1**2)
-        adjacent = pos_window_coord_dim0 
-        self.phi_min_map = (np.arctan((opposite-2.5)/adjacent)) 
-        self.phi_mean_map = (np.arctan(opposite/adjacent))
-        self.phi_max_map = (np.arctan((opposite+2.5)/adjacent))
-        
-        self.energy_min_map = compton_electron_array(1173.2, self.phi_max_map.flatten()).reshape((ndim0, ndim1))
-        self.energy_mean_map = compton_electron_array(1332.5, self.phi_mean_map.flatten()).reshape((ndim0, ndim1))
-        self.energy_max_map = compton_electron_array(1332.5, self.phi_min_map.flatten()).reshape((ndim0, ndim1))
-        
-#     def energyUnfolding(self):
-#         
-# 
-#             
-#                  
-#          
-#          
-         
-         
+        fig.canvas.mpl_connect('button_press_event', self.on_mouse)
             
-            
-            
-            
-            
-            
-            
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-                
-                
-    
-                
-                
-        
-        

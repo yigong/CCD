@@ -1,7 +1,7 @@
 clear
 clc
 
-load('/Users/Yigong/Research/photon_diagnostics/data/09_19_14_Co60/measurementsegmented_tracks_all.mat')
+load('/Volumes/TEAM 7B/beam_diagnostics_data/10_05_14_Co60_8hr/measurement/segmented_tracks_2hr.mat')
 num_tracks = length(segmented_tracks_all);
 recon_tracks(num_tracks) = struct('track_position', [], 'track_original', [], 'track_1d', [],...
     'track_energy', [], 'track_thinned', [], 'ends_num', [], 'ends_pos', [], 'ends_idx', [],...

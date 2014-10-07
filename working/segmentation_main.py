@@ -2,13 +2,17 @@ from CCD.segmentation import noise_sigma
 from CCD.io import load_fits
 from CCD.segmentation import segment_tracks
 from CCD.io import save_mat
-base_dir = '/Users/Yigong/Research/photon_diagnostics/data/08_18_14_Am241/measurement'
-tmp_list = []
-for file_idx in [3]:
+from CCD.calibrate import self_subtraction
 
-    GAIN = [5.6090e-4, 5.4834e-4]
-    image_ADC = load_fits(base_dir + '/image_%s_corrected.fit' % file_idx)
-    print 'Segmenting file: %simage_%s_corrected.fit\n' % (base_dir, file_idx)
+base_dir = '/Volumes/TEAM 7B/beam_diagnostics_data/10_05_14_Co60_8hr/measurement'
+tmp_list = []
+GAIN = [5.6090e-4, 5.4834e-4]
+
+for file_idx in range(1,81):
+    file_name = base_dir + '/image_%s.fit' % file_idx
+    image_ADC = self_subtraction(file_name, save_flag=False)
+    
+    print 'Segmenting file: %s/image_%s.fit\n' % (base_dir, file_idx)
     nrow, ncol = np.shape(image_ADC)
     
     image_bottom_ADC = image_ADC[:nrow/2]
@@ -25,6 +29,6 @@ for file_idx in [3]:
     
     tmp = segment_tracks(image, THRESHOLDS)
     tmp_list.extend(tmp)
-    save_mat('segmented_tracks_%s' % file_idx, tmp, '%ssegmented_tracks_%s' % (base_dir, file_idx))
+    save_mat('segmented_tracks_%s' % file_idx, tmp, '%s/segmented_tracks_%s' % (base_dir, file_idx))
 
-save_mat('segmented_tracks_%s' % file_idx, tmp_list, '%ssegmented_tracks_%s' % (base_dir, file_idx))    
+save_mat('segmented_tracks_all', tmp_list, '%s/segmented_tracks_2hr'%(base_dir))    
