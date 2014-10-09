@@ -13,7 +13,7 @@
 /testem/stepMax 100 nm
 #
 /gun/particle e-
-/gun/energy 1066.757 keV
+/gun/energy 922.208 keV
 #
 /gun/position 0 0 -325 um
 /gun/direction 0 9.614 1 um

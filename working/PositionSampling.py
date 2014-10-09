@@ -12,13 +12,14 @@ class PositionSampling():
         We will get samples on alpha, beta and phi
     '''
     
-    def __init__(self, alphaMap, betaMap, phiMap, energyMap, numPoints=16):
+    def __init__(self, alphaMap, betaMap, phiMap, energyMap1173, energyMap1332, numPoints=16):
         self.numPoints1d = np.sqrt(numPoints)
         self.alphaMap = alphaMap
         self.betaMap = betaMap
         self.phiMap = phiMap
-        self.energyMap = energyMap
-    
+        self.energyMap1173 = energyMap1173
+        self.energyMap1332 = energyMap1332
+        
     def sample(self):
         ''' Sample on alpha, beta, phi and energy '''
         
@@ -32,6 +33,13 @@ class PositionSampling():
         self.alphaSample = self.alphaMap[xSample, ySample]
         self.betaSample = self.betaMap[xSample, ySample]
         self.phiSample = self.phiMap[xSample, ySample]
-        self.energySample = self.energyMap[xSample, ySample]
+        energySample = np.zeros_like(xSample, dtype=np.float)
+        for i, xy in enumerate(zip(xSample, ySample)):
+            if xy[1] > 1753:
+                energySample[i] = self.energyMap1173[xy]
+            else:
+                energySample[i] = self.energyMap1332[xy]
+                
+        self.energySample = energySample
         
 

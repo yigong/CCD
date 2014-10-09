@@ -53,57 +53,60 @@ class DataCutter:
 class eData(DataCutter):
     edge = 4
 
-    def __init__(self, filename):
+    def __init__(self, filename=None, numTrack=None):
         ''' Loading reconstructed electron tracks data '''
-        
-        
-        recon_array = loadmat(filename)['recon_tracks'][0]
-        print 'Loaded %s. There are %s tracks.'%(filename, len(recon_array))
-        dtype_names = recon_array.dtype.names
-        recon_tracks = []
-        
-        for i in range(len(recon_array)): # loop the tracks
-            recon_tmp = {} # the dict the save the track
-            for j in range(len(dtype_names)): # loop the field
-                key = dtype_names[j]
-                recon_tmp[key] = np.squeeze(recon_array[i][key])
-        
-            lower_left = [np.min(recon_tmp['track_position'][0]), np.min(recon_tmp['track_position'][1])]
-            recon_tmp['length'] = np.sum(recon_tmp['track_thinned'])
-            recon_tmp['diffusivity'] = np.median(recon_tmp['ridge_FWHMum'])
-            recon_tmp['ends_pos'] = recon_tmp['ends_pos'].astype(np.uint16) - 1 + lower_left# adjust for matlab 1 indexing
-            recon_tmp['beta'] = recon_tmp['beta'].astype(np.float32)
-            recon_tmp['ends_idx'] = recon_tmp['ends_idx'].astype(np.int16) - 1 # adjust for matlab 1 indexing
-            recon_tmp['ends_num'] = recon_tmp['ends_num'].astype(np.int16)
-        
-            if recon_tmp['ends_num'] == 1:
-                recon_tmp['ends_pos'] = [recon_tmp['ends_pos']]
-                # to make sure recon_tmp['ends_pos']['ends_idx'] is a vector
+        if filename is None:
+            print 'A new eData instance is created, but it\'s and empty instance.'
+        else:
             
-            recon_tmp['px_num'] = np.sum(recon_tmp['track_1d'])
+            recon_array = loadmat(filename)['recon_tracks'][0]
+            dtype_names = recon_array.dtype.names
+            recon_tracks = []
+            if numTrack is None:
+                numTrack = len(recon_array)
+            print 'Loaded %s. There are %s tracks.'%(filename, numTrack)
+            for i in range(numTrack): # loop the tracks
+                recon_tmp = {} # the dict the save the track
+                for j in range(len(dtype_names)): # loop the field
+                    key = dtype_names[j]
+                    recon_tmp[key] = np.squeeze(recon_array[i][key])
             
-            end_idx = recon_tmp['ends_idx']
-            # calculate back projected position on the window
-            end_pos = recon_tmp['ends_pos'][end_idx]
-            end_row = end_pos[0]
-            end_col = end_pos[1]
-            init_pos = [end_row, end_col]
-            recon_tmp['init_pos'] = init_pos
-            alpha = recon_tmp['alpha']
+                lower_left = [np.min(recon_tmp['track_position'][0]), np.min(recon_tmp['track_position'][1])]
+                recon_tmp['length'] = np.sum(recon_tmp['track_thinned'])
+                recon_tmp['diffusivity'] = np.median(recon_tmp['ridge_FWHMum'])
+                recon_tmp['ends_pos'] = recon_tmp['ends_pos'].astype(np.uint16) - 1 + lower_left# adjust for matlab 1 indexing
+                recon_tmp['beta'] = recon_tmp['beta'].astype(np.float32)
+                recon_tmp['ends_idx'] = recon_tmp['ends_idx'].astype(np.int16) - 1 # adjust for matlab 1 indexing
+                recon_tmp['ends_num'] = recon_tmp['ends_num'].astype(np.int16)
             
-            if 0<=alpha<=90 or 270<=alpha<=360:
-                dim1 = (end_col - 1753 + 0.5) * 10.5/1000 + \
-                        ((end_row+0.5)*10.5/1000 + self.edge) * \
-                        np.tan(-1*alpha/180*np.pi)
-            else:
-                dim1 = None    
-            recon_tmp['back_projection'] = dim1
-            recon_tracks.append(recon_tmp)
-        dataFrame = pd.DataFrame(recon_tracks)
-        self.cutVars = []
-        for attr in dataFrame.columns:
-            setattr(self, attr, dataFrame[attr].values)
-            self.cutVars.append(attr)
+                if recon_tmp['ends_num'] == 1:
+                    recon_tmp['ends_pos'] = [recon_tmp['ends_pos']]
+                    # to make sure recon_tmp['ends_pos']['ends_idx'] is a vector
+                
+                recon_tmp['px_num'] = np.sum(recon_tmp['track_1d'])
+                
+                end_idx = recon_tmp['ends_idx']
+                # calculate back projected position on the window
+                end_pos = recon_tmp['ends_pos'][end_idx]
+                end_row = end_pos[0]
+                end_col = end_pos[1]
+                init_pos = [end_row, end_col]
+                recon_tmp['init_pos'] = init_pos
+                alpha = recon_tmp['alpha']
+                
+                if 0<=alpha<=90 or 270<=alpha<=360:
+                    dim1 = (end_col - 1753 + 0.5) * 10.5/1000 + \
+                            ((end_row+0.5)*10.5/1000 + self.edge) * \
+                            np.tan(-1*alpha/180*np.pi)
+                else:
+                    dim1 = None    
+                recon_tmp['back_projection'] = dim1
+                recon_tracks.append(recon_tmp)
+            dataFrame = pd.DataFrame(recon_tracks)
+            self.cutVars = []
+            for attr in dataFrame.columns:
+                setattr(self, attr, dataFrame[attr].values)
+                self.cutVars.append(attr)
 
     def betaMapping(self):
         from CCD.physics import compton_electron_array
@@ -173,7 +176,8 @@ class eData(DataCutter):
         self.phi_max_map = (np.arctan((opposite+2.5)/adjacent))
         
         self.energy_min_map = compton_electron_array(1173.2, self.phi_max_map.flatten()).reshape((ndim0, ndim1))
-        self.energy_mean_map = compton_electron_array(1332.5, self.phi_mean_map.flatten()).reshape((ndim0, ndim1))
+        self.energy_mean_map_1332 = compton_electron_array(1332.5, self.phi_mean_map.flatten()).reshape((ndim0, ndim1))
+        self.energy_mean_map_1173 = compton_electron_array(1173.2, self.phi_mean_map.flatten()).reshape((ndim0, ndim1))
         self.energy_max_map = compton_electron_array(1332.5, self.phi_min_map.flatten()).reshape((ndim0, ndim1))
  
     def pixelCoordinate(self):
@@ -272,10 +276,11 @@ length: %s pixels
 diffusivity: %.1f um
 init segment: %s
 num of ends : %s
+index       : %s
 """ % (self.back_projection[iTrack], self.alpha[iTrack],\
        self.track_energy[iTrack], self.length[iTrack],\
        self.diffusivity[iTrack], self.init_pos[iTrack],\
-       self.ends_num[iTrack])
+       self.ends_num[iTrack], iTrack)
             else:
                 print_tmp = """backprojection: wrong direction
 alpha: %.1f degree
@@ -284,10 +289,11 @@ length: %s pixels
 diffusivity: %.1f um
 init segment: %s
 num of ends : %s
+index       : %s
 """ % (self.alpha[iTrack],\
        self.track_energy[iTrack], self.length[iTrack],\
        self.diffusivity[iTrack], self.init_pos[iTrack],\
-       self.ends_num[iTrack])
+       self.ends_num[iTrack], iTrack)
             
             info = info + print_tmp      
         else:
@@ -302,8 +308,8 @@ num of ends : %s
         image_filtered = np.zeros((3506, 3506))
         image_segmented_filtered = -1 * np.ones_like(image_filtered)
         image_segmented_filtered = image_segmented_filtered.astype(np.int16)
-        for i, [rows, cols] in enumerate(edata.track_position):
-             image_filtered[rows, cols] += edata.track_1d[i]
+        for i, [rows, cols] in enumerate(self.track_position):
+             image_filtered[rows, cols] += self.track_1d[i]
              image_segmented_filtered[rows, cols] = int(i)
         fig, ax = image2d(image_filtered)
         text = fig.text(0.8,0.5,'track_info')
@@ -316,4 +322,31 @@ num of ends : %s
         self.ax = ax 
         
         fig.canvas.mpl_connect('button_press_event', self.on_mouse)
-            
+    
+    def getTracks(self, index):
+        ''' return a list of tracks. Each track is a eData instance '''
+        
+        from inspect import ismethod
+        attrS = ['track_1d', 'track_energy', 'track_original', 'track_position','track_thinned']
+        tracks = list()
+        for i in index:
+            oneTrack = eData()
+            for attr in attrS:
+                val = getattr(self, attr)
+                setattr(oneTrack, attr, [val[i]])
+            tracks.append(oneTrack)
+        return tracks
+    
+    def 
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
