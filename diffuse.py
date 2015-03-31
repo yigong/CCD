@@ -4,26 +4,28 @@ debug_here = Tracer()
 
 def diffuseAndPixelize(xArray, yArray, zArray, dEArray, psfTable, pixelPlane):
     ''' compute the diffused energy deposition'''
-    nx = psfTable[0].shape[0]
-    ny = nx
-    x = np.arange(-(nx/2), nx/2., 1)
-    y = x
-    xv_tmp, yv_tmp = np.meshgrid(x, y)
-    xData = []
-    yData = []
+    nrow = psfTable[0].shape[0]
+    ncol = nrow
+    rows = np.arange(-(nrow/2), nrow/2., 1)
+    cols = rows
+    rowVectorPSF, colVectorPSF = np.meshgrid(rows, cols, indexing='ij')
+    # debug_here()
+    rowData = []
+    colData = []
     EData = []
     
     for x, y, z, dE in zip(xArray, yArray, zArray, dEArray):
         dEv = dE * computePSF(z, psfTable, pixelPlane)
-        xv = x + xv_tmp
-        yv = y + yv_tmp
-        xData.extend(xv.flatten())
-        yData.extend(yv.flatten())
+        rowVector = y + rowVectorPSF
+        colVector = x + colVectorPSF
+        
+        rowData.extend(rowVector.flatten())
+        colData.extend(colVector.flatten())
         EData.extend(dEv.flatten())
-        debug_here()
-    xEdges = np.arange(0, 36750.01, 10.5)
-    yEdges = xEdges
-    image, a, b = np.histogram2d(xData, yData, [xEdges, yEdges], weights=EData)
+        # debug_here()
+    colEdges = np.arange(0, 36750.01, 10.5)
+    rowEdges = colEdges
+    image, a, b = np.histogram2d(colData, rowData, [colEdges, rowEdges], weights=EData)
     
     return image
     

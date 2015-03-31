@@ -9,7 +9,7 @@ for i, p in enumerate(data['psf']):
 eventObjList = []
 imageTotal = np.zeros((3500, 3500))
 
-for event in aRun.eventList[:100]:
+for event in aRun.eventList:
     anEvent = G4Event(event)
     anEvent.detect()
     if anEvent.detected == True:
