@@ -1,9 +1,9 @@
 from CCD.calibrate import self_subtraction
 
-folder = '/Users/Yigong/Research/photon_diagnostics/data/08_18_14_Am241/measurement/'
+folder = '/Users/Yigong/Research/photon_diagnostics/data/10_27_14_doubleThickness/measurement/'
 
-for image_index in np.arange(1,31):
+for image_index in np.arange(1,2):
     file_name = folder + 'image_%s.fit' % image_index
 
-    self_subtraction(file_name, save_flag=True)
+    a = self_subtraction(file_name, save_flag=True)
 

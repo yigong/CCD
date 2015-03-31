@@ -1,0 +1,26 @@
+1. DiffuseTrack7 does the actual diffusion. It requires a database of point-spread functions as a function of depth, which is a 56 MB file (psft.mat) which you can grab by USB tomorrow.
+
+It should be invoked something like:
+
+inputData = [xMicrons(:,1), yMicrons(:,1), zMicrons(:,1), energyKev(:,1)]; %column-wise matrix of points of energy deposition, from geant4 or your imagination
+D = DiffuseTrack7(psft, 'manual', inputData);
+
+Additional arguments to DiffuseTrack are supplied by key-value pairs... a couple might be important. Defaults shown here.
+'pixelsize', 10.5          %size of pixels in um
+'driftdim', 'z'               %which position dimension is the depth of the CCD? 'x', 'y', 'z', or 1, 2, 3
+'depthcoordinates', [-0.650, 0]   %first value is the depth position of the pixel plane, second is the back plane. these are in **mm**.
+
+2. AddCCDImageNoise can (surprise!) add noise to the simulated CCD image. The image should be in keV to get the Fano statistics right. Electronic noise is added too:
+If you want the electronic noise level (black level noise) that I've measured in past experiments:
+imgNoisy = AddCCDImageNoise(imgClean);
+If you want to customize with a value in keV of 1-sigma noise: (value shown is what the default command does, ~19 eV)
+imgNoisy = AddCCDImageNoise(imgClean, 'blsig', 0.01874);
+Or you can use 'blfwhm' if you prefer to specify in FWHM keV.
+
+3. Geant4TrackHandling7 has the remotest chance of working, only if you're using the same Geant4 output format that Amy Coffer uses. If that is the case, then we can talk about it tomorrow.
+
+The rest of the files are dependencies that Geant4TrackHandling requires.
+
+See y'all tomorrow.
+
+Brian

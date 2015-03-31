@@ -4,11 +4,11 @@ from CCD.segmentation import segment_tracks
 from CCD.io import save_mat
 from CCD.calibrate import self_subtraction
 
-base_dir = '/Volumes/TEAM 7B/beam_diagnostics_data/10_05_14_Co60_8hr/measurement'
+base_dir = '/Users/Yigong/Research/photon_diagnostics/data/10_27_14_doubleThickness/measurement'
 tmp_list = []
 GAIN = [5.6090e-4, 5.4834e-4]
 
-for file_idx in range(1,81):
+for file_idx in range(26,74):
     file_name = base_dir + '/image_%s.fit' % file_idx
     image_ADC = self_subtraction(file_name, save_flag=False)
     
@@ -31,4 +31,4 @@ for file_idx in range(1,81):
     tmp_list.extend(tmp)
     save_mat('segmented_tracks_%s' % file_idx, tmp, '%s/segmented_tracks_%s' % (base_dir, file_idx))
 
-save_mat('segmented_tracks_all', tmp_list, '%s/segmented_tracks_2hr'%(base_dir))    
+save_mat('segmented_tracks_all', tmp_list, '%s/segmented_tracks_doubleThickness'%(base_dir))    

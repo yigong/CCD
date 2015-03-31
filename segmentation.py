@@ -58,47 +58,38 @@ def noise_sigma(image, bin_range=(-500, 500), bin_step=10, plot_flag=False):
     
 
 def segment_tracks(image, thresholds):
-    track = []
-    
+    track = [] # a list of segmented tracks. 
     NEIGHBOR_ARRAY = np.ones((3, 3))
-    
     dim0, dim1 = np.shape(image)
-      
     image_bottom = image[:dim0/2, :]
     image_top = image[dim0/2:, :]
-      
     image_binary_bottom = image_bottom > thresholds[0]
     image_binary_top = image_top > thresholds[1]
-    
     image_binary = np.concatenate((image_binary_bottom, image_binary_top))
-    image_binary = clear_border(image_binary)
+    image_binary = clear_border(image_binary) # clear the border tracks
     image_dilated = binary_dilation(image_binary, NEIGHBOR_ARRAY)
     image_segmented, max_label = label(image_dilated, neighbors=8, background=False,
                                        return_num=True)
-    print '%s tracks are segmented.' % (max_label)
+    print '%s tracks in the image' % (max_label)
     for track_idx in range(1,max_label):
-        
         if track_idx%100 == 0:
-            print 'Have segmented %s tracks' % track_idx
+            print '%s tracks have been segmented' % track_idx
         rows_in_image, cols_in_image = np.where(image_segmented==track_idx)
-        
         row_min = np.min(rows_in_image)
         row_max = np.max(rows_in_image)
         col_min = np.min(cols_in_image)
         col_max = np.max(cols_in_image)
-        
         rows_in_track = rows_in_image - row_min
         cols_in_track = cols_in_image - col_min
-        
-        track_dict = {}
+        track_dict = {} # a dict, the element in track(a list)
         track_dict['track'] = np.zeros([row_max-row_min+1, col_max-col_min+1])
         track_dict['track'][rows_in_track, cols_in_track] = image[rows_in_image, cols_in_image]
-        track_dict['track_1d'] = image[image_segmented == track_idx]
+        # track_dict['track'] is a 2d image
+        track_dict['track_1d'] = image[image_segmented == track_idx] 
         track_dict['energy'] = np.sum(track_dict['track_1d'])
         track_dict['position'] = (rows_in_image, cols_in_image)
-        
+        # be careful about the zero-indexing in Python
         track.append(track_dict)
-
     return track    
         
          

@@ -6,7 +6,7 @@ def image2d(image_array, interactive_flag=True):
     from matplotlib.colors import Normalize
     
     cmap_Etrack = load_pickle('./cmap_Etrack.p') 
-    norm_instance = Normalize(vmin=0, vmax=65535*5.6090e-4)
+    norm_instance = Normalize(vmin=0, vmax=65535*5.546e-4)
     if interactive_flag == True:
         fig = plt.figure(figsize=(12,8))
         ax = fig.add_axes([0.1,0.1,0.6,0.8])

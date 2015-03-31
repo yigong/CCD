@@ -1,0 +1,10 @@
+figure()
+ax = gca()
+ax.hist(edata.back_projection, bins=BINS, \
+        histtype='step',align='left')
+ax.vlines(-2.75, 0, 25, color='r',alpha=0.5, lw=1.5)
+ax.vlines(2.75, 0, 25, color='r',alpha=0.5, lw=1.5)
+ax.set_xlabel('electron pointing back position (mm)', fontsize='x-large')
+ax.set_ylabel('counts', fontsize='x-large')
+ax.set_ylim(bottom=0)   
+plt.show() 

@@ -1,12 +1,14 @@
 #from CCD.working.track_analysis import eData
 
 
-#edata = eData('./recon_tracks_2hr.mat')
+edata = eData('./recon_tracks_73min.mat')
 edata.betaMapping()
 edata.alphaMapping()
 edata.energyMapping()
 
-BINS = linspace(-10, 10,21)
+BINS = linspace(-10, 10,41)
+
+edata.cutData(~np.isnan(edata.back_projection))
 
 figure()
 ax = gca()
@@ -15,7 +17,7 @@ vlines(-3, 0, counts.max(), color='r',alpha=0.5, lw=1.5)
 vlines(3, 0, counts.max(), color='r',alpha=0.5, lw=1.5)
 xlabel('back projection at scattering window (mm)', fontsize='x-large')
 ylabel('counts', fontsize='x-large')
-ylim([0, 800])
+
 title('No cut', fontsize='x-large')
 
 lower_bound = edata.back_projection > -2.5
@@ -23,7 +25,11 @@ upper_bound = edata.back_projection < 2.5
 in_window = np.logical_and(lower_bound, upper_bound).sum()
 print '%s tracks are within window.'%(in_window)
 print '%s tracks are left.'%(len(edata.diffusivity))
-
+edata.pixelCoordinate()
+edata.pointBack()
+edata.measureAngles()
+edata.energyInverting()
+edata.addCutVar('gammaEnergy')
 
 # end = 2
 edata.cutData(np.logical_or(edata.ends_num==2, edata.ends_num==3))

@@ -2,6 +2,7 @@ import numpy as np
 from scipy.io import loadmat
 import pandas as pd
 from CCD.plot import image2d
+import matplotlib.pyplot as plt
 
 
 class DataCutter:
@@ -32,7 +33,7 @@ class DataCutter:
             if hasattr(self, var):
                 ar = getattr(self, var)
                 if np.shape(ar)[0] == keep.shape[0]:
-                    ar = ar[keep]  
+                    ar = np.array(ar)[keep]  
                     setattr(self, var, ar)     
                 else:
                     print '%s not same shape: '%(var), ar.shape
@@ -51,15 +52,20 @@ class DataCutter:
                 print '%s not found'%(var)
                                 
 class eData(DataCutter):
-    edge = 4
+    edge = 2.974
 
     def __init__(self, filename=None, numTrack=None):
         ''' Loading reconstructed electron tracks data '''
+        
+        ## initialization
+        self.sourceEnergy = []
+        self.mc2 = 511.
+        
         if filename is None:
-            print 'A new eData instance is created, but it\'s and empty instance.'
+            print 'A new eData instance is created, but it\'s an empty instance.'
         else:
             
-            recon_array = loadmat(filename)['recon_tracks'][0]
+            recon_array = loadmat(filename)['reconTracks'][0]
             dtype_names = recon_array.dtype.names
             recon_tracks = []
             if numTrack is None:
@@ -71,9 +77,10 @@ class eData(DataCutter):
                     key = dtype_names[j]
                     recon_tmp[key] = np.squeeze(recon_array[i][key])
             
-                lower_left = [np.min(recon_tmp['track_position'][0]), np.min(recon_tmp['track_position'][1])]
+                lower_left = [np.min(recon_tmp['track_position'][0])-1, np.min(recon_tmp['track_position'][1])-1]
                 recon_tmp['length'] = np.sum(recon_tmp['track_thinned'])
-                recon_tmp['diffusivity'] = np.median(recon_tmp['ridge_FWHMum'])
+                recon_tmp['diffusivity'] = recon_tmp['ridge_FWHMum']
+                recon_tmp['diffusivityMedian'] = np.median(recon_tmp['ridge_FWHMum'])
                 recon_tmp['ends_pos'] = recon_tmp['ends_pos'].astype(np.uint16) - 1 + lower_left# adjust for matlab 1 indexing
                 recon_tmp['beta'] = recon_tmp['beta'].astype(np.float32)
                 recon_tmp['ends_idx'] = recon_tmp['ends_idx'].astype(np.int16) - 1 # adjust for matlab 1 indexing
@@ -92,12 +99,26 @@ class eData(DataCutter):
                 end_col = end_pos[1]
                 init_pos = [end_row, end_col]
                 recon_tmp['init_pos'] = init_pos
-                alpha = recon_tmp['alpha']
+                alpha = recon_tmp['alpha']    
+#                 alpha = np.zeros_like(recon_tmp['alpha'])
+#                 for i, alpha_tmp in enumerate(recon_tmp['alpha']):
+#                     if 0 <= alpha_tmp < 90:
+#                         alpha[i] = 180 - alpha_tmp
+#                     elif 90 <= alpha_tmp <=270:
+#                         alpha[i] = inf
+#                     elif alpha_tmp > 270:
+#                         alpha[i] = 360 - alpha_tmp
+#                     
+#                 alpha = 360 - recon_tmp['alpha']
+#                 alpha[alpha>270] = alpha[alpha>270] - 180
                 
-                if 0<=alpha<=90 or 270<=alpha<=360:
-                    dim1 = (end_col - 1753 + 0.5) * 10.5/1000 + \
+                if 0<=alpha<90 or 270<alpha<=360:
+                    if 270<alpha<=360:
+                        recon_tmp['alpha'] = alpha - 360
+                    dim1 = (end_col - 1753.5) * 10.5/1000 - \
                             ((end_row+0.5)*10.5/1000 + self.edge) * \
-                            np.tan(-1*alpha/180*np.pi)
+                            np.tan(alpha/180*np.pi)
+                    
                 else:
                     dim1 = None    
                 recon_tmp['back_projection'] = dim1
@@ -105,9 +126,25 @@ class eData(DataCutter):
             dataFrame = pd.DataFrame(recon_tracks)
             self.cutVars = []
             for attr in dataFrame.columns:
-                setattr(self, attr, dataFrame[attr].values)
+                setattr(self, attr, np.array(dataFrame[attr].values))
                 self.cutVars.append(attr)
-
+    
+    def addCutVar(self, attr):
+        self.cutVars.append(attr)
+        
+    def setSource(self, sourceEnergy):
+        ''' add source energy and compute Compton kinematics '''
+        
+        self.sourceEnergy.extend(sourceEnergy)
+        EeCompton = []
+        phiDegree = np.linspace(0, 90, 100)
+        phi = phiDegree/180.*np.pi
+        for Eg in sourceEnergy:
+            Ee_tmp = 2*self.mc2/(((self.mc2/Eg+1)/np.cos(phi))**2 - 1)    
+            EeCompton.append(Ee_tmp)
+        self.phiDegree = phiDegree
+        self.EeCompton = np.array(EeCompton)
+        
     def betaMapping(self):
         from CCD.physics import compton_electron_array
 
@@ -140,8 +177,10 @@ class eData(DataCutter):
         
         pos_window_coord_dim0 = lower_left[0] + dim0_vector*px_size
         pos_window_coord_dim1 = lower_left[1] + dim1_vector*px_size
+        y = pos_window_coord_dim0
+        x = pos_window_coord_dim1
         # alpha map calculated from geometry
-        alpha_mean_map = np.arctan(-pos_window_coord_dim1/pos_window_coord_dim0)
+        alpha_mean_map = 90 - np.arctan2(y, x)*180./np.pi 
         
         
         beta_sample = np.linspace(10, 40, 7)*np.pi/180.
@@ -182,7 +221,7 @@ class eData(DataCutter):
  
     def pixelCoordinate(self):
         ''' add attributes self.x/y/zEvent, which represent the position of the initial
-            pixel in the detector coordinate system.
+            pixel in the detector coordinate system in mm.
         '''
            
         pxSize = 10.5/1000
@@ -208,46 +247,52 @@ class eData(DataCutter):
             window. add attribute self.x/y/zWindow to the instance.
         '''
         
-        self.pixelCoordinate()
         xWindow = []
         yWindow = []
         zWindow = []
-        for (xEvent, yEvent, alpha) in zip(self.xEvent, self.yEvent, self.alpha):
-            alphaRadius = alpha *np.pi/180.
+        phi = []
+        
+        for (xEvent, yEvent, alpha, beta) in zip(self.xEvent, self.yEvent, self.alpha, self.beta):
+            alphaR = alpha *np.pi/180.
+            betaR = beta *np.pi/180.
+            phiR = np.arccos(np.cos(alphaR)*np.cos(betaR))
+            #print 'alpha = %s, beta = %s, phi = %s'%(alpha, beta, phiR)
             x = 0
-            y = yEvent - xEvent*np.tan(alphaRadius)
-            z = 3.5
+            y = yEvent - xEvent*np.tan(alphaR)
+            z = np.sqrt(xEvent**2+yEvent**2) * np.tan(betaR)
+            phi.append(phiR)
             xWindow.append(x)
             yWindow.append(y)
             zWindow.append(z)
         self.xWindow = np.array(xWindow)
         self.yWindow = np.array(yWindow)
         self.zWindow = np.array(zWindow)
+        self.phi = np.array(phi)
         
-    def measureAngles(self):
-        '''
-        
-        '''
-        
-        beta = []
-        phi = []
-        for (x, y, z) in zip(self.xWindow-self.xEvent, self.yWindow-self.yEvent, \
-                             self.zWindow-self.zEvent):
-            betaTmp = np.arctan(z/np.sqrt(x**2+y**2))
-            phiTmp = np.arctan(np.sqrt(y**2+z**2)/np.abs(x))
-            beta.append(betaTmp)
-            phi.append(phiTmp)
-        self.beta = beta
-        self.phi = phi
-        
+#     def measureAngles(self):
+#         '''
+#         
+#         '''
+#         
+#         beta = []
+#         phi = []
+#         for (x, y, z) in zip(self.xWindow-self.xEvent, self.yWindow-self.yEvent, \
+#                              self.zWindow-self.zEvent):
+#             betaTmp = np.arctan(z/np.sqrt(x**2+y**2))
+#             phiTmp = np.arctan(np.sqrt(y**2+z**2)/np.abs(x))
+#             beta.append(betaTmp)
+#             phi.append(phiTmp)
+#         self.betaPrior = beta
+#         self.phiMeasured = np.array(phi)
+#         
     def energyInverting(self):
         Etrack = np.array(self.track_energy)
         Etrack = Etrack.astype(np.float32)
-        m0C2 = np.ones_like(Etrack)*512
-        cosPhi = np.cos(self.phi)
-        sigmaC = np.sqrt(Etrack*(Etrack+2*m0C2))
         
-        self.gammaEnergy = Etrack*m0C2/(cosPhi*sigmaC-Etrack)
+        cosPhi = np.cos(self.phi)
+        sigmaC = np.sqrt(Etrack*(Etrack+2*self.mc2))
+        
+        self.gammaEnergy = Etrack*self.mc2/(cosPhi*sigmaC-Etrack)
     
     def on_mouse(self, event):
         event_row = int(event.ydata+0.5)
@@ -279,7 +324,7 @@ num of ends : %s
 index       : %s
 """ % (self.back_projection[iTrack], self.alpha[iTrack],\
        self.track_energy[iTrack], self.length[iTrack],\
-       self.diffusivity[iTrack], self.init_pos[iTrack],\
+       self.diffusivityMedian[iTrack], self.init_pos[iTrack],\
        self.ends_num[iTrack], iTrack)
             else:
                 print_tmp = """backprojection: wrong direction
@@ -292,7 +337,7 @@ num of ends : %s
 index       : %s
 """ % (self.alpha[iTrack],\
        self.track_energy[iTrack], self.length[iTrack],\
-       self.diffusivity[iTrack], self.init_pos[iTrack],\
+       self.diffusivityMedian[iTrack], self.init_pos[iTrack],\
        self.ends_num[iTrack], iTrack)
             
             info = info + print_tmp      
@@ -337,7 +382,75 @@ index       : %s
             tracks.append(oneTrack)
         return tracks
     
-    def 
+    def positionHist(self, title='', BINS=np.linspace(-20, 20,81)):
+        
+        if hasattr(self, 'prevCounts'):
+            print 'abc'
+            fig, ax = plt.subplots()
+            counts, bins, poly_prev = ax.hist(self.back_projection, bins=BINS, \
+                                              histtype='step', align='left', label=title)
+            ax.hold(True)
+            ax.vlines([-2.75, 2.25], 0, self.prevCounts.max()+1, color='r', lw=1.5)
+            
+            
+            ax.plot(self.prevBins, self.prevCounts, drawstyle='steps', c='g', alpha=0.4, label=self.prevTitle)
+            ax.set_xlabel('electron pointing back position (mm)', fontsize='x-large')
+            ax.set_ylabel('counts', fontsize='x-large')
+            ax.set_ylim(bottom=0)
+            ax.legend()
+           
+            self.prevCounts = counts
+            self.prevBins = bins[1:] - 0.5*(bins[1] - bins[0])           
+            self.prevTitle = title
+            plt.show()    
+
+        else:
+
+            fig, ax = plt.subplots()
+            counts, bins, poly_prev = ax.hist(self.back_projection, bins=BINS, \
+                                              histtype='step',align='left')
+            ax.vlines([-2.75, 2.25], 0, counts.max()+1, color='r',lw=1.5)
+            ax.set_xlabel('electron pointing back position (mm)', fontsize='x-large')
+            ax.set_ylabel('counts', fontsize='x-large')
+            ax.set_ylim(bottom=0)    
+            
+            self.prevCounts = counts
+            self.prevBins = bins[1:] - 0.5*(bins[1] - bins[0])           
+            self.prevTitle = title
+            plt.show()   
+            
+    def electronEnergyPhiScatter(self, title=''): 
+        
+        if hasattr(self, 'track_energy'):
+            fig, ax = plt.subplots()
+            ax.scatter(self.phi*180/np.pi, self.track_energy, alpha=0.5)
+            for EeCompton in self.EeCompton:
+                ax.plot(self.phiDegree, EeCompton, c='r')
+            ax.set_xlabel(r'$\hat{\phi}$', fontsize='xx-large')
+            ax.set_ylabel(r'$\hat{E_{e-}}$', fontsize='xx-large')
+            ax.text(50, 1200, r'Electron Energy', fontsize='xx-large')
+            ax.set_ylim(0, 1400)
+            ax.set_xlim(0, 90)
+            ax.legend()
+            ax.set_title(title)
+            plt.show()
+
+    def gammaEnergyPhiScatter(self, title=''):
+        
+        if hasattr(self, 'gammaEnergy'):
+            fig, ax = plt.subplots()
+            ax.scatter(self.phi*180/np.pi, self.gammaEnergy, c='c', alpha=0.5)
+            ax.hlines([1173.2, 1332.5], 0, 90, color='m')
+            ax.set_xlabel(r'$\hat{\phi}$', fontsize='xx-large')
+            ax.set_ylabel(r'$\hat{E_{\gamma}}$', fontsize='xx-large')
+            ax.text(50, 1400, r'Gamma-ray Energy', fontsize='xx-large')
+            ax.set_ylim(0, 1600)
+            ax.set_xlim(0, 90)
+            ax.legend()
+            ax.set_title(title)
+            plt.show()
+        
+
         
         
         

@@ -279,15 +279,3 @@ def Am241_calibration(energy, plot_flag=False):
     print 'FWHM at 59.5 keV is %(FWHM_keV).4e keV' % result 
 
     return result
-
-
-
-
-
-
-
-
-
-
-    
-    

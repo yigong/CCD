@@ -1,9 +1,12 @@
+from numpy import sqrt, pi, exp
 
 
 def gaussian_no_background(x, area, mu, sigma):
-    from pylab import sqrt, pi, exp
     return area/(sigma*sqrt(2*pi))*exp(-((x-mu)/sigma)**2/2)
 
-def gaussian_linear_background(x, area, mu, sigma, a, b):
-    from pylab import sqrt, pi, exp
-    return area/(sigma*sqrt(2*pi))*exp(-((x-mu)/sigma)**2/2) + a*x + b
+def gaussian_linear_background(x, area, mu, sigma, b):
+    return area/(sigma*sqrt(2*pi))*exp(-((x-mu)/sigma)**2/2)  + b
+
+def doubleGaussianFit(x, area1, mu1, sigma1, area2, mu2, sigma2):
+    return area1/(sigma1*sqrt(2*pi))*exp(-((x-mu1)/sigma1)**2/2) + \
+           area2/(sigma2*sqrt(2*pi))*exp(-((x-mu2)/sigma2)**2/2)
