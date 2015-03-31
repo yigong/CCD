@@ -25,8 +25,8 @@ def diffuseAndPixelize(xArray, yArray, zArray, dEArray, psfTable, pixelPlane):
         # debug_here()
     colEdges = np.arange(0, 36750.01, 10.5)
     rowEdges = colEdges
-    image, a, b = np.histogram2d(colData, rowData, [colEdges, rowEdges], weights=EData)
-    
+    image, a, b = np.histogram2d(rowData, colData, [colEdges, rowEdges], weights=EData)
+    # the first element is row; the second is col
     return image
     
     
