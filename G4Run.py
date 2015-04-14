@@ -18,13 +18,14 @@ class G4Run:
         anEvent['x'] = []
         anEvent['y'] = []
         anEvent['z'] = []
+        anEvent['ds'] = []
         anEvent['vol'] = []
         anEvent['E'] = []
+        anEvent['dE'] = []
         anEvent['dirX'] = []
         anEvent['dirY'] = []
         anEvent['dirZ'] = []
         anEvent['proc'] = []
-        Tracer()
         for line in fileObj:
             if line == 'Run terminated.\n':
                 startFlag = False
@@ -36,12 +37,14 @@ class G4Run:
                 anEvent['x'].append(float(lineSplit[0]))
                 anEvent['y'].append(float(lineSplit[1]))
                 anEvent['z'].append(float(lineSplit[2]))
-                anEvent['vol'].append(lineSplit[3])
-                anEvent['E'].append(float(lineSplit[4]))
-                anEvent['dirX'].append(float(lineSplit[5]))
-                anEvent['dirY'].append(float(lineSplit[6]))
-                anEvent['dirZ'].append(float(lineSplit[7]))
-                anEvent['proc'].append(lineSplit[8])
+                anEvent['ds'].append(float(lineSplit[3]))
+                anEvent['vol'].append(lineSplit[4])
+                anEvent['E'].append(float(lineSplit[5]))
+                anEvent['dE'].append(float(lineSplit[6]))
+                anEvent['dirX'].append(float(lineSplit[-4]))
+                anEvent['dirY'].append(float(lineSplit[-3]))
+                anEvent['dirZ'].append(float(lineSplit[-2]))
+                anEvent['proc'].append(lineSplit[-1])
                 
             elif startFlag == True and line=='\n':
                 self.eventList.append(anEvent)
@@ -49,8 +52,10 @@ class G4Run:
                 anEvent['x'] = []
                 anEvent['y'] = []
                 anEvent['z'] = []
+                anEvent['ds'] = []
                 anEvent['vol'] = []
                 anEvent['E'] = []
+                anEvent['dE'] = []
                 anEvent['dirX'] = []
                 anEvent['dirY'] = []
                 anEvent['dirZ'] = []

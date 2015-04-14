@@ -16,8 +16,10 @@ class G4Event:
         self.x = []
         self.y = []
         self.z = []
+        self.ds = []
         self.vol = []
         self.E = []
+        self.dE = []
         self.dirX = []
         self.dirY = []
         self.dirZ = []
@@ -37,6 +39,7 @@ class G4Event:
         self.eTrackY = self.y[self.inCCDFlag]
         self.eTrackZ = self.z[self.inCCDFlag]
         self.eTrackE = self.E[self.inCCDFlag]
+        self.eTrackdE = self.dE[self.inCCDFlag][1:]
         if any(self.inCCDFlag):
             self.detected = True
             if self.inCCDFlag[-1] == False:
@@ -57,12 +60,12 @@ class G4Event:
             Ytmp = self.eTrackY - 2000.
             Ztmp = self.eTrackZ  
             Etmp = self.eTrackE
+            
             # compute the center of each step and energy deposition                
             xCCD = 0.5*(Xtmp[:-1] + Xtmp[1:])
             yCCD = 0.5*(Ytmp[:-1] + Ytmp[1:])
             zCCD = 0.5*(Ztmp[:-1] + Ztmp[1:])
-            dE   = Etmp[:-1] - Etmp[1:]
-            self.image = diffuseAndPixelize(xCCD, yCCD, zCCD, dE, \
+            self.image = diffuseAndPixelize(xCCD, yCCD, zCCD, self.eTrackdE, \
                                             psfTable, pixelPlane)
         else:
             self.image = np.zeros((3500, 3500))
