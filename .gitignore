@@ -1,5 +1,6 @@
 *.p
 *.fit
+*.fits
 *.JPG
 *.png
 *.mat
