@@ -41,10 +41,11 @@ class G4Run:
                 anEvent['vol'].append(lineSplit[4])
                 anEvent['E'].append(float(lineSplit[5]))
                 anEvent['dE'].append(float(lineSplit[6]))
-                anEvent['dirX'].append(float(lineSplit[-4]))
-                anEvent['dirY'].append(float(lineSplit[-3]))
-                anEvent['dirZ'].append(float(lineSplit[-2]))
-                anEvent['proc'].append(lineSplit[-1])
+                anEvent['dirX'].append(float(lineSplit[7]))
+                anEvent['dirY'].append(float(lineSplit[8]))
+                anEvent['dirZ'].append(float(lineSplit[9]))
+                anEvent['proc'].append(lineSplit[10])
+                # lineSplit[-1] is ''
                 
             elif startFlag == True and line=='\n':
                 self.eventList.append(anEvent)
