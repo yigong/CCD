@@ -40,6 +40,7 @@ class G4Event:
         self.eTrackZ = self.z[self.inCCDFlag]
         self.eTrackE = self.E[self.inCCDFlag]
         self.eTrackdE = self.dE[self.inCCDFlag][1:]
+        self.eTrackds = self.ds[self.inCCDFlag][1:]
         if any(self.inCCDFlag):
             self.detected = True
             if self.inCCDFlag[-1] == False:

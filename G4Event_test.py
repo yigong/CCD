@@ -4,7 +4,7 @@ from CCD.io import save_fits
 from scipy.io import loadmat
 
 # initialize a run
-fileName = '/Users/Yigong/GEANT4/work/BeamDiag_simple/build_Xcode/a.out'
+fileName = '/Users/Yigong/GEANT4/work/BeamDiag_simple/build_Xcode/1um.out'
 aRun = G4Run(fileName)
 aRun.parse()
 aRun.eventList.pop(0)

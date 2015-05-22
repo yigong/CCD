@@ -2,9 +2,11 @@ from CCD.G4Run import G4Run
 from CCD.G4Event import G4Event
 from CCD.io import save_fits
 from scipy.io import loadmat
+import numpy as np
+import matplotlib.pyplot as plt
 
 # initialize a run
-fileName = '/Users/Yigong/GEANT4/work/BeamDiag_simple/build_1/b.out'
+fileName = '/Users/Yigong/GEANT4/work/BeamDiag_simple/build_1/3um.out'
 aRun = G4Run(fileName)
 aRun.parse()
 aRun.eventList.pop(0)
@@ -30,7 +32,7 @@ for event in aRun.eventList:
 
 # plot
 print '%d Compton electrons are detected.'
-save_fits(imageTotal, 'image.fits', True)
+save_fits(imageTotal, '3um_image.fits', True)
 fig, ax = plt.subplots()
 im = ax.imshow(imageTotal, origin='lower')
 cax = fig.add_axes([0.9, 0.1, 0.03, 0.8])

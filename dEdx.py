@@ -1,0 +1,5 @@
+figure()
+plot(ev.eTrackdE/ev.eTrackds)
+xlabel('step #')
+ylabel('dE/dx (keV/um)')
+title('100 um')
