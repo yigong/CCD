@@ -51,6 +51,14 @@ class G4Event:
             self.detected = False     
             self.contained = False                
         
+    def computeHitPosition(self):
+        ''' get the hitting position relative to lower left corner in um
+        '''
+        if self.detected == True:
+          self.xHit = self.eTrackX[0] + 37000./2
+          self.yHit = self.eTrackY[0] - 2000.
+          self.zHit = self.eTrackZ[0]
+
     def generateImage(self, psfTable, pixelPlane):
         ''' generate a CCD image from a track
         '''
