@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 fileName = '/Users/Yigong/GEANT4/work/BeamDiag_simple/build_1/100um.out'
 aRun = G4Run(fileName)
 aRun.parse()
-aRun.eventList.pop(0)
 
 # load psf
 psfTable = []
