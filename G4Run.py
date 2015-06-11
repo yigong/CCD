@@ -27,10 +27,11 @@ class G4Run:
         anEvent['dirZ'] = []
         anEvent['proc'] = []
         for line in fileObj:
-            if line == 'Run terminated.\n':
+            if line == 'Thread-local run terminated.\n':
+	        self.eventList.pop(0)
                 startFlag = False
 
-            elif startFlag == True and line !='\n':
+            elif startFlag == True and line[0]=='*':
                 lineSplit = re.split(r'\s*[(),\s]\s*', line)
                 if lineSplit[0] == '':          
                     lineSplit = lineSplit[1:]   # remove the empty string
@@ -45,9 +46,8 @@ class G4Run:
                 anEvent['dirY'].append(float(lineSplit[8]))
                 anEvent['dirZ'].append(float(lineSplit[9]))
                 anEvent['proc'].append(lineSplit[10])
-                # lineSplit[-1] is ''
                 
-            elif startFlag == True and line=='\n':
+            elif startFlag == True and line[0]=='*':
                 self.eventList.append(anEvent)
                 anEvent = {}
                 anEvent['x'] = []
@@ -62,7 +62,7 @@ class G4Run:
                 anEvent['dirZ'] = []
                 anEvent['proc'] = []
 
-            elif line == '### Run 0 starts.\n':
+            elif line[0:9] == '### Run 0'
                 startFlag = True
             
 
