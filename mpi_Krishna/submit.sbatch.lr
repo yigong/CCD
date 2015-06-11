@@ -1,0 +1,14 @@
+#!/bin/sh
+
+WORK IN PROGRESS
+
+echo "Start parallel job"
+
+### To start the parallel processor on he nodes you were given by the scheduler
+cd /global/home/users/kmuriki/sample_executables/bundle_serial_jobs
+
+mpirun -v -np $NODES ./my_script.pl jobs-list
+
+### END of job
+echo "Job complete"
+

@@ -1,0 +1,27 @@
+#!/bin/sh
+
+#PBS -N TestLR_small
+#PBS -l nodes=2:ppn=1
+#PBS -l walltime=00:05:00
+#PBS -q cm_short
+
+#PBS -o /global/scratch/kmuriki/${PBS_JOBID}_output
+#PBS -e /global/scratch/kmuriki/${PBS_JOBID}_error
+
+#PBS -M kmuriki@lbl.gov
+#PBS -m abe
+
+echo "Start parallel job"
+echo $PBS_NODEFILE
+NODES=`wc -l $PBS_NODEFILE| awk '{print $1}'`
+echo Run on $NODES nodes.
+cat $PBS_NODEFILE
+
+### To start the parallel processor on he nodes you were given by the scheduler
+cd /global/home/users/kmuriki/sample_executables/bundle_serial_jobs
+
+mpirun -v -np $NODES ./my_script.pl jobs-list
+
+### END of job
+echo "Job complete"
+

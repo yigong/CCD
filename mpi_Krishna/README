@@ -1,0 +1,28 @@
+
+By : Krishna Muriki (kmuriki@lbl.gov)
+Date : Oct 31st 2008
+
+You will have to copy the files in this directory to your place,
+modify them and use to bundle your serial jobs into one
+single parallel job.
+
+There are four main files in this directory.
+
+1) jobs-list : This is the file in which you will list all
+your serial programs with input parameters and optionally
+redirect the out from each serial program into a different
+output file. Now I have listed some simple programs like
+'ls', 'hostname' & 'pwd' in there. Remove them and list your
+serial programs one per each line.
+
+2) my_script.pl & 3) getid : These are a PERL script and a binary
+which you need not touch or modify. Just make sure you have
+them available in your working directory.
+
+and finally
+4) submit.qsub.lr : This is your PBS job submit script. You will have
+to modify a lot in this script according to the job you are about
+to submit. On the mpirun line change the number of tasks after
+'-np' but leave the "./my_script.pl jobs-list" part as it is.
+You are listing all your serial programs in jobs-list file.
+
