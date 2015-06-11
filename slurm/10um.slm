@@ -1,0 +1,47 @@
+#!/bin/bash -I
+#
+# Job name:
+#SBATCH --job-name=parse10umEvent
+#
+# Account:
+#SBATCH  --account=ac_etci
+#
+# Partition
+#SBATCH --partition=lr3
+#
+# QoS:
+#SBATCH --qos=lr_normal
+#
+# Processors:
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#
+# Wall clock limit:
+#SBATCH --time=5:00:00
+#
+# Mail type:
+#SBATCH --mail-type=all
+#
+# Mail user:
+#SBATCH --mail-user=ygzhang@lbl.gov
+#
+
+PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
+cd $PyBeamDiagDir
+ipython parse_10um.py
+
+FAIL=0
+for job in `jobs -p`
+do
+echo $job
+    wait $job || let "FAIL+=1"
+done
+
+echo $FAIL
+
+if [ "$FAIL" == "0" ];
+then
+echo "YAY!"
+else
+echo "FAIL! ($FAIL)"
+fi

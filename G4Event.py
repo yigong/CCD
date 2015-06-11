@@ -1,5 +1,5 @@
 import numpy as np
-from CCD.diffuse import diffuseAndPixelize
+from PyBeamDiag.diffuse import diffuseAndPixelize
 
 class G4Event:
     ''' A class of G4Event

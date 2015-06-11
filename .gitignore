@@ -6,3 +6,5 @@
 *.mat
 *.p_plot
 *.out
+*.swp
+*.pyc

@@ -31,7 +31,7 @@ class G4Run:
 	        self.eventList.pop(0)
                 startFlag = False
 
-            elif startFlag == True and line[0]=='*':
+            elif startFlag == True and line[0]!='*':
                 lineSplit = re.split(r'\s*[(),\s]\s*', line)
                 if lineSplit[0] == '':          
                     lineSplit = lineSplit[1:]   # remove the empty string
@@ -62,7 +62,7 @@ class G4Run:
                 anEvent['dirZ'] = []
                 anEvent['proc'] = []
 
-            elif line[0:9] == '### Run 0'
+            elif line[0:9] == '### Run 0':
                 startFlag = True
             
 
