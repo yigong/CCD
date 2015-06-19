@@ -1,7 +1,6 @@
 import numpy as np
 from PyBeamDiag.diffuse import diffuseAndPixelize
 
-class G4Event:
     ''' A class of G4Event
             - converting the output of G4Run to multiple G4Event
             - create a CCD image from 
