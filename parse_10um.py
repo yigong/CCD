@@ -18,7 +18,7 @@ psfTable = np.array(psf_tmp['psf'])
 # initialization
 lineNum = 0
 nTrk = 0 # count number of tracks
-for file in fileList[:2]:
+for file in fileList:
     print 'Now parsing file %s' % file
     endOfFile = False
     f = open(file, 'r')
@@ -35,6 +35,7 @@ for file in fileList[:2]:
                 elif line == '':
                     endOfFile = True             
                     print 'Reaches EOF'
+                    break
                 elif 'physiTracker' not in line:
                     continue
                 elif 'physiTracker' in line:
