@@ -1,23 +1,23 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=process10um
+#SBATCH --job-name=10umParse
 #
 # Account:
 #SBATCH  --account=ac_etci
 #
 # Partition
-#SBATCH --partition=lr3
+#SBATCH --partition=lr2
 #
 # QoS:
-#SBATCH --qos=lr_debug
+#SBATCH --qos=lr_normal
 #
 # Processors:
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=16
+#SBATCH --ntasks-per-node=12
 #
 # Wall clock limit:
-#SBATCH --time=00:30:00
+#SBATCH --time=10:00:00
 #
 # Mail type:
 #SBATCH --mail-type=all

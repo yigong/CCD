@@ -22,7 +22,8 @@ for file in fileList:
     print 'Now parsing file %s' % file
     endOfFile = False
     f = open(file, 'r')
-    while not endOfFile:
+    while True:
+    # the while loop will be broken when EOF is reached
         try: 
             x_tmp = []
             y_tmp = []
@@ -31,10 +32,6 @@ for file in fileList:
             for line in f:
                 lineNum += 1
                 if line[0] == '*' and x_tmp:
-                    break
-                elif line == '':
-                    endOfFile = True             
-                    print 'Reaches EOF'
                     break
                 elif 'physiTracker' not in line:
                     continue
@@ -46,6 +43,12 @@ for file in fileList:
                     y_tmp.append(float(lineSplit[1]))
                     z_tmp.append(float(lineSplit[2]))
                     dE_tmp.append(float(lineSplit[6]))
+            else:
+                # executed after 'for' terminates normally
+                # when 'for' terminates normally, it reaches the end of file
+                # then break the while-loop
+                break
+
             print 'Now we are at line #%s' % lineNum
             x = np.array(x_tmp) + 37000./2
             y = np.array(y_tmp) - 2000.
