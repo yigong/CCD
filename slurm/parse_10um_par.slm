@@ -3,6 +3,9 @@
 # Job name:
 #SBATCH --job-name=10umPar
 #
+# Error file:
+#SBATCH -e10umPar.err
+#
 # Account:
 #SBATCH  --account=ac_etci
 #
@@ -28,7 +31,7 @@
 
 PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
 cd $PyBeamDiagDir
-ipython parse_10um.py
+python parse_10um_par.py
 
 FAIL=0
 for job in `jobs -p`
