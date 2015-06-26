@@ -3,6 +3,9 @@
 # Job name:
 #SBATCH --job-name=recon10um
 #
+# Error file:
+#SBATCH -e10umRecon.err
+#
 # Account:
 #SBATCH  --account=ac_etci
 #
@@ -25,9 +28,12 @@
 # Mail user:
 #SBATCH --mail-user=ygzhang@lbl.gov
 #
-cd /global/scratch/ygzhang/PyBeamDiag/matlab
+
 module load matlab
-matlab -nojvm -nodisplay -nosplash -r "recon_10um"
+MatlabDir=/global/scratch/ygzhang/PyBeamDiag/matlab
+cd $MatlabDir
+matlab -nodisplay -nosplash -r "recon_10um"
+
 FAIL=0
 for job in `jobs -p`
 do
