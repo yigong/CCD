@@ -1,23 +1,26 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=1umParse
+#SBATCH --job-name=par_parsing_3um
+#
+# Error file:
+#SBATCH -eERR_par_parsing_3um
 #
 # Account:
 #SBATCH  --account=ac_etci
 #
 # Partition
-#SBATCH --partition=lr2
+#SBATCH --partition=lr3
 #
 # QoS:
 #SBATCH --qos=lr_normal
 #
 # Processors:
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=12
+#SBATCH --ntasks-per-node=16
 #
 # Wall clock limit:
-#SBATCH --time=10:00:00
+#SBATCH --time=10:30:00
 #
 # Mail type:
 #SBATCH --mail-type=all
@@ -28,7 +31,7 @@
 
 PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
 cd $PyBeamDiagDir
-ipython parse_1um.py
+python PARSING_3um.py
 
 FAIL=0
 for job in `jobs -p`

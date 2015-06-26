@@ -19,9 +19,9 @@ def parse(file):
     psfTable = np.array(psf_tmp['psf'])
     # prepare files 
     f = open(file, 'r')
-    fileIdx = re.split(file, '_')[1]
+    fileIdx = re.split('_', file)[1]
     fLog = open('./W%s_parser.log' % fileIdx, 'w')
-    fLog.write('Now parsing file %s' % file)
+    fLog.write('Now parsing file %s\n' % file)
     while True:
     # the while loop will be broken when EOF is reached
         try: 
@@ -49,7 +49,7 @@ def parse(file):
                 # then break the while-loop
                 break
 
-            fLog.write('Now we are at line #%s' % lineNum)
+            fLog.write('Now we are at line #%s\n' % lineNum)
             x = np.array(x_tmp) + 37000./2
             y = np.array(y_tmp) - 2000.
             z = np.array(z_tmp)
@@ -58,12 +58,12 @@ def parse(file):
                     pixelPlane='top')
             del x_tmp, y_tmp, z_tmp, dE_tmp, x, y, z, dE
             nTrk += 1
-            fLog.write('Now parsing track #%d' % (nTrk))
-            fLog.write('(rowMin, colMin) = %d, %d' % (rowMin, colMin))
+            fLog.write('Now parsing track #%d\n' % (nTrk))
+            fLog.write('(rowMin, colMin) = %d, %d\n' % (rowMin, colMin))
             h = fits.Header()
             h['rowMin'] = rowMin
             h['colMin'] = colMin
-            fits.writeto('./%d_W%s.fits' % (nTrk, fileIdx), track, h, clobber=True)
+            fits.writeto('./W%s_%d.fits' % (fileIdx, nTrk), track, h, clobber=True)
         except ValueError:
-            print 'ValueError'
+            print 'ValueError\n'
             continue

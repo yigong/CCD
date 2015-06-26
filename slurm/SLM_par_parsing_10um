@@ -1,10 +1,10 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=10umPar
+#SBATCH --job-name=par_parsing_10um
 #
 # Error file:
-#SBATCH -e10umPar.err
+#SBATCH -eERR_par_parsing_10um
 #
 # Account:
 #SBATCH  --account=ac_etci
@@ -31,7 +31,7 @@
 
 PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
 cd $PyBeamDiagDir
-python parse_10um_par.py
+python par_parsing_10um.py
 
 FAIL=0
 for job in `jobs -p`
