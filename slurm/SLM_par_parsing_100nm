@@ -1,10 +1,10 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=par_parsing_1um
+#SBATCH --job-name=par_parsing_100nm
 #
 # Error file:
-#SBATCH --error=ERR_par_parsing_1um
+#SBATCH --error=ERR_par_parsing_100nm
 #
 # Account:
 #SBATCH  --account=ac_etci
@@ -20,7 +20,7 @@
 #SBATCH --ntasks-per-node=16
 #
 # Wall clock limit:
-#SBATCH --time=10:30:00
+#SBATCH --time=60:30:00
 #
 # Mail type:
 #SBATCH --mail-type=all
@@ -31,7 +31,7 @@
 
 PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
 cd $PyBeamDiagDir
-python PARSING_1um.py
+python PARSING_100nm.py
 
 FAIL=0
 for job in `jobs -p`

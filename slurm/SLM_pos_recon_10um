@@ -1,10 +1,10 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=par_parsing_1um
+#SBATCH --job-name=posRecon10um
 #
 # Error file:
-#SBATCH --error=ERR_par_parsing_1um
+#SBATCH --error=ERR_pos_recon_10um
 #
 # Account:
 #SBATCH  --account=ac_etci
@@ -13,14 +13,14 @@
 #SBATCH --partition=lr3
 #
 # QoS:
-#SBATCH --qos=lr_normal
+#SBATCH --qos=lr_debug
 #
 # Processors:
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=16
 #
 # Wall clock limit:
-#SBATCH --time=10:30:00
+#SBATCH --time=00:30:00
 #
 # Mail type:
 #SBATCH --mail-type=all
@@ -29,9 +29,9 @@
 #SBATCH --mail-user=ygzhang@lbl.gov
 #
 
-PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
-cd $PyBeamDiagDir
-python PARSING_1um.py
+MatlabDir=/global/scratch/ygzhang/PyBeamDiag/matlab
+cd $MatlabDir
+matlab -nodisplay -nosplash -r "recon_10um"
 
 FAIL=0
 for job in `jobs -p`

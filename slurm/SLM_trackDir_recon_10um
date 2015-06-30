@@ -4,7 +4,7 @@
 #SBATCH --job-name=recon10um
 #
 # Error file:
-#SBATCH -e10umRecon.err
+#SBATCH --error=ERR_trackDir_recon_10um
 #
 # Account:
 #SBATCH  --account=ac_etci
@@ -29,10 +29,9 @@
 #SBATCH --mail-user=ygzhang@lbl.gov
 #
 
-module load matlab
-MatlabDir=/global/scratch/ygzhang/PyBeamDiag/matlab
-cd $MatlabDir
-matlab -nodisplay -nosplash -r "recon_10um"
+PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
+cd $PyBeamDiagDir
+python RECON_10um.py
 
 FAIL=0
 for job in `jobs -p`

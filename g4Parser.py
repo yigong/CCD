@@ -3,7 +3,7 @@ import numpy as np
 from scipy.io import loadmat
 from PyBeamDiag.diffuse import XYZdE2track
 from astropy.io import fits
-
+import gc
 
 def parse(file):
     '''
@@ -56,7 +56,8 @@ def parse(file):
             dE = np.array(dE_tmp)
             track, rowMin, colMin = XYZdE2track(x, y, z, dE, psfTable, \
                     pixelPlane='top')
-            del x_tmp, y_tmp, z_tmp, dE_tmp, x, y, z, dE
+    #        del x_tmp, y_tmp, z_tmp, dE_tmp, x, y, z, dE
+            gc.collect()
             nTrk += 1
             fLog.write('Now parsing track #%d\n' % (nTrk))
             fLog.write('(rowMin, colMin) = %d, %d\n' % (rowMin, colMin))
@@ -67,3 +68,4 @@ def parse(file):
         except ValueError:
             print 'ValueError\n'
             continue
+    f.close()

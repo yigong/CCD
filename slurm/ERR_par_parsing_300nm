@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "PARSING_300nm.py", line 16, in <module>
+    pool.map(parse, fileList)
+  File "/global/home/groups-sw/ac_etci/anaconda/lib/python2.7/multiprocessing/pool.py", line 251, in map
+    return self.map_async(func, iterable, chunksize).get()
+  File "/global/home/groups-sw/ac_etci/anaconda/lib/python2.7/multiprocessing/pool.py", line 558, in get
+    raise self._value
+MemoryError

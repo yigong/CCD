@@ -4,9 +4,9 @@ import multiprocessing
 from PyBeamDiag.g4Parser import parse
 
 # cd to G4out dir
-dataDir = '/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/3um'
+dataDir = '/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/1um'
 os.chdir(dataDir)
-fileList = glob.glob('./G4W_*_3um.out')
+fileList = glob.glob('./G4W_*_1um.out')
 
 # parallel
 pool = multiprocessing.Pool(15)
