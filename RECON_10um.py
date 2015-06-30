@@ -20,20 +20,21 @@ print 'after initialization'
 
 for i, matFile in enumerate(Files):
     file = openFile(matFile)
-    recon[0] = file.root.recon.alpha[0][0]
-    recon[1] = file.root.recon.beta[0][0]
-    recon[2] = file.root.recon.startPix[0][0]
-    recon[3] = file.root.recon.startPix[1][0]
+    recon = np.squeeze(file.root.var)
+#    recon[0] = file.root.recon.alpha[0][0]
+#    recon[1] = file.root.recon.beta[0][0]
+#    recon[2] = file.root.recon.startPix[0][0]
+#    recon[3] = file.root.recon.startPix[1][0]
     # ele0:row ele1:col ele2:alpha ele3:beta
 
-    x_CCD[i] = 10.5/2 + recon[1] * 10.5 - 37000./2
-    y_CCD[i] = 10.5/2 + recon[0] * 10.5 + 2000.
-    alpha[i] = recon[2]
-    beta[i]  = recon[3]
+    x_CCD[i] = 10.5/2 + recon[2] * 10.5 - 37000./2
+    y_CCD[i] = 10.5/2 + recon[3] * 10.5 + 2000.
+    alpha[i] = recon[0]
+    beta[i]  = recon[1]
 
 print 'finish loading data'
-x_window[(90<alpha) & (alpha<270)] = float('inf')
-
 x_window = x_CCD - y_CCD * tan(deg2rad(alpha)) 
+x_window[(90<alpha) & (alpha<270)] = float('inf')
 dump(x_window, open('./x_window.p', 'wb'))
+dump([x_window, x_CCD, y_CCD, alpha, beta], open('./ridgeFollow.p', 'wb'))
 print 'data is dumped'
