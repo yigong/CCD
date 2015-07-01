@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "RECON_3um.py", line 23, in <module>
+    recon = np.squeeze(file.root.recon)
+  File "/global/home/groups-sw/ac_etci/anaconda/lib/python2.7/site-packages/tables/group.py", line 811, in __getattr__
+    return self._f_get_child(name)
+  File "/global/home/groups-sw/ac_etci/anaconda/lib/python2.7/site-packages/tables/group.py", line 681, in _f_get_child
+    self._g_check_has_child(childname)
+  File "/global/home/groups-sw/ac_etci/anaconda/lib/python2.7/site-packages/tables/group.py", line 405, in _g_check_has_child
+    % (self._v_pathname, name))
+tables.exceptions.NoSuchNodeError: group ``/`` does not have a child named ``recon``
+Closing remaining open files:./6817.mat...done
