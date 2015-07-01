@@ -1,10 +1,10 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=TrkRe1um
+#SBATCH --job-name=PSF1um
 #
 # Error file:
-#SBATCH --error=ERR_track_recon_1um
+#SBATCH --error=ERR_PSF_window_1um
 #
 # Account:
 #SBATCH  --account=ac_etci
@@ -28,10 +28,10 @@
 # Mail user:
 #SBATCH --mail-user=ygzhang@lbl.gov
 #
-module load matlab
-MatlabDir=/global/scratch/ygzhang/PyBeamDiag/matlab
-cd $MatlabDir
-matlab -nodisplay -nosplash -r "TRACK_recon_1um"
+
+PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
+cd $PyBeamDiagDir
+python PSF_window_1um.py
 
 FAIL=0
 for job in `jobs -p`

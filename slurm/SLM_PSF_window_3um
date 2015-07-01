@@ -31,7 +31,7 @@
 
 PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
 cd $PyBeamDiagDir
-python RECON_3um.py
+python PSF_window_3um.py
 
 FAIL=0
 for job in `jobs -p`
