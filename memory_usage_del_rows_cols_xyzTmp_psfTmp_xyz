@@ -1,0 +1,135 @@
+a script is being run
+Filename: /global/scratch/ygzhang/PyBeamDiag/PARSING_300nm.py
+
+Line #    Mem usage    Increment   Line Contents
+================================================
+     6   34.555 MiB    0.000 MiB   @profile
+     7                             def main():
+     8                                 # cd to G4out dir
+     9   34.555 MiB    0.000 MiB       dataDir = '/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/300nm'
+    10   34.559 MiB    0.004 MiB       os.chdir(dataDir)
+    11   34.562 MiB    0.004 MiB       fileList = glob.glob('./G4W_*_0p3um.out')
+    12                                 
+    13                                 # serial
+    14                                 parse(fileList[0])
+
+
+Filename: /global/scratch/ygzhang/PyBeamDiag/diffuse.py
+
+Line #    Mem usage    Increment   Line Contents
+================================================
+     3  184.086 MiB    0.000 MiB   @profile
+     4                             def XYZdE2track(xArray, yArray, zArray, dEArray, psfTable, pixelPlane):
+     5                                 ''' compute the diffused energy deposition'''
+     6                             
+     7                                 # find minimum and maximum locations in x and y
+     8  184.094 MiB    0.008 MiB       xMin = min(xArray)
+     9  184.094 MiB    0.000 MiB       xMax = max(xArray)
+    10  184.094 MiB    0.000 MiB       yMin = min(yArray)
+    11  184.094 MiB    0.000 MiB       yMax = max(yArray)
+    12                                 # find the row number and col number to use in the track
+    13  184.098 MiB    0.004 MiB       rowMin = np.ceil(yMin/10.5) - 3
+    14  184.098 MiB    0.000 MiB       rowMax = np.ceil(yMax/10.5) + 3
+    15  184.098 MiB    0.000 MiB       colMin = np.ceil(xMin/10.5) - 3
+    16  184.098 MiB    0.000 MiB       colMax = np.ceil(xMax/10.5) + 3
+    17  184.098 MiB    0.000 MiB       nrow = rowMax - rowMin
+    18  184.098 MiB    0.000 MiB       ncol = colMax - colMin
+    19                                 # create a track array: nrow x ncol
+    20  184.098 MiB    0.000 MiB       track = np.zeros((nrow, ncol))
+    21                                 # compute PSF grid
+    22  184.109 MiB    0.012 MiB       rowPSF = np.arange(-30, 30.01, 0.5)
+    23  184.109 MiB    0.000 MiB       colPSF = rowPSF
+    24  184.578 MiB    0.469 MiB       rowPSF2d, colPSF2d = np.meshgrid(rowPSF, colPSF, indexing='ij')
+    25  184.582 MiB    0.004 MiB       rowPSF1d = rowPSF2d.flatten()
+    26  184.582 MiB    0.000 MiB       colPSF1d = colPSF2d.flatten()
+    27                                 # store data
+    28  184.582 MiB    0.000 MiB       rows = []
+    29  184.582 MiB    0.000 MiB       cols = []
+    30  184.582 MiB    0.000 MiB       dE = [] 
+    31 1283.855 MiB 1099.273 MiB       for x_1step, y_1step, z_1step,dE_1step in zip(xArray, yArray, zArray, dEArray):
+    32 1283.062 MiB   -0.793 MiB           rows.extend(y_1step + rowPSF1d)
+    33 1283.516 MiB    0.453 MiB           cols.extend(x_1step + colPSF1d)
+    34 1283.855 MiB    0.340 MiB           dE.extend(dE_1step * computePSF(z_1step, psfTable, pixelPlane='top'))
+    35 1283.855 MiB    0.000 MiB       rowEdges = np.arange(rowMin*10.5, rowMax*10.5 + 0.01, 10.5)
+    36 1283.855 MiB    0.000 MiB       colEdges = np.arange(colMin*10.5, colMax*10.5 + 0.01, 10.5)
+    37 1295.340 MiB   11.484 MiB       track, a, b = np.histogram2d(rows, cols, [rowEdges, colEdges], weights=dE) 
+    38  197.250 MiB -1098.090 MiB       del rows, cols, dE
+    39  197.250 MiB    0.000 MiB       return track, rowMin, colMin
+
+
+Filename: /global/scratch/ygzhang/PyBeamDiag/g4Parser.py
+
+Line #    Mem usage    Increment   Line Contents
+================================================
+     8   34.562 MiB    0.000 MiB   @profile
+     9                             def parse(file):
+    10                                 '''
+    11                                 a parser for G4output.
+    12                                 It's easier to parallelize if written as a separate function.
+    13                                 '''
+    14                                 # initialization
+    15   34.562 MiB    0.000 MiB       lineNum = 0
+    16   34.562 MiB    0.000 MiB       nTrk = 0 # count number of tracks
+    17                                 # load PSF
+    18   34.562 MiB    0.000 MiB       psfDir = '/global/scratch/ygzhang/PyBeamDiag/data/psf.mat'
+    19  180.059 MiB  145.496 MiB       psf_tmp = loadmat(psfDir)
+    20  325.391 MiB  145.332 MiB       psfTable = np.array(psf_tmp['psf'])
+    21  180.062 MiB -145.328 MiB       del psf_tmp
+    22                                 # prepare files 
+    23  180.062 MiB    0.000 MiB       f = open(file, 'r')
+    24  180.066 MiB    0.004 MiB       fileIdx = re.split('_', file)[1]
+    25  180.066 MiB    0.000 MiB       fLog = open('./W%s_parser.log' % fileIdx, 'w')
+    26  180.070 MiB    0.004 MiB       fLog.write('Now parsing file %s\n' % file)
+    27  197.281 MiB   17.211 MiB       while True:
+    28  197.281 MiB    0.000 MiB           if nTrk == 1:
+    29  197.281 MiB    0.000 MiB               break
+    30                                 # the while loop will be broken when EOF is reached
+    31  180.070 MiB  -17.211 MiB           try: 
+    32  180.070 MiB    0.000 MiB               x_tmp = []
+    33  180.070 MiB    0.000 MiB               y_tmp = []
+    34  180.070 MiB    0.000 MiB               z_tmp = []
+    35  180.070 MiB    0.000 MiB               dE_tmp = []
+    36  180.070 MiB    0.000 MiB               x = []
+    37  180.070 MiB    0.000 MiB               y = []
+    38  180.070 MiB    0.000 MiB               z = []
+    39  197.254 MiB   17.184 MiB               dE = []
+    40  184.070 MiB  -13.184 MiB               for line in f:
+    41  184.070 MiB    0.000 MiB                   lineNum += 1
+    42  184.070 MiB    0.000 MiB                   if line[0] == '*' and x_tmp:
+    43  184.070 MiB    0.000 MiB                       break
+    44  184.070 MiB    0.000 MiB                   elif 'physiTracker' not in line:
+    45  184.070 MiB    0.000 MiB                       continue
+    46  184.070 MiB    0.000 MiB                   elif 'physiTracker' in line:
+    47  184.070 MiB    0.000 MiB                       lineSplit = re.split(r'\s*[(), \s]\s*', line)
+    48  184.070 MiB    0.000 MiB                       if lineSplit[0] == '':
+    49  184.070 MiB    0.000 MiB                           lineSplit = lineSplit[1:]
+    50  184.070 MiB    0.000 MiB                       x_tmp.append(float(lineSplit[0]))
+    51  184.070 MiB    0.000 MiB                       y_tmp.append(float(lineSplit[1]))
+    52  184.070 MiB    0.000 MiB                       z_tmp.append(float(lineSplit[2]))
+    53  184.070 MiB    0.000 MiB                       dE_tmp.append(float(lineSplit[6]))
+    54                                         else:
+    55                                             # executed after 'for' terminates normally
+    56                                             # when 'for' terminates normally, it reaches the end of file
+    57                                             # then break the while-loop
+    58                                             break
+    59                             
+    60  184.070 MiB    0.000 MiB               fLog.write('Now we are at line #%s\n' % lineNum)
+    61  184.074 MiB    0.004 MiB               x = np.array(x_tmp) + 37000./2
+    62  184.078 MiB    0.004 MiB               y = np.array(y_tmp) - 2000.
+    63  184.078 MiB    0.000 MiB               z = np.array(z_tmp)
+    64  184.086 MiB    0.008 MiB               dE = np.array(dE_tmp)
+    65  184.086 MiB    0.000 MiB               track, rowMin, colMin = XYZdE2track(x, y, z, dE, psfTable, \
+    66                                                 pixelPlane='top')
+    67  197.254 MiB   13.168 MiB               nTrk += 1
+    68  197.254 MiB    0.000 MiB               fLog.write('Now parsing track #%d\n' % (nTrk))
+    69  197.254 MiB    0.000 MiB               fLog.write('(rowMin, colMin) = %d, %d\n' % (rowMin, colMin))
+    70  197.258 MiB    0.004 MiB               h = fits.Header()
+    71  197.262 MiB    0.004 MiB               h['rowMin'] = rowMin
+    72  197.262 MiB    0.000 MiB               h['colMin'] = colMin
+    73  197.281 MiB    0.020 MiB               fits.writeto('./W%s_%d.fits' % (fileIdx, nTrk), track, h, clobber=True)
+    74                                     except ValueError:
+    75                                         print 'ValueError\n'
+    76                                         continue
+    77  193.281 MiB   -4.000 MiB       f.close()
+
+

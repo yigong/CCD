@@ -5,6 +5,7 @@ from PyBeamDiag.diffuse import XYZdE2track
 from astropy.io import fits
 import gc
 
+@profile
 def parse(file):
     '''
     a parser for G4output.
@@ -17,6 +18,7 @@ def parse(file):
     psfDir = '/global/scratch/ygzhang/PyBeamDiag/data/psf.mat'
     psf_tmp = loadmat(psfDir)
     psfTable = np.array(psf_tmp['psf'])
+    del psf_tmp
     # prepare files 
     f = open(file, 'r')
     fileIdx = re.split('_', file)[1]
@@ -29,6 +31,10 @@ def parse(file):
             y_tmp = []
             z_tmp = []
             dE_tmp = []
+            x = []
+            y = []
+            z = []
+            dE = []
             for line in f:
                 lineNum += 1
                 if line[0] == '*' and x_tmp:
@@ -56,15 +62,13 @@ def parse(file):
             dE = np.array(dE_tmp)
             track, rowMin, colMin = XYZdE2track(x, y, z, dE, psfTable, \
                     pixelPlane='top')
-    #        del x_tmp, y_tmp, z_tmp, dE_tmp, x, y, z, dE
-            gc.collect()
             nTrk += 1
             fLog.write('Now parsing track #%d\n' % (nTrk))
             fLog.write('(rowMin, colMin) = %d, %d\n' % (rowMin, colMin))
             h = fits.Header()
             h['rowMin'] = rowMin
             h['colMin'] = colMin
-            fits.writeto('./W%s_%d.fits' % (fileIdx, nTrk), track, h, clobber=True)
+            fits.writeto('./fits/W%s_%d.fits' % (fileIdx, nTrk), track, h, clobber=True)
         except ValueError:
             print 'ValueError\n'
             continue

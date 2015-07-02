@@ -1,5 +1,15 @@
 Traceback (most recent call last):
-  File "PARSING_300nm.py", line 16, in <module>
+  File "/global/home/groups-sw/ac_etci/anaconda/lib/python2.7/runpy.py", line 162, in _run_module_as_main
+    "__main__", fname, loader, pkg_name)
+  File "/global/home/groups-sw/ac_etci/anaconda/lib/python2.7/runpy.py", line 72, in _run_code
+    exec code in run_globals
+  File "/global/home/groups-sw/ac_etci/anaconda/lib/python2.7/site-packages/memory_profiler-0.33-py2.7.egg/memory_profiler.py", line 854, in <module>
+    execfile(__file__, ns, ns)
+  File "/global/scratch/ygzhang/PyBeamDiag/PARSING_300nm.py", line 21, in <module>
+    main()
+  File "/global/home/groups-sw/ac_etci/anaconda/lib/python2.7/site-packages/memory_profiler-0.33-py2.7.egg/memory_profiler.py", line 446, in f
+    result = func(*args, **kwds)
+  File "/global/scratch/ygzhang/PyBeamDiag/PARSING_300nm.py", line 18, in main
     pool.map(parse, fileList)
   File "/global/home/groups-sw/ac_etci/anaconda/lib/python2.7/multiprocessing/pool.py", line 251, in map
     return self.map_async(func, iterable, chunksize).get()

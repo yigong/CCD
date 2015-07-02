@@ -1,7 +1,7 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=par_parsing_300nm
+#SBATCH --job-name=300nm_par
 #
 # Error file:
 #SBATCH --error=ERR_par_parsing_300nm
@@ -13,14 +13,14 @@
 #SBATCH --partition=lr3
 #
 # QoS:
-#SBATCH --qos=lr_debug
+#SBATCH --qos=lr_normal
 #
 # Processors:
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=16
 #
 # Wall clock limit:
-#SBATCH --time=00:30:00
+#SBATCH --time=70:30:00
 #
 # Mail type:
 #SBATCH --mail-type=all
@@ -31,7 +31,7 @@
 
 PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
 cd $PyBeamDiagDir
-python PARSING_300nm.py
+python -m memory_profiler /global/scratch/ygzhang/PyBeamDiag/PARSING_300nm.py > MEM_parsing_300nm
 
 FAIL=0
 for job in `jobs -p`

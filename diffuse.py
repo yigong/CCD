@@ -1,5 +1,6 @@
 import numpy as np
 
+@profile
 def XYZdE2track(xArray, yArray, zArray, dEArray, psfTable, pixelPlane):
     ''' compute the diffused energy deposition'''
 
@@ -34,6 +35,7 @@ def XYZdE2track(xArray, yArray, zArray, dEArray, psfTable, pixelPlane):
     rowEdges = np.arange(rowMin*10.5, rowMax*10.5 + 0.01, 10.5)
     colEdges = np.arange(colMin*10.5, colMax*10.5 + 0.01, 10.5)
     track, a, b = np.histogram2d(rows, cols, [rowEdges, colEdges], weights=dE) 
+    del rows, cols, dE
     return track, rowMin, colMin
 ##     nrow = psfTable[0].shape[0]
 ##     ncol = nrow
