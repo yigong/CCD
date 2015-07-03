@@ -28,40 +28,17 @@ def XYZdE2track(xArray, yArray, zArray, dEArray, psfTable, pixelPlane):
     rows = []
     cols = []
     dE = [] 
-    for x_1step, y_1step, z_1step,dE_1step in zip(xArray, yArray, zArray, dEArray):
-        rows.extend(y_1step + rowPSF1d)
-        cols.extend(x_1step + colPSF1d)
-        dE.extend(dE_1step * computePSF(z_1step, psfTable, pixelPlane='top'))
     rowEdges = np.arange(rowMin*10.5, rowMax*10.5 + 0.01, 10.5)
     colEdges = np.arange(colMin*10.5, colMax*10.5 + 0.01, 10.5)
-    track, a, b = np.histogram2d(rows, cols, [rowEdges, colEdges], weights=dE) 
+    for i, (x_1step, y_1step, z_1step,dE_1step) in enumerate(zip(xArray, yArray, zArray, dEArray)):
+        rows = y_1step + rowPSF1d
+        cols = x_1step + colPSF1d
+        dE = (dE_1step * computePSF(z_1step, psfTable, pixelPlane='top'))
+        track_1step, a, b = np.histogram2d(rows, cols, [rowEdges, colEdges], weights=dE)
+        track += track_1step
+    del track_1step
     del rows, cols, dE
     return track, rowMin, colMin
-##     nrow = psfTable[0].shape[0]
-##     ncol = nrow
-##     rows = np.arange(-(nrow/2), nrow/2., 1)
-##     cols = rows
-##     rowVectorPSF, colVectorPSF = np.meshgrid(rows, cols, indexing='ij')
-##     # debug_here()
-##     rowData = []
-##     colData = []
-##     EData = []
-##     
-##     for x, y, z, dE in zip(xArray, yArray, zArray, dEArray):
-##         dEv = dE * computePSF(z, psfTable, pixelPlane)
-##         rowVector = y + rowVectorPSF
-##         colVector = x + colVectorPSF
-##         
-##         rowData.extend(rowVector.flatten())
-##         colData.extend(colVector.flatten())
-##         EData.extend(dEv.flatten())
-##         # debug_here()
-##     colEdges = np.arange(0, 36750.01, 10.5)
-##     rowEdges = colEdges
-##     image, a, b = np.histogram2d(rowData, colData, [colEdges, rowEdges], weights=EData)
-##     # the first element is row; the second is col
-##     return image
-    
     
 def computePSF(z, psfTable, pixelPlane):
     ''' compute the point spread function given the z value '''

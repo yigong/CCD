@@ -1,10 +1,10 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=100nm_par
+#SBATCH --job-name=10nm_par
 #
 # Error file:
-#SBATCH --error=ERR_par_parsing_100nm
+#SBATCH --error=ERR_par_parsing_10nm
 #
 # Account:
 #SBATCH  --account=ac_etci
@@ -31,7 +31,7 @@
 
 PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
 cd $PyBeamDiagDir
-python -m memory_profiler /global/scratch/ygzhang/PyBeamDiag/PARSING_100nm.py > MEM_parsing_100nm
+python -m memory_profiler /global/scratch/ygzhang/PyBeamDiag/PARSING_10nm.py > MEM_parsing_10nm
 
 FAIL=0
 for job in `jobs -p`

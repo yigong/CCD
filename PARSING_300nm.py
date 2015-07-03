@@ -11,7 +11,7 @@ def main():
     fileList = glob.glob('./G4W_*_0p3um.out')
     
     ## serial
-    # parse(fileList[0])
+    #parse(fileList[0])
     
     # parallel
     pool = multiprocessing.Pool(15)

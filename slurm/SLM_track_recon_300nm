@@ -1,10 +1,10 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=100nm_par
+#SBATCH --job-name=300nmRecon
 #
 # Error file:
-#SBATCH --error=ERR_par_parsing_100nm
+#SBATCH --error=ERR_track_recon_300nm
 #
 # Account:
 #SBATCH  --account=ac_etci
@@ -13,14 +13,14 @@
 #SBATCH --partition=lr3
 #
 # QoS:
-#SBATCH --qos=lr_normal
+#SBATCH --qos=lr_debug
 #
 # Processors:
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=16
 #
 # Wall clock limit:
-#SBATCH --time=70:30:00
+#SBATCH --time=00:30:00
 #
 # Mail type:
 #SBATCH --mail-type=all
@@ -28,10 +28,10 @@
 # Mail user:
 #SBATCH --mail-user=ygzhang@lbl.gov
 #
-
-PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
-cd $PyBeamDiagDir
-python -m memory_profiler /global/scratch/ygzhang/PyBeamDiag/PARSING_100nm.py > MEM_parsing_100nm
+module load matlab
+MatlabDir=/global/scratch/ygzhang/PyBeamDiag/matlab
+cd $MatlabDir
+matlab -nodisplay -nosplash -r "TRACK_recon_300nm"
 
 FAIL=0
 for job in `jobs -p`

@@ -3,7 +3,6 @@ import numpy as np
 from scipy.io import loadmat
 from PyBeamDiag.diffuse import XYZdE2track
 from astropy.io import fits
-import gc
 
 @profile
 def parse(file):
