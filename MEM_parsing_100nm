@@ -1,0 +1,20 @@
+a script is being run
+Filename: /global/scratch/ygzhang/PyBeamDiag/PARSING_100nm.py
+
+Line #    Mem usage    Increment   Line Contents
+================================================
+     6   34.535 MiB    0.000 MiB   @profile
+     7                             def main():
+     8                                 # cd to G4out dir
+     9   34.535 MiB    0.000 MiB       dataDir = '/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/100nm'
+    10   34.539 MiB    0.004 MiB       os.chdir(dataDir)
+    11   34.547 MiB    0.008 MiB       fileList = glob.glob('./G4W_*_0p1um.out')
+    12                                 
+    13                                 ## serial
+    14                                 #parse(fileList[0])
+    15                                 
+    16                                 # parallel
+    17   34.910 MiB    0.363 MiB       pool = multiprocessing.Pool(15)
+    18   34.961 MiB    0.051 MiB       pool.map(parse, fileList)
+
+

@@ -1,10 +1,10 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=PSF300nm
+#SBATCH --job-name=PSF100nm
 #
 # Error file:
-#SBATCH --error=ERR_PSF_window_300nm
+#SBATCH --error=ERR_PSF_window_100nm
 #
 # Account:
 #SBATCH  --account=ac_etci
@@ -29,11 +29,16 @@
 #SBATCH --mail-user=ygzhang@lbl.gov
 #
 
+module load matlab
+MatlabDir=/global/scratch/ygzhang/PyBeamDiag/matlab
+cd $MatlabDir
+matlab -nodisplay -nosplash -r "TRACK_recon_100nm"
+
 PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
 cd $PyBeamDiagDir
-python PSF_window_300nm.py
+python PSF_window_100nm.py
 
-FAIL=0
+FAIL=n
 for job in `jobs -p`
 do
 echo $job
