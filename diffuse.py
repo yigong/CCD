@@ -1,6 +1,6 @@
 import numpy as np
 
-@profile
+#@profile
 def XYZdE2track(xArray, yArray, zArray, dEArray, psfTable, pixelPlane):
     ''' compute the diffused energy deposition'''
 
