@@ -20,7 +20,7 @@
 #SBATCH --ntasks-per-node=16
 #
 # Wall clock limit:
-#SBATCH --time=70:30:00
+#SBATCH --time=72:00:00
 #
 # Mail type:
 #SBATCH --mail-type=all
@@ -31,7 +31,8 @@
 
 PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
 cd $PyBeamDiagDir
-python -m memory_profiler /global/scratch/ygzhang/PyBeamDiag/PARSING_10nm.py > MEM_parsing_10nm
+python PARSING_10nm.py
+# python -m memory_profiler /global/scratch/ygzhang/PyBeamDiag/PARSING_60nm.py > MEM_parsing_60nm
 
 FAIL=0
 for job in `jobs -p`

@@ -18,12 +18,12 @@ def main():
     psfTable = np.array(loadmat(psfDir)['psf'])
 
     ## serial
-    map(partial(parse, psfTable), fileList[:10])
+    # map(partial(parse, psfTable), fileList[:10])
     # map(parse, fileList[:10])
     
-    # # parallel
-    # pool = multiprocessing.Pool(15)
-    # pool.map(partial(parse, psfTable), fileList)
+    # parallel
+    pool = multiprocessing.Pool(15)
+    pool.map(partial(parse, psfTable), fileList)
 
 if __name__ == "__main__":
     main()

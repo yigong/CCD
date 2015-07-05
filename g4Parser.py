@@ -47,6 +47,7 @@ def parse(psfTable, file):
             y = np.array(y_tmp) - 2000.
             z = np.array(z_tmp)
             dE = np.array(dE_tmp)
+            del x_tmp, y_tmp, z_tmp, dE_tmp
             track, rowMin, colMin = XYZdE2track(x, y, z, dE, psfTable, \
                     pixelPlane='top')
             h = fits.Header()
