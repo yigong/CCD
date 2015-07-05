@@ -1,0 +1,50 @@
+#!/bin/bash -I
+#
+# Job name:
+#SBATCH --job-name=60nm_split
+#
+# Error file:
+#SBATCH --error=ERR_split_60nm
+#
+# Account:
+#SBATCH  --account=ac_etci
+#
+# Partition
+#SBATCH --partition=lr3
+#
+# QoS:
+#SBATCH --qos=lr_normal
+#
+# Processors:
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#
+# Wall clock limit:
+#SBATCH --time=70:30:00
+#
+# Mail type:
+#SBATCH --mail-type=all
+#
+# Mail user:
+#SBATCH --mail-user=ygzhang@lbl.gov
+#
+
+PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
+cd $PyBeamDiagDir
+python myText_60nm.py
+
+FAIL=0
+for job in `jobs -p`
+do
+echo $job
+    wait $job || let "FAIL+=1"
+done
+
+echo $FAIL
+
+if [ "$FAIL" == "0" ];
+then
+echo "YAY!"
+else
+echo "FAIL! ($FAIL)"
+fi
