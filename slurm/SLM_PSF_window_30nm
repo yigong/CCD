@@ -1,10 +1,10 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=par_parsing_1um
+#SBATCH --job-name=PSF30nm
 #
 # Error file:
-#SBATCH --error=ERR_par_parsing_1um
+#SBATCH --error=ERR_PSF_window_30nm
 #
 # Account:
 #SBATCH  --account=ac_etci
@@ -29,11 +29,15 @@
 #SBATCH --mail-user=ygzhang@lbl.gov
 #
 
+MatlabDir=/global/scratch/ygzhang/PyBeamDiag/matlab
+cd $MatlabDir
+matlab -nodisplay -nosplash -r "TRACK_recon_30nm"
+
 PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
 cd $PyBeamDiagDir
-python PARSING_1um.py
+python PSF_window_30nm.py
 
-FAIL=0
+FAIL=n
 for job in `jobs -p`
 do
 echo $job

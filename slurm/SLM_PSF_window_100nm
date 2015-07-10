@@ -1,10 +1,10 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=PSF100nm
+#SBATCH --job-name=PSF60nm
 #
 # Error file:
-#SBATCH --error=ERR_PSF_window_100nm
+#SBATCH --error=ERR_PSF_window_60nm
 #
 # Account:
 #SBATCH  --account=ac_etci
@@ -20,7 +20,7 @@
 #SBATCH --ntasks-per-node=16
 #
 # Wall clock limit:
-#SBATCH --time=01:30:00
+#SBATCH --time=10:30:00
 #
 # Mail type:
 #SBATCH --mail-type=all
@@ -29,14 +29,13 @@
 #SBATCH --mail-user=ygzhang@lbl.gov
 #
 
-module load matlab
 MatlabDir=/global/scratch/ygzhang/PyBeamDiag/matlab
 cd $MatlabDir
-matlab -nodisplay -nosplash -r "TRACK_recon_100nm"
+matlab -nodisplay -nosplash -r "TRACK_recon_60nm"
 
 PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
 cd $PyBeamDiagDir
-python PSF_window_100nm.py
+python PSF_window_60nm.py
 
 FAIL=n
 for job in `jobs -p`

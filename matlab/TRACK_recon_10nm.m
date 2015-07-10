@@ -1,5 +1,5 @@
 matlabpool open 12
-dataDir = '/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/60nm/fits'
+dataDir = '/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/10nm/fits'
 cd(dataDir);
 fileList = dir('*.fits');
 fileNum = length(fileList);

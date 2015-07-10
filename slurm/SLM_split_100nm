@@ -1,10 +1,10 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=par_parsing_1um
+#SBATCH --job-name=100nm_split
 #
 # Error file:
-#SBATCH --error=ERR_par_parsing_1um
+#SBATCH --error=ERR_split_100nm
 #
 # Account:
 #SBATCH  --account=ac_etci
@@ -13,7 +13,7 @@
 #SBATCH --partition=lr3
 #
 # QoS:
-#SBATCH --qos=lr_debug
+#SBATCH --qos=lr_normal
 #
 # Processors:
 #SBATCH --nodes=1
@@ -31,7 +31,7 @@
 
 PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
 cd $PyBeamDiagDir
-python PARSING_1um.py
+python myText_100nm.py
 
 FAIL=0
 for job in `jobs -p`
