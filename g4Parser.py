@@ -39,6 +39,7 @@ def parse(psfTable, file):
                 yDir = float(lineSplit[8])
                 xInit = float(lineSplit[0]) 
                 yInit = float(lineSplit[1])
+                eInit = float(lineSplit[6])
             x_tmp.append(float(lineSplit[0]))
             y_tmp.append(float(lineSplit[1]))
             z_tmp.append(float(lineSplit[2]))
@@ -66,5 +67,6 @@ def parse(psfTable, file):
             h['alphaT'] = alpha_true
             h['xInit'] = xInit
             h['yInit'] = yInit 
+            h['eInit'] = eInit
             fits.writeto('../fits/%s.fits' % (fileIdx), track, h, clobber=True)
         f.close()   

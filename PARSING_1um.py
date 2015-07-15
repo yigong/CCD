@@ -23,7 +23,7 @@ def main():
     
     # parallel
     pool = multiprocessing.Pool(15)
-    pool.map(partial(parse, psfTable), fileList[:1000])
+    pool.map(partial(parse, psfTable), fileList[:10000])
 
 if __name__ == "__main__":
     main()
