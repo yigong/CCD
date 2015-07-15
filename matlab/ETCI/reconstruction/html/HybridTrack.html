@@ -1,0 +1,3229 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>HybridTrack</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-07-14"><meta name="DC.source" content="HybridTrack.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#3">ridge following %%%%%</a></li></ul></div><pre class="codeinput"><span class="keyword">function</span> Output = HybridTrack(originalImageKev,varargin)
+</pre><pre class="codeinput"><span class="comment">% function Output = HybridTrack(originalImageKev)</span>
+<span class="comment">% function Output = HybridTrack(originalImageKev, 'key', value, ...)</span>
+<span class="comment">%</span>
+<span class="comment">% Measure the initial electron direction from a CCD image.</span>
+<span class="comment">%</span>
+<span class="comment">% Inputs:</span>
+<span class="comment">%   originalImageKev: A 2D numeric array of values corresponding to energy</span>
+<span class="comment">%       deposited in CCD pixels. Units keV.</span>
+<span class="comment">%     **If pixels are 10.5um and no special operation or plotting is desired,</span>
+<span class="comment">%       no key/value pairs are needed.</span>
+<span class="comment">%   key/value: The following key/value pairs are supported, in the format</span>
+<span class="comment">%       e.g. HybridTrack(img, 'pixelSizeUm', 5, 'lowThresholdKev', 0.3);</span>
+<span class="comment">%       Defaults given in []. Key names are case-insensitive.</span>
+<span class="comment">%     pixelSizeUm: Associate a different pixel size with the input image.</span>
+<span class="comment">%       [10.5]</span>
+<span class="comment">%     lowThresholdKev: Use a different threshold value for the binary image</span>
+<span class="comment">%       step. [0.5 for 10.5um pixels, and scales with pixel area]</span>
+<span class="comment">%     dedxTable: Use a different reference table of dE/dx vs. energy, for</span>
+<span class="comment">%       interpolating values to use in calculating beta.</span>
+<span class="comment">%       Format: column 1 is energy (keV), column 2 is dEdx (keV/um)</span>
+<span class="comment">%       [uses some rough values grabbed from geant in 2008, a.k.a. dEdx_ref.mat]</span>
+<span class="comment">%     cheat: Structure of information from geant4, created in the codes</span>
+<span class="comment">%       Geant4TrackHandling and DiffuseTrack. Not used, but passed through to</span>
+<span class="comment">%       output structure for calculating algorithm errors afterwards.</span>
+<span class="comment">%     oneplot: A single logical value. (You can just put this key as a flag,</span>
+<span class="comment">%       without having to supply a value, and it will be interpreted as 'true'.)</span>
+<span class="comment">%       Indicates that a plot should be generated showing the ridge following</span>
+<span class="comment">%       points, best cuts, and step directions.</span>
+<span class="comment">%     plotflags: Generate plots illustrating any of various steps in the</span>
+<span class="comment">%       algorithm process. 1x15 logical array, with any true's generating a plot</span>
+<span class="comment">%       associated with that index. (Up to 15 plots.) I'm not listing them all</span>
+<span class="comment">%       here at this time. Default all false.</span>
+<span class="comment">%     insetPix: View coordinates for some of the plots in plotflags.</span>
+<span class="comment">%       assign by: insetPix = [xlim, ylim];</span>
+<span class="comment">%     nameString: For saving plots to file. File names end up in the format:</span>
+<span class="comment">%       ['Track_', nameString, '_plotSpecificSuffix.eps'] and *.fig and *.png.</span>
+<span class="comment">%</span>
+<span class="comment">% Outputs:</span>
+<span class="comment">%   Output: structure containing a whole bunch of stuff. The most user-friendly</span>
+<span class="comment">%       and useful fields are as follows:</span>
+<span class="comment">%     alpha: the estimated direction in the plane of the pixels. Units degrees.</span>
+<span class="comment">%       *alpha = 0 is in the positive x direction, where x is the first array</span>
+<span class="comment">%       dimension. In an image array in Matlab variable editor, this is down; in</span>
+<span class="comment">%       a surface plot or pseudocolor plot in Matlab, this is up.</span>
+<span class="comment">%       *alpha = 90 is in the positive y direction, where y is the second array</span>
+<span class="comment">%       dimension. In an image array in Matlab variable editor, this is to the</span>
+<span class="comment">%       right; in a surface plot or pseudocolor plot in Matlab, this is also to</span>
+<span class="comment">%       the right.</span>
+<span class="comment">%     beta: the estimated direction, as the magnitude of the out-of-plane angle.</span>
+<span class="comment">%       Units degrees. This is a rather poor estimate right now.</span>
+<span class="comment">%     img: the input image with a one-pixel buffer around the outside. This is</span>
+<span class="comment">%       the image to which any reference coordinates are given in.</span>
+<span class="comment">%     Etot: Etot = sum(originalImageKev(:))</span>
+<span class="comment">%</span>
+
+<span class="comment">% follows version 1c</span>
+
+
+
+<span class="comment">%The lowthresh should cut out some diffusion,</span>
+<span class="comment">% so that the thinned track is closer to the actual track,</span>
+<span class="comment">% and the correct end can be identified more accurately.</span>
+<span class="comment">%If the lowthresh is too high, the initial end may be cut off.</span>
+
+<span class="comment">%%%%%%%%%%%%%%%</span>
+<span class="comment">%%%% input %%%%</span>
+<span class="comment">%%%%%%%%%%%%%%%</span>
+
+Options = HtConstructOptions(nargin,varargin);
+<span class="comment">% this includes the ridge-following options, in a subroutine.</span>
+
+<span class="comment">% add buffer of zeros around image</span>
+[trackEnergy, preparedImageKev, Options] = <span class="keyword">...</span>
+    HtPrepareImage(originalImageKev, Options);
+
+<span class="comment">%%%%%%%%%%%%%%%</span>
+<span class="comment">%%%% ends %%%%%</span>
+<span class="comment">%%%%%%%%%%%%%%%</span>
+
+<span class="comment">% low threshold, thinning, identify ends.</span>
+EdgeSegments = HtChooseInitialEnd(preparedImageKev, Options);
+
+<span class="comment">% exception</span>
+<span class="keyword">if</span> isnan(EdgeSegments.chosenIndex)
+    <span class="comment">% no end found</span>
+    <span class="comment">% exit unsuccessfully</span>
+    Output.img = preparedImageKev;
+    Output.Etot = sum(preparedImageKev(:));
+    Output.ends = 0;
+    Output.err = <span class="string">'No ends found'</span>;
+    <span class="keyword">return</span>
+<span class="keyword">end</span>
+
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+</pre><pre class="codeoutput error">Error using HybridTrack (line 74)
+Not enough input arguments.
+</pre><h2>ridge following %%%%%<a name="3"></a></h2><pre class="codeinput"><span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+
+<span class="comment">% ridge following</span>
+Ridge = HtRidgeFollow(EdgeSegments, Options, preparedImageKev);
+
+<span class="comment">% exception</span>
+<span class="keyword">if</span> isfield(Ridge,<span class="string">'err'</span>) &amp;&amp; strcmpi(Ridge.err,<span class="string">'infinite loop'</span>)
+    Output.img = preparedImageKev;
+    Output.Etot = sum(preparedImageKev(:));
+    Output.err = <span class="string">'Infinite loop'</span>;
+    Output.EdgeSegments = EdgeSegments;
+    Output.Ridge = Ridge;
+    Output.Options = Options;
+    <span class="keyword">return</span>
+<span class="keyword">end</span>
+
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%%%% compute direction %%%%%</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+
+[Measurement, Ridge] = HtComputeDirection(trackEnergy, Ridge, Options);
+
+<span class="comment">%%%%%%%%%%%%%%%%</span>
+<span class="comment">%%%% output %%%%</span>
+<span class="comment">%%%%%%%%%%%%%%%%</span>
+Output = <span class="keyword">...</span>
+    HtSetOutput(preparedImageKev, Options, EdgeSegments, Ridge, Measurement);
+
+<span class="comment">%%%%%%%%%%%%%%</span>
+<span class="comment">%%%% plot %%%%</span>
+<span class="comment">%%%%%%%%%%%%%%</span>
+<span class="comment">% plots #13-15</span>
+<span class="keyword">if</span> Options.PlotStyle.multiple(13)
+    <span class="comment">% all ridge points, measurement highlighted</span>
+    [~, Options.PlotStyle.axesPosition] = <span class="keyword">...</span>
+        HtPlotImage(preparedImageKev, Options.PlotStyle.cmap, <span class="keyword">...</span>
+        Options.PlotStyle.axesPosition, <span class="keyword">...</span>
+        Options.PlotStyle.insetPix);
+    hold <span class="string">on</span>
+    <span class="comment">% points</span>
+    plot3(Ridge.positionPix(:,2)+0.5, Ridge.positionPix(:,1)+0.5, <span class="keyword">...</span>
+        Options.PlotStyle.z0*ones(size(Ridge.positionPix(:,1))), <span class="keyword">...</span>
+        <span class="string">'d'</span>,<span class="string">'markerfacecolor'</span>,Options.PlotStyle.ptColor, <span class="keyword">...</span>
+        <span class="string">'markeredgecolor'</span>,Options.PlotStyle.ptColor, <span class="keyword">...</span>
+        <span class="string">'markersize'</span>,4);
+    <span class="comment">% highlighted measurement</span>
+    measInd = Measurement.indices;
+    plot3(Ridge.positionPix(measInd,2)+0.5, Ridge.positionPix(measInd,1)+0.5, <span class="keyword">...</span>
+        Options.PlotStyle.z0*ones(size(Ridge.positionPix(measInd,1))), <span class="keyword">...</span>
+        <span class="string">'d'</span>,<span class="string">'markerfacecolor'</span>,Options.PlotStyle.measPtColor, <span class="keyword">...</span>
+        <span class="string">'markeredgecolor'</span>,Options.PlotStyle.measPtColor, <span class="keyword">...</span>
+        <span class="string">'markersize'</span>,4);
+    HtSavePlot(gcf, Options, <span class="string">'13_meas_highlighted'</span>)
+<span class="keyword">end</span>
+<span class="keyword">if</span> Options.PlotStyle.multiple(14)
+    <span class="comment">% dE/dx plot, measurement highlighted, dE/dx values marked horizontally</span>
+    HtPlotImage(ones(2),<span class="string">'gray'</span>,Options.PlotStyle.axesPosition, []);
+    hold <span class="string">off</span>
+    <span class="comment">% measured dE points</span>
+    xtmp = cumsum(Ridge.stepLengthPix);
+    ytmp = Ridge.dedxKevUm;
+    plot(xtmp, ytmp, <span class="string">'*'</span>, <span class="string">'color'</span>, Options.PlotStyle.ptColor, <span class="keyword">...</span>
+        <span class="string">'linewidth'</span>,2, <span class="string">'markersize'</span>,8);
+    hold <span class="string">on</span>
+    <span class="comment">% dE/dx horizontal lines</span>
+    dedxLineWidth = 2;
+    hLegend(1) = plot(xtmp, Measurement.dedxMeasured*ones(size(xtmp)), <span class="string">'-'</span>, <span class="keyword">...</span>
+        <span class="string">'color'</span>,Options.PlotStyle.measPtColor, <span class="string">'linewidth'</span>,dedxLineWidth);
+    hLegend(2) = plot(xtmp, Measurement.dedxReference*ones(size(xtmp)), <span class="string">'-'</span>, <span class="keyword">...</span>
+        <span class="string">'color'</span>,<span class="string">'k'</span>, <span class="string">'linewidth'</span>,dedxLineWidth);
+    <span class="keyword">if</span> ~isempty(Options.cheat)
+        ytmp = Measurement.dedxReference / cosd(Options.cheat.beta);
+        hLegend(3) = plot(xtmp, ytmp*ones(size(xtmp)), <span class="string">'-'</span>, <span class="keyword">...</span>
+            <span class="string">'color'</span>,Options.PlotStyle.trueArrColor, <span class="string">'linewidth'</span>,dedxLineWidth);
+    <span class="keyword">end</span>
+    xlabel(<span class="string">'Distance along ridge [pixel lengths]'</span>);
+    ylabel(<span class="string">'dE/dx [keV / {\mu}m]'</span>)
+    xlim([0, xtmp(end)+Options.positionStepSizePix]);
+    hLegend(4) = legend(hLegend, {<span class="string">'Measured \Delta{E}/\Delta{R}'</span>, <span class="keyword">...</span>
+        <span class="string">'(dE/dS)_{calculated}'</span>, <span class="keyword">...</span>
+        <span class="string">'(dE/dS)_{calculated} / cos(\beta)'</span>}, <span class="keyword">...</span>
+        <span class="string">'Location'</span>,<span class="string">'SouthEast'</span>);
+    set(hLegend(4),<span class="string">'fontsize'</span>,16);
+    FixAxesMargins(gca);
+    HtSavePlot(gcf, Options, <span class="string">'14_dEdx_meas'</span>);
+<span class="keyword">end</span>
+<span class="keyword">if</span> Options.PlotStyle.multiple(15)
+    <span class="comment">% ridge points, measurement highlighted, with arrow(s)</span>
+    [~, Options.PlotStyle.axesPosition] = <span class="keyword">...</span>
+        HtPlotImage(preparedImageKev, Options.PlotStyle.cmap, <span class="keyword">...</span>
+        Options.PlotStyle.axesPosition, <span class="keyword">...</span>
+        Options.PlotStyle.insetPix);
+    hold <span class="string">on</span>
+    <span class="comment">% points</span>
+    plot3(Ridge.positionPix(:,2)+0.5, Ridge.positionPix(:,1)+0.5, <span class="keyword">...</span>
+        Options.PlotStyle.z0*ones(size(Ridge.positionPix(:,1))), <span class="keyword">...</span>
+        <span class="string">'d'</span>,<span class="string">'markerfacecolor'</span>,Options.PlotStyle.ptColor, <span class="keyword">...</span>
+        <span class="string">'markeredgecolor'</span>,Options.PlotStyle.ptColor, <span class="keyword">...</span>
+        <span class="string">'markersize'</span>,4);
+    <span class="comment">% measurement highlighted</span>
+    measInd = Measurement.indices;
+    plot3(Ridge.positionPix(measInd,2)+0.5, Ridge.positionPix(measInd,1)+0.5, <span class="keyword">...</span>
+        Options.PlotStyle.z0*ones(size(Ridge.positionPix(measInd,1))), <span class="keyword">...</span>
+        <span class="string">'d'</span>,<span class="string">'markerfacecolor'</span>,Options.PlotStyle.measPtColor, <span class="keyword">...</span>
+        <span class="string">'markeredgecolor'</span>,Options.PlotStyle.measPtColor, <span class="keyword">...</span>
+        <span class="string">'markersize'</span>,4);
+    <span class="comment">% measured arrow</span>
+    arr_length1 = 4;    <span class="comment">%pixels. main stem.</span>
+    arr_length2 = .75;  <span class="comment">%pixels. Side prongs.</span>
+    arrowLineWidth = 2;
+    xTmp0 = Ridge.positionPix(measInd(1),1)+0.5;
+    yTmp0 = Ridge.positionPix(measInd(1),2)+0.5;
+    <span class="comment">%   draw arrow from base to tip to two prongs</span>
+    a = Measurement.alphaDegrees;
+    xMeasArrow = xTmp0 + [0, <span class="keyword">...</span>
+        cosd(a)*arr_length1, <span class="keyword">...</span>
+        cosd(a)*arr_length1 - cosd(a+45)*arr_length2, <span class="keyword">...</span>
+        cosd(a)*arr_length1, <span class="keyword">...</span>
+        cosd(a)*arr_length1 - cosd(a-45)*arr_length2];
+    yMeasArrow = yTmp0 + [0, <span class="keyword">...</span>
+        sind(a)*arr_length1, <span class="keyword">...</span>
+        sind(a)*arr_length1 - sind(a+45)*arr_length2, <span class="keyword">...</span>
+        sind(a)*arr_length1, <span class="keyword">...</span>
+        sind(a)*arr_length1 - sind(a-45)*arr_length2];
+    plot3(yMeasArrow, xMeasArrow, <span class="keyword">...</span>
+        Options.PlotStyle.z0*ones(size(yMeasArrow)), <span class="keyword">...</span>
+        <span class="string">'-'</span>, <span class="string">'color'</span>,Options.PlotStyle.measArrColor, <span class="keyword">...</span>
+        <span class="string">'linewidth'</span>,arrowLineWidth);
+    <span class="keyword">if</span> ~isempty(Options.cheat)
+        <span class="comment">% true arrow</span>
+        a = Options.cheat.alpha;
+        xTrueArrow = xTmp0 + [0, <span class="keyword">...</span>
+            cosd(a)*arr_length1, <span class="keyword">...</span>
+            cosd(a)*arr_length1 - cosd(a+45)*arr_length2, <span class="keyword">...</span>
+            cosd(a)*arr_length1, <span class="keyword">...</span>
+            cosd(a)*arr_length1 - cosd(a-45)*arr_length2];
+        yTrueArrow = yTmp0 + [0, <span class="keyword">...</span>
+            sind(a)*arr_length1, <span class="keyword">...</span>
+            sind(a)*arr_length1 - sind(a+45)*arr_length2, <span class="keyword">...</span>
+            sind(a)*arr_length1, <span class="keyword">...</span>
+            sind(a)*arr_length1 - sind(a-45)*arr_length2];
+        plot3(yTrueArrow, xTrueArrow, <span class="keyword">...</span>
+            Options.PlotStyle.z0*ones(size(yTrueArrow)), <span class="keyword">...</span>
+            <span class="string">'-'</span>, <span class="string">'color'</span>,Options.PlotStyle.trueArrColor, <span class="keyword">...</span>
+            <span class="string">'linewidth'</span>,arrowLineWidth);
+    <span class="keyword">end</span>
+    HtSavePlot(gcf, Options, <span class="string">'15_alpha_arrows'</span>);
+<span class="keyword">end</span>
+</pre><pre class="codeinput"><span class="keyword">function</span> Options = HtConstructOptions(nArgs, varargs)
+<span class="comment">% function InputOptions = HtConstructOptions(nArgs, varargs)</span>
+<span class="comment">%</span>
+<span class="comment">% Parse the varargin from HybridTrack, and assign some builtin values.</span>
+<span class="comment">%</span>
+<span class="comment">% key-value pairs</span>
+<span class="comment">%</span>
+<span class="comment">% keys (alternate strings) [default value]:</span>
+<span class="comment">%   pixelSizeUm (pixelsize, pixsize, pixelpitch, pixel, pitch)</span>
+<span class="comment">%       The pixel size in the image, in microns.. Used to scale many other</span>
+<span class="comment">%       parameters.</span>
+<span class="comment">%       [10.5]</span>
+<span class="comment">%   lowThreshold (lt, lowthresh, threshold)</span>
+<span class="comment">%       The threshold to apply to make the binary image.</span>
+<span class="comment">%       [0.5 keV * (pixelSizeUm/10.5)^2]</span>
+<span class="comment">%   dEdxTable (dEdx_table, dEdx_ref, dEref, dE_ref, dEdx)</span>
+<span class="comment">%       The table of linear stopping powers, as a function of energy, to use for</span>
+<span class="comment">%       calculating beta. First column, energy in keV, second column,</span>
+<span class="comment">%       stopping power in keV/um.</span>
+<span class="comment">%       [defined from 2009(?) values in dEdx_ref.mat]</span>
+<span class="comment">%   plotflag</span>
+<span class="comment">%       ....define how to approach this...</span>
+<span class="comment">%       [false]</span>
+<span class="comment">%   cheat</span>
+<span class="comment">%       Structure of information from Geant4TrackHandling, providing true values</span>
+<span class="comment">%       for electron track.</span>
+<span class="comment">%       []</span>
+<span class="comment">%</span>
+<span class="comment">% Also, call HtDefineDefaultRidgeFollowingOptions</span>
+
+Options = struct;
+
+<span class="comment">%first, parse input arguments</span>
+argumentNo = 1;
+requiredArgs = 1;   <span class="comment">%because varargin includes required arguments too</span>
+<span class="keyword">while</span> argumentNo &lt;= (nArgs - requiredArgs);
+    argumentIncrement = 2;  <span class="comment">%by default, increment the argumentNo by 2 each time</span>
+    <span class="keyword">switch</span> lower(varargs{argumentNo})
+        <span class="keyword">case</span> {<span class="string">'pixelsizeum'</span>,<span class="string">'pixelsize'</span>,<span class="string">'pixsize'</span>,<span class="string">'pixelpitch'</span>,<span class="string">'pixel'</span>,<span class="string">'pitch'</span>}
+            thisValue = varargs{argumentNo+1};
+            <span class="keyword">if</span> isnumeric(thisValue) &amp;&amp; isfinite(thisValue) &amp;&amp; <span class="keyword">...</span>
+                    length(thisValue)==1
+                Options.pixelSizeUm = thisValue;
+            <span class="keyword">else</span>
+                error(<span class="string">'pixelSizeUm must be a single value, numeric and finite'</span>);
+            <span class="keyword">end</span>
+        <span class="keyword">case</span> {<span class="string">'lowthresh'</span>,<span class="string">'lt'</span>,<span class="string">'lowthreshold'</span>,<span class="string">'threshold'</span>,<span class="string">'lowthresholdkev'</span>}
+            thisValue = varargs{argumentNo+1};
+            <span class="keyword">if</span> isnumeric(thisValue) &amp;&amp; isfinite(thisValue) &amp;&amp; <span class="keyword">...</span>
+                    length(thisValue)==1
+                Options.lowThreshold = thisValue;
+            <span class="keyword">else</span>
+                error(<span class="string">'lowThresholdKev must be a single value, numeric and finite'</span>)
+            <span class="keyword">end</span>
+        <span class="keyword">case</span> {<span class="string">'dedx_ref'</span>,<span class="string">'dedx'</span>,<span class="string">'deref'</span>,<span class="string">'de_ref'</span>,<span class="string">'dedxtable'</span>,<span class="string">'dedx_table'</span>}
+            thisValue = varargs{argumentNo+1};
+            <span class="keyword">if</span> isnumeric(thisValue) &amp;&amp; all(isfinite(thisValue(:))) &amp;&amp; <span class="keyword">...</span>
+                    size(thisValue,2)&gt;=2    <span class="comment">%two columns of values</span>
+                Options.dedxTable = thisValue;
+            <span class="keyword">else</span>
+                error(<span class="string">'dedxTable should be two columns, numeric and finite'</span>)
+            <span class="keyword">end</span>
+        <span class="keyword">case</span> {<span class="string">'plotflag'</span>, <span class="string">'plotflags'</span>}
+            <span class="keyword">if</span> argumentNo+1 &gt; (nArgs - requiredArgs) || <span class="keyword">...</span>
+                    ischar(varargs{argumentNo+1})
+                <span class="comment">% no value is supplied. this means, set PlotStyle.single = true</span>
+                Options.PlotStyle.single = true;
+                Options.PlotStyle.multiple = false(1,20);
+                argumentIncrement = 1;
+            <span class="keyword">elseif</span> islogical(varargs{argumentNo+1}) &amp;&amp; <span class="keyword">...</span>
+                    length(varargs{argumentNo+1})==1
+                Options.PlotStyle.single = varargs{argumentNo+1};
+                Options.PlotStyle.multiple = false(1,20);
+            <span class="keyword">elseif</span> islogical(varargs{argumentNo+1}) &amp;&amp; <span class="keyword">...</span>
+                    length(varargs{argumentNo+1}) &gt; 1
+                Options.PlotStyle.single = false;
+                Options.PlotStyle.multiple = varargs{argumentNo+1};
+            <span class="keyword">elseif</span> isnumeric(varargs{argumentNo+1})
+                Options.PlotStyle.single = false;
+                Options.PlotStyle.multiple = false(1,20);
+                Options.PlotStyle.multiple(varargs{argumentNo+1}) = true;
+            <span class="keyword">else</span>
+                error(<span class="string">'plotflag should be a boolean or numeric value'</span>)
+            <span class="keyword">end</span>
+        <span class="keyword">case</span> {<span class="string">'insetpix'</span>,<span class="string">'inset'</span>,<span class="string">'xylim'</span>}
+            thisArg = varargs{argumentNo+1};
+            <span class="keyword">if</span> isnumeric(thisArg) &amp;&amp; <span class="keyword">...</span>
+                    length(thisArg)==4
+                Options.PlotStyle.insetPix = thisArg(1:4);
+            <span class="keyword">elseif</span> ~isempty(thisArg)
+                error(<span class="string">'insetpix should be a 1x4 numeric array'</span>)
+            <span class="keyword">end</span>
+        <span class="keyword">case</span> {<span class="string">'namestring'</span>,<span class="string">'savename'</span>,<span class="string">'name'</span>,<span class="string">'string'</span>,<span class="string">'plotname'</span>}
+            thisArg = varargs{argumentNo+1};
+            <span class="keyword">if</span> ischar(thisArg) &amp;&amp; isempty(strfind(thisArg,<span class="string">'*'</span>))
+                Options.PlotStyle.nameString = thisArg;
+                <span class="comment">% Track_*_descriptor.{fig|png|eps}</span>
+            <span class="keyword">elseif</span> ischar(thisArg)
+                error(<span class="string">'Don''t put special characters in the filename! (*)'</span>)
+            <span class="keyword">end</span>
+        <span class="keyword">case</span> {<span class="string">'cheat'</span>}
+            thisValue = varargs{argumentNo+1};
+            <span class="keyword">if</span> isstruct(thisValue) <span class="comment">% &amp;&amp; length(thisValue)==1</span>
+                Options.cheat = thisValue;
+            <span class="keyword">else</span>
+                error(<span class="string">'cheat should be a structure'</span>)
+            <span class="keyword">end</span>
+        <span class="keyword">case</span> {<span class="string">'oneplot'</span>, <span class="string">'plot'</span>}
+            <span class="keyword">if</span> argumentNo+1 &gt; (nArgs - requiredArgs) || ischar(varargs{argumentNo+1})
+                Options.PlotStyle.single = true;
+                Options.PlotStyle.multiple = false(1,20);
+                argumentIncrement = 1;
+            <span class="keyword">elseif</span> islogical(varargs{argumentNo+1}) || <span class="keyword">...</span>
+                    isnumeric(varargs{argumentNo+1})
+                Options.PlotStyle.single = varargs{argumentNo+1};
+                Options.PlotStyle.multiple = false(1,20);
+            <span class="keyword">else</span>
+                error(<span class="string">'unrecognized plot style'</span>)
+            <span class="keyword">end</span>
+        <span class="keyword">otherwise</span>
+            error(<span class="string">'Unrecognized input argument'</span>)
+    <span class="keyword">end</span>
+    argumentNo = argumentNo + argumentIncrement;
+<span class="keyword">end</span>
+
+<span class="comment">%now, assign default values where needed</span>
+<span class="keyword">if</span> ~isfield(Options,<span class="string">'pixelSizeUm'</span>)
+    Options.pixelSizeUm = 10.5;
+<span class="keyword">end</span>
+<span class="keyword">if</span> ~isfield(Options,<span class="string">'lowThresholdKev'</span>)
+    Options.lowThresholdKev = 0.5 * (Options.pixelSizeUm / 10.5)^2;
+<span class="keyword">end</span>
+<span class="keyword">if</span> ~isfield(Options,<span class="string">'dedxTable'</span>)
+    Options.dedxTable = HtConstructDedxTable;
+<span class="keyword">end</span>
+<span class="keyword">if</span> ~isfield(Options,<span class="string">'plotflag'</span>)
+    Options.plotflag = false;
+<span class="keyword">end</span>
+<span class="keyword">if</span> ~isfield(Options,<span class="string">'cheat'</span>)
+    Options.cheat = [];
+<span class="keyword">end</span>
+<span class="keyword">if</span> ~isfield(Options,<span class="string">'PlotStyle'</span>)
+    Options.PlotStyle.single = false;
+    Options.PlotStyle.multiple = false(1,20);
+<span class="keyword">end</span>
+
+<span class="comment">%assign additional options which are not actually inputs (yet)</span>
+Options = HtDefineDefaultRidgeFollowingOptions(Options);
+Options = HtDefineMeasurementOptions(Options);
+
+Options.ridgeStartingDistanceFromTrackEndUm = 40;
+
+Options = HtDefinePlotOptions(Options);
+
+
+
+<span class="keyword">function</span> dedxTable = HtConstructDedxTable
+<span class="comment">% function dedxTable = constructDedxTable</span>
+<span class="comment">%</span>
+<span class="comment">% Create a lookup table for dEdx_reference.</span>
+<span class="comment">%</span>
+<span class="comment">% Column 1: electron energy [keV]</span>
+<span class="comment">% Column 2: dEdx_reference [keV/um]</span>
+<span class="comment">%</span>
+<span class="comment">% Values from dEdx_ref.mat, from 2009(?) work.</span>
+
+<span class="comment">% TODO: Revisit this, preferably using theory.</span>
+
+dedxTable(:,1) = 50:25:1400;    <span class="comment">%keV</span>
+dedxTable(:,2) = [ 1.2114       <span class="comment">%keV / um</span>
+    0.9185
+    0.7200
+    0.5800
+    0.5300
+    0.4400
+    0.3700
+    0.3600
+    0.3200
+    0.3100
+    0.2900
+    0.2900
+    0.2700
+    0.2700
+    0.2600
+    0.2500
+    0.2500
+    0.2400
+    0.2400
+    0.2400
+    0.2300
+    0.2300
+    0.2300
+    0.2300
+    0.2200
+    0.2200
+    0.2200
+    0.2200
+    0.2200
+    0.2200
+    0.2200
+    0.2200
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100];
+
+
+
+<span class="keyword">function</span> Options = HtDefineDefaultRidgeFollowingOptions(Options)
+<span class="comment">% function Options = HtDefineDefaultRidgeFollowingOptions(Options)</span>
+<span class="comment">%</span>
+<span class="comment">% Assign fixed parameters used for the ridge-following.</span>
+<span class="comment">%</span>
+<span class="comment">% Input:</span>
+<span class="comment">%   Options structure defined in HtConstructOptions</span>
+<span class="comment">%   must include field pixelSizeUm</span>
+<span class="comment">%</span>
+<span class="comment">% Output structure includes the following additional fields:</span>
+<span class="comment">%   positionStepSizePix</span>
+<span class="comment">%   cutSamplingIntervalPixPix</span>
+<span class="comment">%   cutTotalLengthPix</span>
+<span class="comment">%   cutAngleIncrementDegrees</span>
+<span class="comment">%   cutAngleIncrementRadians</span>
+<span class="comment">%   searchAngleIndices</span>
+<span class="comment">%   piIndices</span>
+<span class="comment">%   cutAngleDegrees</span>
+<span class="comment">%   cutAngleRadians</span>
+<span class="comment">%   cutInterpolationMethod</span>
+<span class="comment">%   cutDistanceFromCenterPix</span>
+<span class="comment">%   cutCoordinatesPix</span>
+<span class="comment">%   trackEndLowThresholdKev</span>
+
+Options.positionStepSizePix = 0.25;
+Options.cutSamplingIntervalPix = 0.25;
+
+<span class="comment">% (smaller cutTotalLengthPix will make code run faster)</span>
+Options.cutTotalLengthPix = 105 / Options.pixelSizeUm;
+
+<span class="comment">% This needs to be a factor of 45</span>
+<span class="comment">% Smaller cutAngleIncrementDegrees might give a more accurate measurement of</span>
+<span class="comment">% alpha.</span>
+<span class="comment">% (larger cutAngleIncrementDegrees will make code run faster)</span>
+Options.cutAngleIncrementDegrees = 3;
+
+<span class="comment">% cutAngleIncrementDegrees is used as the base unit for all the other anglular</span>
+<span class="comment">% variables. So variables ending in "Indices" are in this unit.</span>
+
+<span class="comment">% This needs to be a multiple of 2. The units are, the number of indices of</span>
+<span class="comment">%  cutAngleIncrement.</span>
+<span class="comment">% The maximum angular change in a single step is searchAngleIndices/2.</span>
+<span class="comment">% TODO: this could be brought down for smaller pixsize, depending on PSS</span>
+<span class="comment">% Larger searchAngleIndices will allow the ridge-following to make a tighter</span>
+<span class="comment">%  turn. However at 4 steps per pixel length, it does not need to make a very</span>
+<span class="comment">%  tight turn. Regardless, searchAngleIndices/2 should always be much less than</span>
+<span class="comment">%  90 degrees or else there is more potential for losing the ridge and walking</span>
+<span class="comment">%  off an elbow or something.</span>
+<span class="comment">% (smaller searchAngleIndices will make code run faster)</span>
+Options.searchAngleIndices = 48/Options.cutAngleIncrementDegrees;
+
+Options.twoPiIndices = 360/Options.cutAngleIncrementDegrees;
+Options.piIndices = 180/Options.cutAngleIncrementDegrees;
+
+Options.cutAngleIncrementRadians = Options.cutAngleIncrementDegrees * pi/180;
+
+Options.cutAngleRadians(1:Options.twoPiIndices) = <span class="keyword">...</span>
+    Options.cutAngleIncrementRadians : <span class="keyword">...</span>
+    Options.cutAngleIncrementRadians : <span class="keyword">...</span>
+    Options.twoPiIndices*Options.cutAngleIncrementRadians;
+Options.cutAngleDegrees(1:Options.twoPiIndices) = <span class="keyword">...</span>
+    Options.cutAngleIncrementDegrees : <span class="keyword">...</span>
+    Options.cutAngleIncrementDegrees : <span class="keyword">...</span>
+    Options.twoPiIndices*Options.cutAngleIncrementDegrees;
+
+<span class="comment">% TODO: Options.cutLowThresholdKev, for truncating cut width</span>
+
+Options.cutInterpolationMethod = <span class="string">'linear'</span>;
+<span class="comment">% other options include 'cubic' and 'spline', which would be slower.</span>
+
+<span class="comment">% Define x,y of an angled cut for a step direction of 0 degrees, then rotate to</span>
+<span class="comment">% all possible step angles.</span>
+cut0y = -Options.cutTotalLengthPix/2 : <span class="keyword">...</span>
+    Options.cutSamplingIntervalPix : <span class="keyword">...</span>
+    Options.cutTotalLengthPix/2;
+cut0x = zeros(size(cut0y));
+
+<span class="comment">% distance from center to a point. This is used for measuring width,</span>
+<span class="comment">%   width = sum_i (d_i * E_i)</span>
+Options.cutDistanceFromCenterPix = abs(cut0y);
+Options.cutDistanceCoordinatePix = cut0y;
+
+Options.cutCoordinatesPix = cell(1,Options.twoPiIndices);
+<span class="keyword">for</span> angleIndex=1:Options.twoPiIndices
+    <span class="comment">% rotation matrix</span>
+    R = [cos(Options.cutAngleRadians(angleIndex)), <span class="keyword">...</span>
+         sin(Options.cutAngleRadians(angleIndex)); <span class="keyword">...</span>
+        -sin(Options.cutAngleRadians(angleIndex)), <span class="keyword">...</span>
+         cos(Options.cutAngleRadians(angleIndex))];
+    Options.cutCoordinatesPix{angleIndex} = [cut0x',cut0y']*R;
+<span class="keyword">end</span>
+
+baseCutLowThresholdKev = 0.05;
+Options.cutLowThresholdKev = baseCutLowThresholdKev * <span class="keyword">...</span>
+    (Options.pixelSizeUm / 10.5).^2;
+<span class="comment">% cut points below this threshold, and beyond, are ignored</span>
+
+baseTrackEndLowThresholdKev = 0.1;
+Options.trackEndLowThresholdKev = baseTrackEndLowThresholdKev * <span class="keyword">...</span>
+    (Options.pixelSizeUm / 10.5)^2;     <span class="comment">% scale with pixel area.</span>
+
+Options.infiniteLoopThresholdPix = Options.positionStepSizePix / 2;
+
+
+
+<span class="keyword">function</span> Options = HtDefineMeasurementOptions(Options)
+<span class="comment">% function Options = HtDefineMeasurementOptions(Options)</span>
+
+minimumWidthMeasurementLengthUm = 30;   <span class="comment">% roughly defined by diffusion</span>
+preferredWidthMeasurementLengthPix = 2;
+Options.widthMeasurementLengthPix = <span class="keyword">...</span>
+    max(preferredWidthMeasurementLengthPix, <span class="keyword">...</span>
+        minimumWidthMeasurementLengthUm / Options.pixelSizeUm);
+
+Options.initialBetaGuessDegrees = 45;
+Options.shouldShortenMeasurementLength = true;
+Options.measurementFunctionHandle = @median;
+
+
+
+<span class="keyword">function</span> Options = HtDefinePlotOptions(Options)
+<span class="comment">% function Options = HtDefinePlotOptions(Options)</span>
+
+Options.PlotStyle.axesPosition = [];    <span class="comment">% gets set in first plot call</span>
+<span class="keyword">if</span> any(Options.PlotStyle.multiple)
+    load <span class="string">cmaps.mat</span>;
+    Options.PlotStyle.cmap = cmaphotlog;
+    <span class="keyword">if</span> ~isfield(Options.PlotStyle,<span class="string">'insetPix'</span>)
+        Options.PlotStyle.insetPix = [];
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> ~isfield(Options.PlotStyle,<span class="string">'nameString'</span>)
+        Options.PlotStyle.nameString = [];
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+Options.PlotStyle.z0 = 50;
+
+<span class="comment">% colors</span>
+Options.PlotStyle.cutColor = <span class="string">'y'</span>;
+Options.PlotStyle.bestCutColor = <span class="string">'g'</span>;
+Options.PlotStyle.otherCutColor = <span class="string">'c'</span>;
+Options.PlotStyle.ptColor = [0,0.6,1];
+Options.PlotStyle.measPtColor = <span class="string">'g'</span>;
+Options.PlotStyle.measArrColor = <span class="string">'g'</span>;
+Options.PlotStyle.trueArrColor = [0.5,0,1];
+
+
+
+<span class="keyword">function</span> [trackEnergyKev, newImageKev, Options] = <span class="keyword">...</span>
+    HtPrepareImage(originalImageKev, Options)
+<span class="comment">% function [trackEnergy, newImage, Options] = ...</span>
+<span class="comment">%     HtPrepareImage(originalImageKev, Options)</span>
+<span class="comment">%</span>
+<span class="comment">% Add buffer around track image.</span>
+<span class="comment">%</span>
+<span class="comment">% Inputs:</span>
+<span class="comment">%   Options structure defined in HtConstructOptions</span>
+<span class="comment">%   must include field cutTotalLengthPix</span>
+
+<span class="comment">% imageEdgeBuffer does not need to handle the cutTotalLength/2 in any direction.</span>
+<span class="comment">%   it only needs to handle the ridge points going off the edge.</span>
+
+<span class="comment">% TODO: but here, we operate under a misunderstanding.</span>
+imageEdgeBufferUm = 0.55 * Options.cutTotalLengthPix;
+imageEdgeBufferPix = ceil(imageEdgeBufferUm / Options.pixelSizeUm);
+
+newImageSize = [size(originalImageKev,1) + 2*imageEdgeBufferPix, <span class="keyword">...</span>
+                size(originalImageKev,2) + 2*imageEdgeBufferPix];
+newImageKev = zeros(newImageSize);
+
+xIndicesOfOriginalImage = imageEdgeBufferPix + (1:size(originalImageKev,1));
+yIndicesOfOriginalImage = imageEdgeBufferPix + (1:size(originalImageKev,2));
+newImageKev(xIndicesOfOriginalImage, yIndicesOfOriginalImage) = originalImageKev;
+
+trackEnergyKev = sum(newImageKev(:));
+
+
+
+<span class="keyword">function</span> EdgeSegments = HtChooseInitialEnd(imgKev, Options)
+<span class="comment">% function EdgeSegments = HtChooseInitialEnd(imgKev, Options)</span>
+<span class="comment">%</span>
+<span class="comment">% Analyze CCD image to decide what end to measure.</span>
+<span class="comment">%</span>
+<span class="comment">% Inputs:</span>
+<span class="comment">%   imgKev: CCD image.</span>
+<span class="comment">%   Options: structure from HtConstructOptions.</span>
+<span class="comment">%</span>
+<span class="comment">% Outputs: EdgeSegments structure with the following fields:</span>
+<span class="comment">%   energiesKev: list of energies measured at each end</span>
+<span class="comment">%   coordinatesPix: Nx2 list of x,y coordinates for each end pixel</span>
+<span class="comment">%   chosenIndex: index for above two fields, of the selected end</span>
+<span class="comment">%   startCoordinatesPix: x,y coordinates to start the ridge following</span>
+<span class="comment">%   startDirectionIndices: direction to start ridge following, based on thinned</span>
+<span class="comment">%       track image, in units of cutAngleIncrementDegrees</span>
+
+<span class="comment">% first: locate all ends</span>
+endLinearIndices = [];
+connectivity = ones(3);     <span class="comment">%8-connectivity</span>
+
+<span class="comment">% if we are unsuccessful in finding ends, increase threshold to break loops.</span>
+<span class="comment">% Normally this loop will only run once.</span>
+lowThresholdKev = Options.lowThresholdKev;    <span class="comment">%initial value only</span>
+<span class="keyword">while</span> isempty(endLinearIndices) &amp;&amp; lowThresholdKev &lt;= 10*Options.lowThresholdKev;
+    binaryImage = +(imgKev &gt; lowThresholdKev);
+    thinnedImage = +bwmorph(binaryImage,<span class="string">'thin'</span>,inf);
+    nNeighborsImage = conv2(thinnedImage,connectivity) - 1;
+    nNeighborsImage = nNeighborsImage(2:end-1,2:end-1); <span class="comment">%reduce to original size</span>
+    nNeighborsImage = nNeighborsImage .* thinnedImage;  <span class="comment">%only pixels in the track</span>
+
+    endImage = (nNeighborsImage==1);
+    endLinearIndices = find(endImage);
+
+    <span class="comment">%if we have not found any ends, increment by the original threshold.</span>
+    <span class="keyword">if</span> isempty(endLinearIndices)
+        lowThresholdKev = lowThresholdKev + Options.lowThresholdKev;
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> ~isempty(endLinearIndices)
+    lowThresholdUsed = lowThresholdKev;
+<span class="keyword">else</span>
+    <span class="comment">%error: no ends found</span>
+    EdgeSegments.energiesKev = [];
+    EdgeSegments.coordinatesPix = zeros(0,2);
+    EdgeSegments.chosenIndex = nan;
+    EdgeSegments.startCoordinatesPix = zeros(0,2);
+    EdgeSegments.startDirectionIndices = nan;
+    EdgeSegments.lowThresholdUsed = nan;
+    <span class="keyword">return</span>
+<span class="keyword">end</span>
+
+<span class="comment">% measure energies</span>
+[psf,psfArrayRadiusPix] = HtConstructPsf(Options.pixelSizeUm);
+energySumImage = conv2(imgKev,psf);
+energySumImage = energySumImage(1+psfArrayRadiusPix:end-psfArrayRadiusPix, <span class="keyword">...</span>
+                                1+psfArrayRadiusPix:end-psfArrayRadiusPix);
+EdgeSegments.energiesKev = energySumImage(endLinearIndices);
+[EdgeSegments.coordinatesPix(:,1), EdgeSegments.coordinatesPix(:,2)] <span class="keyword">...</span>
+    = ind2sub(size(imgKev),endLinearIndices);
+[~,EdgeSegments.chosenIndex] = min(EdgeSegments.energiesKev);
+
+<span class="comment">% Walk back up the track to get starting location. For each step, I count</span>
+<span class="comment">% neighbors to see if we're at an intersection. If not, I use a find operation</span>
+<span class="comment">% to get the position of the next pixel</span>
+nStepsPixels = ceil(Options.ridgeStartingDistanceFromTrackEndUm / <span class="keyword">...</span>
+                    Options.pixelSizeUm);
+thisEnd = EdgeSegments.coordinatesPix(EdgeSegments.chosenIndex, :);
+imageTemp = thinnedImage;
+thisXY = thisEnd;
+<span class="comment">% keep track of the direction of every step.</span>
+<span class="comment">% step #1 is from pixel #1 (end pixel) to pixel #2.</span>
+xStep = nan(1,nStepsPixels);
+yStep = nan(1,nStepsPixels);
+<span class="keyword">for</span> stepNo = 1:nStepsPixels
+    imageTemp(thisXY(1), thisXY(2)) = 0;
+    neighbors = imageTemp(thisXY(1)-1:thisXY(1)+1, thisXY(2)-1:thisXY(2)+1);
+    nNeighbors = sum(neighbors(:));
+    <span class="keyword">if</span> nNeighbors == 1
+        <span class="comment">% take this step</span>
+        <span class="comment">% by definition, this must happen for the first step, since we start at</span>
+        <span class="comment">% an end.</span>
+        [xStep(stepNo), yStep(stepNo)] = find(neighbors);
+        xStep(stepNo) = xStep(stepNo) - 2;  <span class="comment">%from [1 2 3] to [-1 0 1]</span>
+        yStep(stepNo) = yStep(stepNo) - 2;  <span class="comment">%from [1 2 3] to [-1 0 1]</span>
+        thisXY = thisXY + [xStep(stepNo), yStep(stepNo)];
+        lastStep = [xStep(stepNo), yStep(stepNo)];  <span class="comment">%for direction</span>
+    <span class="keyword">elseif</span> nNeighbors &gt; 1
+        <span class="comment">% at an intersection.</span>
+        <span class="comment">% take a step back.</span>
+        thisXY = thisXY - lastStep;
+        <span class="comment">% lastStep can remain as is, pointing away from the intersection.</span>
+        <span class="keyword">break</span>
+    <span class="keyword">elseif</span> nNeighbors == 0
+        <span class="comment">% end of track. keep thisXY</span>
+        <span class="keyword">break</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+EdgeSegments.startCoordinatesPix = thisXY;
+startDirectionDegrees = 180/pi * atan2(-lastStep(2), -lastStep(1));
+<span class="keyword">if</span> startDirectionDegrees &gt; 0    <span class="comment">%atan2 returns a value on [-pi, pi]</span>
+    EdgeSegments.startDirectionIndices = round(startDirectionDegrees / <span class="keyword">...</span>
+        Options.cutAngleIncrementDegrees);
+<span class="keyword">else</span>
+    EdgeSegments.startDirectionIndices = round((startDirectionDegrees + 360) <span class="keyword">...</span>
+        / Options.cutAngleIncrementDegrees);
+<span class="keyword">end</span>
+
+EdgeSegments.lowThresholdUsed = lowThresholdUsed;
+EdgeSegments.thinnedImage = thinnedImage;
+
+<span class="keyword">if</span> Options.PlotStyle.multiple(1)
+    <span class="comment">% original image</span>
+    [~, Options.PlotStyle.axesPosition] = <span class="keyword">...</span>
+        HtPlotImage(imgKev, Options.PlotStyle.cmap, <span class="keyword">...</span>
+        Options.PlotStyle.axesPosition, []);
+    HtSavePlot(gcf, Options, <span class="string">'01_original'</span>);
+<span class="keyword">end</span>
+<span class="keyword">if</span> Options.PlotStyle.multiple(2)
+    <span class="comment">% standard binary image</span>
+    binImg = imgKev &gt; Options.lowThresholdKev;
+    [~, Options.PlotStyle.axesPosition] = <span class="keyword">...</span>
+        HtPlotImage(binImg, <span class="string">'gray'</span>, <span class="keyword">...</span>
+        Options.PlotStyle.axesPosition, []);
+    HtSavePlot(gcf, Options, <span class="string">'02_binary'</span>);
+<span class="keyword">end</span>
+<span class="keyword">if</span> Options.PlotStyle.multiple(3)
+    <span class="comment">% high-threshold binary image</span>
+    binImg = imgKev &gt; 3*Options.lowThresholdKev;
+    [~, Options.PlotStyle.axesPosition] = <span class="keyword">...</span>
+        HtPlotImage(binImg, <span class="string">'gray'</span>, <span class="keyword">...</span>
+        Options.PlotStyle.axesPosition, []);
+    HtSavePlot(gcf, Options, <span class="string">'03_binary_high'</span>);
+<span class="keyword">end</span>
+<span class="keyword">if</span> Options.PlotStyle.multiple(4)
+    <span class="comment">% low-threshold binary image</span>
+    binImg = imgKev &gt; 0.1*Options.lowThresholdKev;
+    [~, Options.PlotStyle.axesPosition] = <span class="keyword">...</span>
+        HtPlotImage(binImg, <span class="string">'gray'</span>, <span class="keyword">...</span>
+        Options.PlotStyle.axesPosition, []);
+    HtSavePlot(gcf, Options, <span class="string">'04_binary_low'</span>);
+<span class="keyword">end</span>
+<span class="keyword">if</span> Options.PlotStyle.multiple(5)
+    <span class="comment">% thinned image</span>
+    binImg = EdgeSegments.thinnedImage;
+    [~, Options.PlotStyle.axesPosition] = <span class="keyword">...</span>
+        HtPlotImage(binImg, <span class="string">'gray'</span>, <span class="keyword">...</span>
+        Options.PlotStyle.axesPosition, []);
+    HtSavePlot(gcf, Options, <span class="string">'05_thinned'</span>);
+<span class="keyword">end</span>
+<span class="keyword">if</span> Options.PlotStyle.multiple(6)
+    <span class="comment">% thinned image, ends highlighted</span>
+    binImg = +EdgeSegments.thinnedImage;
+    binImg(endLinearIndices) = 2;
+    [~, Options.PlotStyle.axesPosition] = <span class="keyword">...</span>
+        HtPlotImage(binImg, <span class="string">'gray'</span>, <span class="keyword">...</span>
+        Options.PlotStyle.axesPosition, []);
+    HtSavePlot(gcf, Options, <span class="string">'06_thinned_highlighted'</span>);
+<span class="keyword">end</span>
+<span class="keyword">if</span> Options.PlotStyle.multiple(7)
+    <span class="comment">% image with ends circled</span>
+    [h, Options.PlotStyle.axesPosition] = <span class="keyword">...</span>
+        HtPlotImage(imgKev, Options.PlotStyle.cmap, <span class="keyword">...</span>
+        Options.PlotStyle.axesPosition, []);
+    <span class="keyword">for</span> i=1:size(EdgeSegments.coordinatesPix,1)
+        x0tmp = EdgeSegments.coordinatesPix(i,1);
+        y0tmp = EdgeSegments.coordinatesPix(i,2);
+        x0tmp = x0tmp + 0.5;
+        y0tmp = y0tmp + 0.5;
+        disp([<span class="string">'End #'</span>,num2str(i),<span class="string">' at ('</span>,num2str(x0tmp),<span class="string">', '</span>,num2str(y0tmp),<span class="keyword">...</span>
+            <span class="string">'): energy = '</span>,num2str(EdgeSegments.energiesKev(i))])
+        <span class="comment">%draw the outline, starting at lower left inside corner</span>
+        xtmp = [x0tmp-1.5, x0tmp-2.5, x0tmp-2.5, x0tmp-1.5, x0tmp-1.5, x0tmp+1.5, x0tmp+1.5, <span class="keyword">...</span>
+            x0tmp+2.5, x0tmp+2.5, x0tmp+1.5, x0tmp+1.5, x0tmp-1.5, x0tmp-1.5]';
+        ytmp = [y0tmp-1.5, y0tmp-1.5, y0tmp+1.5, y0tmp+1.5, y0tmp+2.5, y0tmp+2.5, y0tmp+1.5, <span class="keyword">...</span>
+            y0tmp+1.5, y0tmp-1.5, y0tmp-1.5, y0tmp-2.5, y0tmp-2.5, y0tmp-1.5]';
+        hold <span class="string">on</span>;
+        plot3(h, ytmp, xtmp, Options.PlotStyle.z0*ones(size(xtmp)), <span class="keyword">...</span>
+            <span class="string">'g'</span>,<span class="string">'linewidth'</span>,1);
+    <span class="keyword">end</span>
+    HtSavePlot(gcf, Options, <span class="string">'07_ends_circled'</span>);
+<span class="keyword">end</span>
+
+
+
+<span class="keyword">function</span> [psf, psfArrayRadiusPix] = HtConstructPsf(pixelSizeUm)
+<span class="comment">% function [psf, psfArrayRadiusPix] = HtConstructPsf(pixelSizeUm)</span>
+<span class="comment">%</span>
+<span class="comment">% Construct a convolution kernel covering a 25 um radius.</span>
+<span class="comment">%</span>
+<span class="comment">% Inputs:</span>
+<span class="comment">%   pixelSizeUm: pixel size in microns</span>
+<span class="comment">%</span>
+<span class="comment">% Outputs:</span>
+<span class="comment">%   psf: the convolution kernel, consisting of 0s and 1s.</span>
+<span class="comment">%   psfArrayRadiusPix: (size(psf,1)-1)/2</span>
+
+<span class="comment">%1.0</span>
+<span class="comment">%Sum energy from pixels within 25 um of end pixel.</span>
+<span class="comment">%   These are by no means tested or optimized . . this is something to work on.</span>
+<span class="comment">%</span>
+<span class="comment">% Viewing code for circle: (command window)</span>
+<span class="comment">% pixsize = 10.5; th = 0:360; x = 0.5+25/pixsize*cosd(th); y = 0.5+25/pixsize*sind(th); plot(x,y)</span>
+<span class="comment">% set(gca,'xtick',-ceil(1+25/pixsize):ceil(1+25/pixsize)); set(gca,'ytick',-ceil(1+25/pixsize):ceil(1+25/pixsize));</span>
+<span class="comment">%</span>
+<span class="comment">% This code replicates the hard-coded psf's for 5, 10.5, 20, and 30+ um.</span>
+
+psfRadiusUm = 25;
+psfExactRadiusPix = psfRadiusUm / pixelSizeUm;
+psfArrayRadiusPix = ceil(psfExactRadiusPix) - 1;    <span class="comment">%...</span>
+psfDiameterPix = psfArrayRadiusPix * 2 + 1;  <span class="comment">%odd integer</span>
+x = -psfArrayRadiusPix : psfArrayRadiusPix;
+y = -psfArrayRadiusPix : psfArrayRadiusPix;
+psf = zeros(psfDiameterPix);
+<span class="keyword">for</span> xInd = 1:length(x)
+    <span class="keyword">for</span> yInd = 1:length(y)
+        <span class="keyword">if</span> x(xInd)^2 + y(yInd)^2 &lt; psfExactRadiusPix^2
+            psf(xInd,yInd) = 1;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+
+
+<span class="keyword">function</span> [h,axSize] = HtPlotImage(imageToPlot,cmap,axSize,insetPix)
+<span class="comment">% function [h,axSize] = HtPlotImage(imageToPlot,cmap,axSize,insetPix)</span>
+<span class="comment">%</span>
+<span class="comment">% imageToPlot: numeric or boolean</span>
+<span class="comment">% cmap: color map (use cmaphotlog from cmaps.mat)</span>
+<span class="comment">%</span>
+<span class="comment">% h: axes handle</span>
+
+axesFontSize = 18;
+xSizeScale = 1;
+ySizeScale = 1;
+figPosition = [851, 388, xSizeScale*560, ySizeScale*420];
+
+grayColorMap = ischar(cmap) &amp;&amp; strcmpi(cmap,<span class="string">'gray'</span>);
+<span class="keyword">if</span> isnumeric(imageToPlot) &amp;&amp; ~grayColorMap
+    <span class="comment">% normal track image</span>
+    h = SurfElectronTrack(imageToPlot,<span class="string">'cmap'</span>,cmap);
+<span class="keyword">elseif</span> islogical(imageToPlot) || grayColorMap
+    <span class="comment">% binary image</span>
+    h = SurfElectronTrack(+imageToPlot,<span class="string">'cmap'</span>,cmap);
+    colorbar(<span class="string">'off'</span>);
+<span class="keyword">else</span>
+    error(<span class="string">'imageToPlot should be numeric or logical'</span>)
+<span class="keyword">end</span>
+<span class="keyword">if</span> ~isempty(insetPix)
+    xlim(h,insetPix(1:2));
+    ylim(h,insetPix(3:4));
+<span class="keyword">end</span>
+set(h,<span class="string">'fontsize'</span>,axesFontSize);
+set(get(h,<span class="string">'parent'</span>),<span class="string">'position'</span>,figPosition);
+drawnow;
+<span class="keyword">if</span> isempty(axSize)
+    <span class="comment">% first time only</span>
+    axSize = get(h,<span class="string">'position'</span>);
+<span class="keyword">end</span>
+set(h,<span class="string">'position'</span>,axSize);
+xlabel([]);
+ylabel([]);
+set(get(h,<span class="string">'parent'</span>),<span class="string">'color'</span>,<span class="string">'w'</span>);
+
+
+
+<span class="keyword">function</span> HtSavePlot(figHandle, Options, suffix)
+<span class="comment">% function HtSavePlot(figHandle, Options, suffix)</span>
+
+<span class="keyword">if</span> ~isempty(Options.PlotStyle.nameString)
+    saveName = [<span class="string">'Track_'</span>,Options.PlotStyle.nameString,<span class="string">'_'</span>,suffix];
+    printAll(figHandle,saveName);
+<span class="keyword">end</span>
+
+
+
+<span class="keyword">function</span> Ridge = HtRidgeFollow(EdgeSegments, Options, imgKev)
+<span class="comment">% function Ridge = HtRidgeFollow(EdgeSegments, Options, imgKev)</span>
+<span class="comment">%</span>
+<span class="comment">% Follow the "ridge" of an electron track image.</span>
+<span class="comment">%</span>
+<span class="comment">% Inputs: {standard choice}</span>
+<span class="comment">%   EdgeSegments: structure requiring fields:</span>
+<span class="comment">%       startCoordinatesPix: coordinates of img to start at, in pixels</span>
+<span class="comment">%       startDirectionIndices: angle to start moving in, units of</span>
+<span class="comment">%           Options.cutAngleIncrementDegrees</span>
+<span class="comment">%   Options: structure requiring fields:</span>
+<span class="comment">%       cutInterpolationMethod: for interp2. {'linear'}, 'spline'</span>
+<span class="comment">%       trackEndLowThresholdKev: for ending the ridge-following. {0.1}</span>
+<span class="comment">%       infiniteLoopThresholdPix: minimum distance from a previous point,</span>
+<span class="comment">%           in order to stop ridge-following because of infinite loop.</span>
+<span class="comment">%           {0.5 * Options.xxxxxxx}</span>
+<span class="comment">%       cutAngleIncrementDegrees: angular resolution of step direction.</span>
+<span class="comment">%           (the actual recorded direction is after centroid adjustment.)</span>
+<span class="comment">%       twoPiIndices: 360 degrees, in units of Options.cutAngleIncrementDegrees</span>
+<span class="comment">%       searchAngleIndices: maximum turn per step = 0.5*searchAngleIndices.</span>
+<span class="comment">%       cutCoordinatesPix: cell array of vectors. Each represents the</span>
+<span class="comment">%           coordinates of one angled cut, relative to the ridge point.</span>
+<span class="comment">%       cutDistanceFromCenter: the distance from center for cutCoordinatesPix</span>
+<span class="comment">%          vectors.</span>
+<span class="comment">%       pixelSizeUm: the pixel pitch of the image.</span>
+<span class="comment">%       cutSamplingIntervalPix: the increment between neighboring</span>
+<span class="comment">%           cutCoordinatesPix points.</span>
+<span class="comment">%       cutAngleDegrees: [degrees] = cutAngleDegrees([indices])</span>
+<span class="comment">%       positionStepSizePix: nominal distance from one ridge point to the next.</span>
+<span class="comment">%</span>
+<span class="comment">% Outputs:</span>
+<span class="comment">%   Ridge: structure containing the following fields:</span>
+<span class="comment">%       positionPix: n-by-2 array containing coordinate pairs of ridge points.</span>
+<span class="comment">%       fwhmUm: measured FWHM of the chosen cut, in um.</span>
+<span class="comment">%       dedxKevUm: energy integrated over cut, into units of keV/um.</span>
+<span class="comment">%       stepLengthPix: actual distance from the previous ridge point</span>
+<span class="comment">%       alphaDegrees: actual angle from the previous ridge point</span>
+
+<span class="comment">% set values for first step</span>
+Ridge.positionPix(1,1:2) = EdgeSegments.startCoordinatesPix;
+startDirectionIndices = EdgeSegments.startDirectionIndices;
+isFinished = false;
+
+<span class="keyword">while</span> ~isFinished
+    Ridge = HtTakeOneStep(imgKev, Ridge, Options, startDirectionIndices);
+
+    <span class="keyword">if</span> Options.PlotStyle.single
+        Options.PlotStyle.h = HtPlotRidgeStep(imgKev, Ridge, Options);
+    <span class="keyword">end</span>
+
+    <span class="comment">% are we at the end of the track?</span>
+    thisXPix = Ridge.positionPix(end,1);
+    thisYPix = Ridge.positionPix(end,2);
+    <span class="comment">% there is a possibility (especially for noisy images)</span>
+    <span class="comment">%   that all the cut points were under threshold, and</span>
+    <span class="comment">%   this*Pix are NaN's. This happens at the end of the track.</span>
+    <span class="keyword">if</span> ~isnan(thisXPix) &amp;&amp; ~isnan(thisYPix)
+        thisEnergyKev = interp2(imgKev, thisYPix, thisXPix, <span class="keyword">...</span>
+                            Options.cutInterpolationMethod);
+        isAtEndOfTrack = thisEnergyKev &lt; Options.trackEndLowThresholdKev;
+    <span class="keyword">else</span>
+        isAtEndOfTrack = true;
+        lastGoodRidgePoint = find(~isnan(Ridge.positionPix(:,1)),1,<span class="string">'last'</span>);
+        <span class="comment">% erase NaN points</span>
+        Ridge.positionPix(lastGoodRidgePoint+2:end,:) = []; <span class="comment">% 2 b/c trimmed later</span>
+        Ridge.fwhmUm(lastGoodRidgePoint+1:end) = [];
+        Ridge.dedxKevUm(lastGoodRidgePoint+1:end) = [];
+        Ridge.stepLengthPix(lastGoodRidgePoint+1:end) = [];
+        Ridge.alphaDegrees(lastGoodRidgePoint+1:end) = [];
+        Ridge.bestCutCoordinatesPix = <span class="keyword">...</span>
+            Ridge.bestCutCoordinatesPix(1:lastGoodRidgePoint);  <span class="comment">% cell array</span>
+    <span class="keyword">end</span>
+    <span class="comment">% are we stuck in an infinite loop?</span>
+    <span class="comment">% don't use the current point... it's going to move. use previous point.</span>
+    previousPoints = 1 : size(Ridge.positionPix,1)-2;
+    prevXPix = Ridge.positionPix(end-1,1);
+    prevYPix = Ridge.positionPix(end-1,2);
+    dx = prevXPix - Ridge.positionPix(previousPoints,1);
+    dy = prevYPix - Ridge.positionPix(previousPoints,2);
+    threshold = Options.infiniteLoopThresholdPix;
+	isInInfiniteLoop = any(dx.^2 + dy.^2 &lt; threshold^2);
+
+    <span class="comment">% set values for next step</span>
+    isFinished = isAtEndOfTrack || isInInfiniteLoop;
+    startDirectionIndices = []; <span class="comment">%only use it for the first step</span>
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> isInInfiniteLoop
+    Ridge.err = <span class="string">'Infinite loop'</span>;
+<span class="keyword">end</span>
+<span class="comment">% trim last point</span>
+Ridge.positionPix(end,:) = [];
+
+<span class="comment">% plots</span>
+<span class="keyword">if</span> Options.PlotStyle.multiple(11)
+    <span class="comment">% all ridge points</span>
+    [~, Options.PlotStyle.axesPosition] = <span class="keyword">...</span>
+        HtPlotImage(imgKev, Options.PlotStyle.cmap, <span class="keyword">...</span>
+        Options.PlotStyle.axesPosition, <span class="keyword">...</span>
+        Options.PlotStyle.insetPix);
+    hold <span class="string">on</span>
+    plot3(Ridge.positionPix(:,2)+0.5, Ridge.positionPix(:,1)+0.5, <span class="keyword">...</span>
+        Options.PlotStyle.z0*ones(size(Ridge.positionPix(:,1))), <span class="keyword">...</span>
+        <span class="string">'d'</span>,<span class="string">'markerfacecolor'</span>,Options.PlotStyle.ptColor, <span class="keyword">...</span>
+        <span class="string">'markeredgecolor'</span>,Options.PlotStyle.ptColor, <span class="keyword">...</span>
+        <span class="string">'markersize'</span>,4);
+    HtSavePlot(gcf, Options, <span class="string">'11_finished_points'</span>);
+<span class="keyword">end</span>
+<span class="keyword">if</span> Options.PlotStyle.multiple(12)
+    <span class="comment">% all ridge cuts</span>
+    [~, Options.PlotStyle.axesPosition] = <span class="keyword">...</span>
+        HtPlotImage(imgKev, Options.PlotStyle.cmap, <span class="keyword">...</span>
+        Options.PlotStyle.axesPosition, <span class="keyword">...</span>
+        Options.PlotStyle.insetPix);
+    hold <span class="string">on</span>
+    <span class="keyword">for</span> i=1:length(Ridge.bestCutCoordinatesPix)
+        z0 = Options.PlotStyle.z0 * <span class="keyword">...</span>
+            ones(size(Ridge.bestCutCoordinatesPix{i}(:,1)));
+        plot3(Ridge.bestCutCoordinatesPix{i}(:,2)+0.5, <span class="keyword">...</span>
+            Ridge.bestCutCoordinatesPix{i}(:,1)+0.5, <span class="keyword">...</span>
+            z0, <span class="string">'-'</span>, <span class="string">'color'</span>,Options.PlotStyle.bestCutColor);
+    <span class="keyword">end</span>
+    HtSavePlot(gcf, Options, <span class="string">'12_finished_cuts'</span>);
+<span class="keyword">end</span>
+
+
+
+
+<span class="keyword">function</span> Ridge = HtTakeOneStep(preparedImageKev, Ridge, Options, <span class="keyword">...</span>
+    startDirectionIndices)
+<span class="comment">% function Ridge = HtTakeOneStep(preparedImageKev, Ridge, Options, ...</span>
+<span class="comment">%     startDirectionIndices)</span>
+<span class="comment">%</span>
+<span class="comment">% Take one step of ridge-following, making the accompanying measurements.</span>
+<span class="comment">%</span>
+<span class="comment">% If it is the first step, startDirectionIndices must be supplied.</span>
+<span class="comment">%</span>
+<span class="comment">% Ridge.position(end,:) should contain the point to start from and measure.</span>
+<span class="comment">% That point will be modified to fit the centroid of the energy cut.</span>
+<span class="comment">% Other Ridge properties should be one index shorter, because they have not been</span>
+<span class="comment">%   measured yet.</span>
+
+thisRidgePointIndex = size(Ridge.positionPix,1);
+previousRidgePointIndex = thisRidgePointIndex - 1;  <span class="comment">%may or may not exist</span>
+
+thisXPix = Ridge.positionPix(thisRidgePointIndex,1);
+thisYPix = Ridge.positionPix(thisRidgePointIndex,2);
+
+<span class="keyword">if</span> (nargin==3 || isempty(startDirectionIndices)) &amp;&amp; previousRidgePointIndex &gt; 0
+    <span class="comment">% startDirectionIndices not supplied</span>
+    <span class="comment">% so, read it from the previous step</span>
+    lastStepPix1 = Ridge.positionPix(thisRidgePointIndex, 1:2) - <span class="keyword">...</span>
+                   Ridge.positionPix(previousRidgePointIndex, 1:2);
+    <span class="comment">% lastStep will change once we adjust to centroid. hence lastStep1.</span>
+    startDirectionDegrees = 180/pi * atan2(lastStepPix1(2),lastStepPix1(1));
+    startDirectionIndices = round(startDirectionDegrees / <span class="keyword">...</span>
+        Options.cutAngleIncrementDegrees);
+    <span class="comment">% wrap around to positive angles</span>
+    <span class="keyword">if</span> startDirectionIndices &lt;= 0
+        startDirectionIndices = startDirectionIndices + Options.twoPiIndices;
+    <span class="keyword">end</span>
+<span class="keyword">elseif</span> nargin ==2 &amp;&amp; previousRidgePointIndex == 0
+    <span class="comment">% problem</span>
+    error(<span class="string">'I need a startDirection!'</span>)
+<span class="keyword">end</span>
+minimumCutAngleIndices = startDirectionIndices - Options.searchAngleIndices / 2;
+maximumCutAngleIndices = startDirectionIndices + Options.searchAngleIndices / 2;
+theseCutAnglesIndices = minimumCutAngleIndices:maximumCutAngleIndices;
+<span class="comment">%wrap around to positive angles in range</span>
+theseCutAnglesIndices(theseCutAnglesIndices &lt;= 0) = <span class="keyword">...</span>
+    theseCutAnglesIndices(theseCutAnglesIndices &lt;=0) + <span class="keyword">...</span>
+    Options.twoPiIndices;
+theseCutAnglesIndices(theseCutAnglesIndices &gt; Options.twoPiIndices) = <span class="keyword">...</span>
+    theseCutAnglesIndices(theseCutAnglesIndices &gt; Options.twoPiIndices) - <span class="keyword">...</span>
+    Options.twoPiIndices;
+<span class="comment">%initialize</span>
+allCutsXPix                  = cell(1,length(theseCutAnglesIndices));
+allCutsYPix                  = cell(1,length(theseCutAnglesIndices));
+allCutsDistanceCoordinatePix = cell(1,length(theseCutAnglesIndices));
+allCutsEnergyKev             = cell(1,length(theseCutAnglesIndices));
+widthMetric                  =  nan(1,length(theseCutAnglesIndices));
+<span class="keyword">for</span> cutAngleNo = 1:length(theseCutAnglesIndices)
+    thisCutXPix = thisXPix + <span class="keyword">...</span>
+        Options.cutCoordinatesPix{theseCutAnglesIndices(cutAngleNo)}(:,1);
+    thisCutYPix = thisYPix + <span class="keyword">...</span>
+        Options.cutCoordinatesPix{theseCutAnglesIndices(cutAngleNo)}(:,2);
+
+    <span class="comment">% exclude out-of-bounds points</span>
+    minX = 1;
+    minY = 1;
+    maxX = size(preparedImageKev,1);
+    maxY = size(preparedImageKev,2);
+    isInBounds = thisCutXPix &gt; minX &amp; thisCutXPix &lt; maxX &amp; <span class="keyword">...</span>
+                 thisCutYPix &gt; minY &amp; thisCutYPix &lt; maxY;
+    thisCutXPix = thisCutXPix(isInBounds);
+    thisCutYPix = thisCutYPix(isInBounds);
+    thisCutDistanceCoordinatePix = Options.cutDistanceCoordinatePix(isInBounds);
+    thisCutDistanceFromCenterPix = Options.cutDistanceFromCenterPix(isInBounds);
+    thisCutEnergyKev = interp2(preparedImageKev, thisCutYPix, thisCutXPix, <span class="keyword">...</span>
+        Options.cutInterpolationMethod);
+
+    <span class="comment">% check for cutLowThreshold and exclude points</span>
+    pointIsIncluded = true(size(thisCutEnergyKev));
+    <span class="comment">% each side separately</span>
+    side1underThreshold = thisCutDistanceCoordinatePix &lt; 0 &amp; <span class="keyword">...</span>
+            thisCutEnergyKev' &lt; Options.cutLowThresholdKev;
+    <span class="keyword">if</span> any(side1underThreshold)
+        endIndex = 1;
+        pointsToExclude = endIndex:find(side1underThreshold,1,<span class="string">'last'</span>);
+        pointIsIncluded(pointsToExclude) = false;
+    <span class="keyword">end</span>
+    side2underThreshold = thisCutDistanceCoordinatePix &gt; 0 &amp; <span class="keyword">...</span>
+            thisCutEnergyKev' &lt; Options.cutLowThresholdKev;
+    <span class="keyword">if</span> any(side2underThreshold)
+        endIndex = length(side2underThreshold);
+        pointsToExclude = find(side2underThreshold,1,<span class="string">'first'</span>):endIndex;
+        pointIsIncluded(pointsToExclude) = false;
+    <span class="keyword">end</span>
+    thisCutXPix = thisCutXPix(pointIsIncluded);
+    thisCutYPix = thisCutYPix(pointIsIncluded);
+    thisCutDistanceCoordinatePix = thisCutDistanceCoordinatePix(pointIsIncluded);
+    thisCutDistanceFromCenterPix = thisCutDistanceFromCenterPix(pointIsIncluded);
+    thisCutEnergyKev = thisCutEnergyKev(pointIsIncluded);
+
+    <span class="comment">% here, the previous algorithm excludes cut points less than 0.</span>
+    widthMetric(cutAngleNo) = sum(thisCutEnergyKev .* <span class="keyword">...</span>
+        thisCutDistanceFromCenterPix');
+    <span class="comment">%save for centroid calculation</span>
+    allCutsXPix{cutAngleNo}                  = thisCutXPix;
+    allCutsYPix{cutAngleNo}                  = thisCutYPix;
+    allCutsDistanceCoordinatePix{cutAngleNo} = thisCutDistanceCoordinatePix;
+    allCutsEnergyKev{cutAngleNo}             = thisCutEnergyKev;
+<span class="keyword">end</span>
+
+[~,bestCutIndex] = min(widthMetric);
+bestCutXPix                  = allCutsXPix{bestCutIndex};
+bestCutYPix                  = allCutsYPix{bestCutIndex};
+bestCutDistanceCoordinatePix = allCutsDistanceCoordinatePix{bestCutIndex};
+bestCutEnergyKev             = allCutsEnergyKev{bestCutIndex};
+
+<span class="comment">% adjust to centroid</span>
+centroidXPix = sum(bestCutEnergyKev .* bestCutXPix) / sum(bestCutEnergyKev);
+centroidYPix = sum(bestCutEnergyKev .* bestCutYPix) / sum(bestCutEnergyKev);
+thisXPix = centroidXPix;
+thisYPix = centroidYPix;
+
+<span class="comment">% measure stuff</span>
+thisFwhmUm = <span class="keyword">...</span>
+    HtMeasureCutWidth(bestCutDistanceCoordinatePix * Options.pixelSizeUm, <span class="keyword">...</span>
+    bestCutEnergyKev);
+thisDedxKevUm = sum(bestCutEnergyKev) * Options.cutSamplingIntervalPix / <span class="keyword">...</span>
+	Options.pixelSizeUm;
+<span class="comment">% thisAlpha measures from the previous point to here</span>
+<span class="keyword">if</span> previousRidgePointIndex &gt; 0
+    <span class="comment">% not the first point</span>
+    lastStepPix2 = Ridge.positionPix(thisRidgePointIndex, 1:2) - <span class="keyword">...</span>
+                   Ridge.positionPix(previousRidgePointIndex, 1:2);
+    thisAlphaDegrees = 180/pi * atan2(lastStepPix2(2), lastStepPix2(1));
+    thisStepLengthPix = sqrt(lastStepPix2(1)^2 + lastStepPix2(2)^2);
+<span class="keyword">else</span>
+    <span class="comment">% first point only</span>
+    theseCutAnglesDegrees = Options.cutAngleDegrees(theseCutAnglesIndices);
+    thisAlphaDegrees = theseCutAnglesDegrees(bestCutIndex);
+    thisStepLengthPix = Options.positionStepSizePix;
+
+    <span class="comment">% plots</span>
+    <span class="keyword">if</span> Options.PlotStyle.multiple(8)
+        <span class="comment">% image with all cuts through initial point</span>
+        [~, Options.PlotStyle.axesPosition] = <span class="keyword">...</span>
+            HtPlotImage(preparedImageKev, Options.PlotStyle.cmap, <span class="keyword">...</span>
+            Options.PlotStyle.axesPosition, <span class="keyword">...</span>
+            Options.PlotStyle.insetPix);
+        hold <span class="string">on</span>;
+        <span class="keyword">for</span> i=1:length(theseCutAnglesDegrees)
+            z0 = Options.PlotStyle.z0*ones(size(allCutsXPix{i}));
+            plot3(allCutsYPix{i}+0.5, allCutsXPix{i}+0.5, z0, <span class="string">'-'</span>, <span class="keyword">...</span>
+                <span class="string">'color'</span>,Options.PlotStyle.cutColor);
+        <span class="keyword">end</span>
+        z0 = Options.PlotStyle.z0*ones(size(bestCutXPix));
+        plot3(bestCutYPix+0.5, bestCutXPix+0.5, z0, <span class="string">'-'</span>, <span class="keyword">...</span>
+            <span class="string">'color'</span>, Options.PlotStyle.bestCutColor);
+        HtSavePlot(gcf, Options, <span class="string">'08_initialcuts_all'</span>);
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> Options.PlotStyle.multiple(9)
+        <span class="comment">% image with three example cuts, sample points shown</span>
+        [~, Options.PlotStyle.axesPosition] = <span class="keyword">...</span>
+            HtPlotImage(preparedImageKev, Options.PlotStyle.cmap, <span class="keyword">...</span>
+            Options.PlotStyle.axesPosition, <span class="keyword">...</span>
+            Options.PlotStyle.insetPix);
+        hold <span class="string">on</span>;
+        colors{1}                   = Options.PlotStyle.cutColor;
+        colors{bestCutIndex}        = Options.PlotStyle.bestCutColor;
+        colors{length(allCutsXPix)} = Options.PlotStyle.otherCutColor;
+        <span class="keyword">for</span> i = [1, bestCutIndex, length(allCutsXPix)]
+            z0 = Options.PlotStyle.z0*ones(size(allCutsXPix{i}));
+            plot3(allCutsYPix{i}+0.5, allCutsXPix{i}+0.5, z0, <span class="string">'d'</span>, <span class="keyword">...</span>
+                <span class="string">'markerfacecolor'</span>, colors{i}, <span class="string">'markersize'</span>, 4, <span class="keyword">...</span>
+                <span class="string">'markeredgecolor'</span>, colors{i});
+        <span class="keyword">end</span>
+        HtSavePlot(gcf, Options, <span class="string">'09_initialcuts_select'</span>);
+    <span class="keyword">end</span>
+    <span class="keyword">if</span> Options.PlotStyle.multiple(10)
+        <span class="comment">% graph of interpolated energy in each cut from (9)</span>
+        <span class="comment">% first make axes object with proper settings...</span>
+        HtPlotImage(ones(2),<span class="string">'gray'</span>,Options.PlotStyle.axesPosition,[]);
+        hold <span class="string">off</span>
+        colors{1}                   = Options.PlotStyle.cutColor;
+        colors{bestCutIndex}        = Options.PlotStyle.bestCutColor;
+        colors{length(allCutsXPix)} = Options.PlotStyle.otherCutColor;
+        <span class="keyword">for</span> i = [1, bestCutIndex, length(allCutsXPix)]
+            plot(allCutsDistanceCoordinatePix{i}, allCutsEnergyKev{i}, <span class="keyword">...</span>
+                <span class="string">'-o'</span>, <span class="string">'color'</span>, colors{i}, <span class="keyword">...</span>
+                <span class="string">'markeredgecolor'</span>,<span class="string">'k'</span>, <span class="string">'markerfacecolor'</span>, colors{i}, <span class="keyword">...</span>
+                <span class="string">'linewidth'</span>,2, <span class="string">'markersize'</span>,8);
+            hold <span class="string">on</span>;
+        <span class="keyword">end</span>
+        xlabel(<span class="string">'Length along cut [pixel lengths]'</span>)
+        ylabel(<span class="string">'Interpolated energy value [keV]'</span>)
+        HtSavePlot(gcf, Options, <span class="string">'10_initialcuts_energy'</span>);
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% nextAlpha measures from here to where the next step will be</span>
+theseCutAnglesDegrees = Options.cutAngleDegrees(theseCutAnglesIndices);
+nextAlphaDegrees = theseCutAnglesDegrees(bestCutIndex);
+<span class="comment">% take the step!</span>
+nextStepPix = Options.positionStepSizePix * <span class="keyword">...</span>
+              [cosd(nextAlphaDegrees), sind(nextAlphaDegrees)];
+nextXPix = thisXPix + nextStepPix(1);
+nextYPix = thisYPix + nextStepPix(2);
+nextRidgePointIndex = thisRidgePointIndex + 1;
+
+<span class="comment">% construct output structure</span>
+Ridge.positionPix          (thisRidgePointIndex,1:2) = [thisXPix, thisYPix];
+Ridge.positionPix          (nextRidgePointIndex,1:2) = [nextXPix, nextYPix];
+Ridge.fwhmUm               (thisRidgePointIndex)     = thisFwhmUm;
+Ridge.dedxKevUm            (thisRidgePointIndex)     = thisDedxKevUm;
+Ridge.stepLengthPix        (thisRidgePointIndex)     = thisStepLengthPix;
+Ridge.alphaDegrees         (thisRidgePointIndex)     = thisAlphaDegrees;
+Ridge.bestCutCoordinatesPix{thisRidgePointIndex}     = <span class="keyword">...</span>
+    [bestCutXPix(:), bestCutYPix(:)];
+
+
+
+<span class="keyword">function</span> fwhm = HtMeasureCutWidth(cutXUm, cutEnergy)
+<span class="comment">% function fwhm = HtMeasureCutWidth(cutXUm, cutEnergy)</span>
+<span class="comment">%</span>
+<span class="comment">% Return the full width at half maximum of an interpolated energy cut.</span>
+<span class="comment">%</span>
+<span class="comment">% Inputs should be row vectors, with cutXUm in *microns*.</span>
+
+<span class="comment">% Could either do a fit (traditional behavior), or a quick manual measurement.</span>
+
+<span class="comment">% Check for empty vectors</span>
+<span class="keyword">if</span> ~isempty(cutEnergy) &amp;&amp; ~isempty(cutXUm)
+<span class="comment">    %{
+</span><span class="comment">    % Fit:
+</span><span class="comment">    minX = min(cutXUm);
+</span><span class="comment">    maxX = max(cutXUm);
+</span><span class="comment">    meanX = (minX + maxX) / 2;
+</span><span class="comment">    totalWidthX = maxX - minX;
+</span><span class="comment">    f = fit(cutXUm', cutEnergy', 'gauss1', ...
+</span><span class="comment">        'StartPoint', [max(cutEnergy),   meanX, totalWidthX/5], ...
+</span><span class="comment">        'Lower',      [max(cutEnergy)/2, minX,  0], ...
+</span><span class="comment">        'Upper',      [max(cutEnergy)*2, maxX,  totalWidthX]);
+</span><span class="comment">    fwhm = (f.c1 / sqrt(2)) * 2.355;
+</span><span class="comment">    %}
+</span>    <span class="comment">% Manual: use fit_copy.m</span>
+    f = HtFitCopy(cutXUm', cutEnergy');
+    fwhm = (f.c1 / sqrt(2)) * 2.355;
+<span class="keyword">else</span>
+    fwhm = NaN;
+<span class="keyword">end</span>
+
+
+
+<span class="keyword">function</span> f = HtFitCopy(varargin)
+<span class="comment">%function f = HtFitCopy(xData, yData)</span>
+<span class="comment">%</span>
+<span class="comment">% Take gaussian-like data, and measure a FWHM/1.665 value.</span>
+<span class="comment">% This is similar to what a gaussian fit would result in, but without any</span>
+<span class="comment">%   actual fitting.</span>
+<span class="comment">%</span>
+
+<span class="comment">% %measure centroid</span>
+<span class="comment">% xCentroid = sum(xData.*yData) / sum(yData);</span>
+<span class="comment">%</span>
+<span class="comment">% %find local maximum closest to centroid?</span>
+<span class="comment">% %...</span>
+<span class="comment">%</span>
+
+xData = varargin{1};
+yData = varargin{2};
+<span class="comment">%ignore the rest</span>
+
+<span class="comment">%find global maximum</span>
+[valMax, indMax] = max(yData);
+
+<span class="comment">%find sides of FHWM</span>
+fLeft =               find(yData(2:indMax)     &gt; valMax/2 &amp; yData(1:indMax-1)   &lt; valMax/2, 1, <span class="string">'last'</span>);   <span class="comment">%left index of crossover point</span>
+fRight = indMax - 1 + find(yData(indMax:end-1) &gt; valMax/2 &amp; yData(indMax+1:end) &lt; valMax/2, 1, <span class="string">'first'</span>);  <span class="comment">%left index of crossover point</span>
+<span class="comment">%</span>
+<span class="comment">% %ignore any crossovers on the wrong side</span>
+<span class="comment">% fLeft =   fLeft(fLeft &lt; indMax);</span>
+<span class="comment">% fRight = fRight(fRight &gt; indMax);</span>
+<span class="comment">%</span>
+<span class="comment">% %just take the crossover closest to the middle</span>
+<span class="comment">% fLeft = fLeft(end);</span>
+<span class="comment">% fRight = fRight(1);</span>
+
+<span class="comment">%problematic cases</span>
+<span class="keyword">if</span> isempty(fLeft) || isempty(fRight)
+    <span class="comment">%uhhh . . need to take some value or else alpha,beta calculation will fail completely</span>
+    f.c1 = 0;
+<span class="keyword">else</span>
+    <span class="comment">%linear interpolation to get the half-max point</span>
+    pos1 = xData(fRight) + (valMax/2 - yData(fRight)) / (yData(fRight+1) - yData(fRight)) * (xData(fRight+1) - xData(fRight));
+    pos2 = xData(fLeft)  + (valMax/2 - yData(fLeft))  / (yData(fLeft +1) - yData(fLeft))  * (xData(fLeft +1) - xData(fLeft));
+    f.c1 = (pos1 - pos2) / 2.355 * sqrt(2);    <span class="comment">%matlab definition of c1 is sqrt(2)*sigma</span>
+    <span class="comment">%   units are image pixels</span>
+<span class="keyword">end</span>
+
+
+
+<span class="keyword">function</span> h = HtPlotRidgeStep(imgKev, Ridge, Options)
+<span class="comment">% function h = HtPlotRidgeStep(imgKev, Ridge, Options)</span>
+
+OFFSET_PIX = 0.5;   <span class="comment">% put the points in the center of the image pixels</span>
+Z = 1;              <span class="comment">% vertical distance from image plane</span>
+
+<span class="keyword">if</span> isfield(Options.PlotStyle,<span class="string">'h'</span>)
+    h = Options.PlotStyle.h;
+<span class="keyword">else</span>
+    <span class="comment">%first step plotted for this track: make new axes with electron track image</span>
+    load <span class="string">cmaps</span>
+    h = SurfElectronTrack(imgKev,<span class="string">'cmap'</span>,cmaphotlog);
+    Options.PlotStyle.h = h;
+    hold <span class="string">on</span>;
+<span class="keyword">end</span>
+
+axes(Options.PlotStyle.h);  <span class="comment">% bring to focus, make current</span>
+
+thisInd = length(Ridge.positionPix) - 1;
+thisXY = Ridge.positionPix(thisInd,[2,1]) + ones(1,2)*OFFSET_PIX;
+stepXY = Ridge.positionPix(thisInd+1,[2,1]) + ones(1,2)*OFFSET_PIX;
+cutXY = Ridge.bestCutCoordinatesPix{thisInd}(:,[2,1]);
+cutXY = cutXY + ones(size(cutXY))*OFFSET_PIX;
+
+<span class="comment">% ridge point</span>
+plot3(thisXY(1), thisXY(2), Z, <span class="string">'.g'</span>);
+<span class="comment">% cut</span>
+plot3(cutXY(:,1), cutXY(:,2), ones(size(cutXY,1),1)*Z, <span class="string">'c'</span>);
+<span class="comment">% step direction</span>
+plot3([thisXY(1),stepXY(1)], [thisXY(2),stepXY(2)], [Z,Z], <span class="string">'-g'</span>);
+
+
+
+<span class="keyword">function</span> [Measurement,Ridge] = HtComputeDirection(trackEnergy, Ridge, Options)
+<span class="comment">% function [Measurement,Ridge] = HtComputeDirection(trackEnergy, Ridge, Options)</span>
+
+finalRidgePointIndex = size(Ridge.positionPix,1);   <span class="comment">%already trimmed</span>
+reverseIndices = finalRidgePointIndex:-1:1;
+
+Ridge.positionPix      = Ridge.     positionPix(reverseIndices,:);
+Ridge.dedxKevUm        = Ridge.       dedxKevUm(reverseIndices);
+Ridge.fwhmUm           = Ridge.          fwhmUm(reverseIndices);
+Ridge.alphaDegrees     = Ridge.    alphaDegrees(reverseIndices);
+Ridge.stepLengthPix    = Ridge.   stepLengthPix(reverseIndices);
+
+<span class="comment">% 1. Measure width of track so we know how many points to skip.</span>
+preferredWidthMeasurementLengthPts = <span class="keyword">...</span>
+    round(Options.widthMeasurementLengthPix / Options.positionStepSizePix);
+<span class="keyword">if</span> preferredWidthMeasurementLengthPts &gt; 1 &amp;&amp; <span class="keyword">...</span>
+        preferredWidthMeasurementLengthPts &lt;= finalRidgePointIndex
+    actualWidthMeasurementLengthPts = preferredWidthMeasurementLengthPts;
+<span class="keyword">elseif</span> preferredWidthMeasurementLengthPts &lt; 1
+    actualWidthMeasurementLengthPts = 1;
+<span class="keyword">elseif</span> preferredWidthMeasurementLengthPts &gt; finalRidgePointIndex
+    actualWidthMeasurementLengthPts = finalRidgePointIndex;
+<span class="keyword">end</span>
+measuredWidthUm = Options.measurementFunctionHandle(<span class="keyword">...</span>
+    Ridge.fwhmUm(1:actualWidthMeasurementLengthPts));
+skipDiffusionPts = (measuredWidthUm - Options.pixelSizeUm) * <span class="keyword">...</span>
+    4 / Options.pixelSizeUm;    <span class="comment">% logbook 11/1/2009....</span>
+<span class="keyword">if</span> skipDiffusionPts &lt; 0
+    skipDiffusionPts = 0;
+<span class="keyword">end</span>
+
+cosBeta(1) = cosd(Options.initialBetaGuessDegrees);
+
+<span class="comment">% 2. get measurement selection range, assuming beta==0 and no diffusion</span>
+[parallelMeasurementStartPointNo, parallelMeasurementEndPointNo] = <span class="keyword">...</span>
+    HtSelectMeasurementPoints(trackEnergy);
+
+<span class="comment">% 3. get measurement selection range, for a given beta, and skipping diffusion</span>
+actualMeasurementStartPointNo = <span class="keyword">...</span>
+    ceil(parallelMeasurementStartPointNo * cosBeta(1) + skipDiffusionPts);
+actualMeasurementEndPointNo = <span class="keyword">...</span>
+    ceil(parallelMeasurementEndPointNo * cosBeta(1) + skipDiffusionPts);
+<span class="keyword">if</span> actualMeasurementStartPointNo &gt; finalRidgePointIndex
+    <span class="comment">% fix start and end... this is kinda bad, only one measurement point</span>
+    actualMeasurementStartPointNo = finalRidgePointIndex;
+    actualMeasurementEndPointNo = finalRidgePointIndex;
+<span class="keyword">elseif</span> actualMeasurementEndPointNo &gt; finalRidgePointIndex
+    actualMeasurementEndPointNo = finalRidgePointIndex;
+<span class="keyword">end</span>
+<span class="keyword">if</span> actualMeasurementEndPointNo &lt; 1
+    actualMeasurementStartPointNo = 1;
+    actualMeasurementEndPointNo = 1;
+<span class="keyword">elseif</span> actualMeasurementStartPointNo &lt; 1
+    actualMeasurementStartPointNo = 1;
+<span class="keyword">end</span>
+measurementIndices = actualMeasurementStartPointNo:actualMeasurementEndPointNo;
+
+<span class="comment">% 4. First estimate of beta, using selection which is calculated using beta0.</span>
+energyIndex = 1;
+dedxIndex = 2;
+<span class="keyword">if</span> trackEnergy &gt; Options.dedxTable(1,energyIndex) &amp;&amp; <span class="keyword">...</span>
+        trackEnergy &lt; Options.dedxTable(end,energyIndex)
+    dedxReference = interp1(Options.dedxTable(:,energyIndex), <span class="keyword">...</span>
+                            Options.dedxTable(:,dedxIndex), <span class="keyword">...</span>
+                            trackEnergy);
+<span class="keyword">elseif</span> trackEnergy &lt;= Options.dedxTable(1,energyIndex)
+    <span class="comment">% energy too low to interpolate</span>
+    dedxReference = Options.dedxTable(1,dedxIndex);
+<span class="keyword">elseif</span> trackEnergy &gt;= Options.dedxTable(end,energyIndex)
+    <span class="comment">% energy too high to interpolate</span>
+    dedxReference = Options.dedxTable(end,dedxIndex);
+<span class="keyword">end</span>
+dedxMeasured = Options.measurementFunctionHandle(<span class="keyword">...</span>
+    Ridge.dedxKevUm(measurementIndices));
+cosBeta(2) = dedxReference / dedxMeasured;
+<span class="comment">% closest physical solution</span>
+<span class="keyword">if</span> cosBeta(2) &gt; 1
+    cosBeta(2) = 1;
+<span class="keyword">end</span>
+
+<span class="comment">% 5. Next selection calculation</span>
+actualMeasurementStartPointNo = <span class="keyword">...</span>
+    ceil(parallelMeasurementStartPointNo * cosBeta(2) + skipDiffusionPts);
+actualMeasurementEndPointNo = <span class="keyword">...</span>
+    ceil(parallelMeasurementEndPointNo * cosBeta(2) + skipDiffusionPts);
+<span class="keyword">if</span> actualMeasurementStartPointNo &gt; finalRidgePointIndex
+    <span class="comment">% fix start and end... this is kinda bad, only one measurement point</span>
+    actualMeasurementStartPointNo = finalRidgePointIndex;
+    actualMeasurementEndPointNo = finalRidgePointIndex;
+<span class="keyword">elseif</span> actualMeasurementEndPointNo &gt; finalRidgePointIndex
+    actualMeasurementEndPointNo = finalRidgePointIndex;
+<span class="keyword">end</span>
+<span class="keyword">if</span> actualMeasurementEndPointNo &lt; 1
+    actualMeasurementStartPointNo = 1;
+    actualMeasurementEndPointNo = 1;
+<span class="keyword">elseif</span> actualMeasurementStartPointNo &lt; 1
+    actualMeasurementStartPointNo = 1;
+<span class="keyword">end</span>
+measurementIndices = actualMeasurementStartPointNo:actualMeasurementEndPointNo;
+
+<span class="comment">% 6. Second and final estimate of beta, using selection calculated from</span>
+<span class="comment">%       first estimate of beta.</span>
+dedxMeasured = Options.measurementFunctionHandle(<span class="keyword">...</span>
+    Ridge.dedxKevUm(measurementIndices));
+cosBeta(3) = dedxReference / dedxMeasured;
+<span class="comment">% closest physical solution</span>
+<span class="keyword">if</span> cosBeta(3) &gt; 1
+    cosBeta(3) = 1;
+<span class="keyword">end</span>
+
+betaDegrees = acosd(cosBeta(3));
+
+<span class="comment">% Measure alpha using selection calculated from first estimate of beta</span>
+<span class="comment">%       (same points as for final measurement of beta)</span>
+
+alphaDegrees = Options.measurementFunctionHandle(<span class="keyword">...</span>
+    Ridge.alphaDegrees(measurementIndices));
+<span class="comment">% That was the alpha pointing TOWARD the beginning of the track.</span>
+alphaDegrees = alphaDegrees + 180;
+<span class="keyword">if</span> alphaDegrees &gt; 360
+    alphaDegrees = alphaDegrees - 360;
+<span class="keyword">end</span>
+
+<span class="comment">% construct output</span>
+Measurement.alphaDegrees = alphaDegrees;
+Measurement.betaDegrees = betaDegrees;
+Measurement.dedxReference = dedxReference;
+Measurement.dedxMeasured = dedxMeasured;
+Measurement.indices = measurementIndices;
+
+
+
+<span class="keyword">function</span> [measurementStartPointNo, measurementEndPointNo] = <span class="keyword">...</span>
+    HtSelectMeasurementPoints(trackEnergy)
+<span class="comment">% function [measurementStartPointNo, measurementEndPointNo] = ...</span>
+<span class="comment">%     HtSelectMeasurementPoints(trackEnergy)</span>
+
+<span class="comment">% see node 1875 on bearing.berkeley.edu.</span>
+<span class="comment">% "different indexing" refers to how the alpha value is saved in the ridge data.</span>
+<span class="comment">%   old code had each step saving the angle toward the next step;</span>
+<span class="comment">%   new code has each step saving the angle from the previous step.</span>
+<span class="comment">% TODO: change this and see what happens.</span>
+measurementStartPointNo = sqrt(0.0825 * trackEnergy + 15.814) - 3.4;
+measurementStartPointNo = measurementStartPointNo - 1;  <span class="comment">% different indexing</span>
+measurementStartPointNo = max(measurementStartPointNo, 0);
+measurementEndPointNo = measurementStartPointNo * 2 + 3.4;
+measurementEndPointNo = measurementEndPointNo - 1;    <span class="comment">% different indexing</span>
+measurementEndPointNo = max(measurementEndPointNo, 0);
+
+
+
+<span class="keyword">function</span> Output = HtSetOutput(preparedImageKev, Options, EdgeSegments, Ridge, <span class="keyword">...</span>
+    Measurement)
+<span class="comment">% function Output = HtSetOutput(preparedImageKev, Options, EdgeSegments, Ridge, ...</span>
+<span class="comment">%     Measurement)</span>
+
+Output.img = preparedImageKev; <span class="comment">% image with 0 padding</span>
+Output.Etot = sum(preparedImageKev(:)); <span class="comment">% E total, summing all the pixels up</span>
+<span class="comment">% Output.ThSS = thetaStepSizeRadians;</span>
+Output.pixsize = Options.pixelSizeUm; <span class="comment">% record the pixel size</span>
+
+Output.ends = length(EdgeSegments.energiesKev); <span class="comment">% number of ends</span>
+Output.Eend = EdgeSegments.energiesKev(EdgeSegments.chosenIndex); <span class="comment">% energy of the choosen ends</span>
+Output.thin = EdgeSegments.thinnedImage; <span class="comment">% thinned image</span>
+Output.lt = EdgeSegments.lowThresholdUsed; <span class="comment">% threhold being used</span>
+Output.EdgeSegments = EdgeSegments; <span class="comment">% ends structure</span>
+
+Output.x = Ridge.positionPix(:,1); <span class="comment">% ridge row value</span>
+Output.y = Ridge.positionPix(:,2); <span class="comment">% ridge col value</span>
+Output.w = Ridge.fwhmUm; <span class="comment">% width of the chosen cut, for diffusion</span>
+Output.a0 = Ridge.alphaDegrees; <span class="comment">% measured alpha along the ridge</span>
+Output.dE = Ridge.dedxKevUm; <span class="comment">% measured dedx(s)</span>
+Output.Ridge = Ridge; <span class="comment">% ridge structure</span>
+
+Output.alpha = Measurement.alphaDegrees; <span class="comment">% estimated alpha</span>
+Output.beta = Measurement.betaDegrees; <span class="comment">% estimated beta</span>
+Output.Measurement = Measurement;   <span class="comment">% measured structure</span>
+<span class="comment">%dedxReference, dedxMeasured, indices</span>
+
+
+
+
+<span class="keyword">if</span> ~isempty(Options.cheat)
+    <span class="comment">%pass the cheat structure back out.</span>
+    Output.cheat = Options.cheat;
+    <span class="comment">%already added to cheat structure:</span>
+    <span class="comment">%cosbeta using actual electron energy (e.g. if detector captured full energy of electron)</span>
+
+    <span class="comment">%this needs to be fixed. fields of 'cheat' have changed. and offsets must be included.</span>
+    <span class="comment">% Track.cheat.enddist = sqrt((Track.x(1)-cheat.x)^2 + (Track.y(1)-cheat.y)^2);  %2D distance from first algorithm point to true electron start</span>
+
+<span class="keyword">end</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+function Output = HybridTrack(originalImageKev,varargin)
+% function Output = HybridTrack(originalImageKev)
+% function Output = HybridTrack(originalImageKev, 'key', value, ...)
+% 
+% Measure the initial electron direction from a CCD image.
+% 
+% Inputs:
+%   originalImageKev: A 2D numeric array of values corresponding to energy
+%       deposited in CCD pixels. Units keV.
+%     **If pixels are 10.5um and no special operation or plotting is desired,
+%       no key/value pairs are needed.
+%   key/value: The following key/value pairs are supported, in the format
+%       e.g. HybridTrack(img, 'pixelSizeUm', 5, 'lowThresholdKev', 0.3);
+%       Defaults given in []. Key names are case-insensitive.
+%     pixelSizeUm: Associate a different pixel size with the input image.
+%       [10.5]
+%     lowThresholdKev: Use a different threshold value for the binary image 
+%       step. [0.5 for 10.5um pixels, and scales with pixel area]
+%     dedxTable: Use a different reference table of dE/dx vs. energy, for
+%       interpolating values to use in calculating beta.
+%       Format: column 1 is energy (keV), column 2 is dEdx (keV/um)
+%       [uses some rough values grabbed from geant in 2008, a.k.a. dEdx_ref.mat]
+%     cheat: Structure of information from geant4, created in the codes
+%       Geant4TrackHandling and DiffuseTrack. Not used, but passed through to
+%       output structure for calculating algorithm errors afterwards.
+%     oneplot: A single logical value. (You can just put this key as a flag,
+%       without having to supply a value, and it will be interpreted as 'true'.)
+%       Indicates that a plot should be generated showing the ridge following
+%       points, best cuts, and step directions.
+%     plotflags: Generate plots illustrating any of various steps in the
+%       algorithm process. 1x15 logical array, with any true's generating a plot
+%       associated with that index. (Up to 15 plots.) I'm not listing them all
+%       here at this time. Default all false.
+%     insetPix: View coordinates for some of the plots in plotflags. 
+%       assign by: insetPix = [xlim, ylim];
+%     nameString: For saving plots to file. File names end up in the format:
+%       ['Track_', nameString, '_plotSpecificSuffix.eps'] and *.fig and *.png.
+% 
+% Outputs:
+%   Output: structure containing a whole bunch of stuff. The most user-friendly
+%       and useful fields are as follows:
+%     alpha: the estimated direction in the plane of the pixels. Units degrees.
+%       *alpha = 0 is in the positive x direction, where x is the first array
+%       dimension. In an image array in Matlab variable editor, this is down; in
+%       a surface plot or pseudocolor plot in Matlab, this is up.
+%       *alpha = 90 is in the positive y direction, where y is the second array
+%       dimension. In an image array in Matlab variable editor, this is to the
+%       right; in a surface plot or pseudocolor plot in Matlab, this is also to
+%       the right.
+%     beta: the estimated direction, as the magnitude of the out-of-plane angle.
+%       Units degrees. This is a rather poor estimate right now.
+%     img: the input image with a one-pixel buffer around the outside. This is
+%       the image to which any reference coordinates are given in.
+%     Etot: Etot = sum(originalImageKev(:))
+%     
+
+% follows version 1c
+
+
+
+%The lowthresh should cut out some diffusion,
+% so that the thinned track is closer to the actual track,
+% and the correct end can be identified more accurately.
+%If the lowthresh is too high, the initial end may be cut off.
+
+%%%%%%%%%%%%%%%
+%%%% input %%%%
+%%%%%%%%%%%%%%%
+
+Options = HtConstructOptions(nargin,varargin);
+% this includes the ridge-following options, in a subroutine.
+
+% add buffer of zeros around image
+[trackEnergy, preparedImageKev, Options] = ...
+    HtPrepareImage(originalImageKev, Options);
+
+%%%%%%%%%%%%%%%
+%%%% ends %%%%%
+%%%%%%%%%%%%%%%
+
+% low threshold, thinning, identify ends.
+EdgeSegments = HtChooseInitialEnd(preparedImageKev, Options);
+
+% exception
+if isnan(EdgeSegments.chosenIndex)
+    % no end found
+    % exit unsuccessfully
+    Output.img = preparedImageKev;
+    Output.Etot = sum(preparedImageKev(:));
+    Output.ends = 0;
+    Output.err = 'No ends found';
+    return
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% ridge following %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% ridge following
+Ridge = HtRidgeFollow(EdgeSegments, Options, preparedImageKev);
+
+% exception
+if isfield(Ridge,'err') && strcmpi(Ridge.err,'infinite loop')
+    Output.img = preparedImageKev;
+    Output.Etot = sum(preparedImageKev(:));
+    Output.err = 'Infinite loop';
+    Output.EdgeSegments = EdgeSegments;
+    Output.Ridge = Ridge;
+    Output.Options = Options;
+    return
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% compute direction %%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+[Measurement, Ridge] = HtComputeDirection(trackEnergy, Ridge, Options);
+
+%%%%%%%%%%%%%%%%
+%%%% output %%%%
+%%%%%%%%%%%%%%%%
+Output = ...
+    HtSetOutput(preparedImageKev, Options, EdgeSegments, Ridge, Measurement);
+
+%%%%%%%%%%%%%%
+%%%% plot %%%%
+%%%%%%%%%%%%%%
+% plots #13-15
+if Options.PlotStyle.multiple(13)
+    % all ridge points, measurement highlighted
+    [~, Options.PlotStyle.axesPosition] = ...
+        HtPlotImage(preparedImageKev, Options.PlotStyle.cmap, ...
+        Options.PlotStyle.axesPosition, ...
+        Options.PlotStyle.insetPix);
+    hold on
+    % points
+    plot3(Ridge.positionPix(:,2)+0.5, Ridge.positionPix(:,1)+0.5, ...
+        Options.PlotStyle.z0*ones(size(Ridge.positionPix(:,1))), ...
+        'd','markerfacecolor',Options.PlotStyle.ptColor, ...
+        'markeredgecolor',Options.PlotStyle.ptColor, ...
+        'markersize',4);
+    % highlighted measurement
+    measInd = Measurement.indices;
+    plot3(Ridge.positionPix(measInd,2)+0.5, Ridge.positionPix(measInd,1)+0.5, ...
+        Options.PlotStyle.z0*ones(size(Ridge.positionPix(measInd,1))), ...
+        'd','markerfacecolor',Options.PlotStyle.measPtColor, ...
+        'markeredgecolor',Options.PlotStyle.measPtColor, ...
+        'markersize',4);
+    HtSavePlot(gcf, Options, '13_meas_highlighted')
+end
+if Options.PlotStyle.multiple(14)
+    % dE/dx plot, measurement highlighted, dE/dx values marked horizontally
+    HtPlotImage(ones(2),'gray',Options.PlotStyle.axesPosition, []);
+    hold off
+    % measured dE points
+    xtmp = cumsum(Ridge.stepLengthPix);
+    ytmp = Ridge.dedxKevUm;
+    plot(xtmp, ytmp, '*', 'color', Options.PlotStyle.ptColor, ...
+        'linewidth',2, 'markersize',8);
+    hold on
+    % dE/dx horizontal lines
+    dedxLineWidth = 2;
+    hLegend(1) = plot(xtmp, Measurement.dedxMeasured*ones(size(xtmp)), '-', ...
+        'color',Options.PlotStyle.measPtColor, 'linewidth',dedxLineWidth);
+    hLegend(2) = plot(xtmp, Measurement.dedxReference*ones(size(xtmp)), '-', ...
+        'color','k', 'linewidth',dedxLineWidth);
+    if ~isempty(Options.cheat)
+        ytmp = Measurement.dedxReference / cosd(Options.cheat.beta);
+        hLegend(3) = plot(xtmp, ytmp*ones(size(xtmp)), '-', ...
+            'color',Options.PlotStyle.trueArrColor, 'linewidth',dedxLineWidth);
+    end
+    xlabel('Distance along ridge [pixel lengths]');
+    ylabel('dE/dx [keV / {\mu}m]')
+    xlim([0, xtmp(end)+Options.positionStepSizePix]);
+    hLegend(4) = legend(hLegend, {'Measured \Delta{E}/\Delta{R}', ...
+        '(dE/dS)_{calculated}', ...
+        '(dE/dS)_{calculated} / cos(\beta)'}, ...
+        'Location','SouthEast');
+    set(hLegend(4),'fontsize',16);
+    FixAxesMargins(gca);
+    HtSavePlot(gcf, Options, '14_dEdx_meas');
+end
+if Options.PlotStyle.multiple(15)
+    % ridge points, measurement highlighted, with arrow(s)
+    [~, Options.PlotStyle.axesPosition] = ...
+        HtPlotImage(preparedImageKev, Options.PlotStyle.cmap, ...
+        Options.PlotStyle.axesPosition, ...
+        Options.PlotStyle.insetPix);
+    hold on
+    % points
+    plot3(Ridge.positionPix(:,2)+0.5, Ridge.positionPix(:,1)+0.5, ...
+        Options.PlotStyle.z0*ones(size(Ridge.positionPix(:,1))), ...
+        'd','markerfacecolor',Options.PlotStyle.ptColor, ...
+        'markeredgecolor',Options.PlotStyle.ptColor, ...
+        'markersize',4);
+    % measurement highlighted
+    measInd = Measurement.indices;
+    plot3(Ridge.positionPix(measInd,2)+0.5, Ridge.positionPix(measInd,1)+0.5, ...
+        Options.PlotStyle.z0*ones(size(Ridge.positionPix(measInd,1))), ...
+        'd','markerfacecolor',Options.PlotStyle.measPtColor, ...
+        'markeredgecolor',Options.PlotStyle.measPtColor, ...
+        'markersize',4);
+    % measured arrow
+    arr_length1 = 4;    %pixels. main stem.
+    arr_length2 = .75;  %pixels. Side prongs.
+    arrowLineWidth = 2;
+    xTmp0 = Ridge.positionPix(measInd(1),1)+0.5;
+    yTmp0 = Ridge.positionPix(measInd(1),2)+0.5;
+    %   draw arrow from base to tip to two prongs
+    a = Measurement.alphaDegrees;
+    xMeasArrow = xTmp0 + [0, ...
+        cosd(a)*arr_length1, ...
+        cosd(a)*arr_length1 - cosd(a+45)*arr_length2, ...
+        cosd(a)*arr_length1, ...
+        cosd(a)*arr_length1 - cosd(a-45)*arr_length2];
+    yMeasArrow = yTmp0 + [0, ...
+        sind(a)*arr_length1, ...
+        sind(a)*arr_length1 - sind(a+45)*arr_length2, ...
+        sind(a)*arr_length1, ...
+        sind(a)*arr_length1 - sind(a-45)*arr_length2];
+    plot3(yMeasArrow, xMeasArrow, ...
+        Options.PlotStyle.z0*ones(size(yMeasArrow)), ...
+        '-', 'color',Options.PlotStyle.measArrColor, ...
+        'linewidth',arrowLineWidth);
+    if ~isempty(Options.cheat)
+        % true arrow
+        a = Options.cheat.alpha;
+        xTrueArrow = xTmp0 + [0, ...
+            cosd(a)*arr_length1, ...
+            cosd(a)*arr_length1 - cosd(a+45)*arr_length2, ...
+            cosd(a)*arr_length1, ...
+            cosd(a)*arr_length1 - cosd(a-45)*arr_length2];
+        yTrueArrow = yTmp0 + [0, ...
+            sind(a)*arr_length1, ...
+            sind(a)*arr_length1 - sind(a+45)*arr_length2, ...
+            sind(a)*arr_length1, ...
+            sind(a)*arr_length1 - sind(a-45)*arr_length2];
+        plot3(yTrueArrow, xTrueArrow, ...
+            Options.PlotStyle.z0*ones(size(yTrueArrow)), ...
+            '-', 'color',Options.PlotStyle.trueArrColor, ...
+            'linewidth',arrowLineWidth);
+    end
+    HtSavePlot(gcf, Options, '15_alpha_arrows');
+end
+
+
+
+function Options = HtConstructOptions(nArgs, varargs)
+% function InputOptions = HtConstructOptions(nArgs, varargs)
+%
+% Parse the varargin from HybridTrack, and assign some builtin values.
+% 
+% key-value pairs
+%
+% keys (alternate strings) [default value]:
+%   pixelSizeUm (pixelsize, pixsize, pixelpitch, pixel, pitch)
+%       The pixel size in the image, in microns.. Used to scale many other 
+%       parameters.
+%       [10.5]
+%   lowThreshold (lt, lowthresh, threshold)
+%       The threshold to apply to make the binary image. 
+%       [0.5 keV * (pixelSizeUm/10.5)^2]
+%   dEdxTable (dEdx_table, dEdx_ref, dEref, dE_ref, dEdx)
+%       The table of linear stopping powers, as a function of energy, to use for
+%       calculating beta. First column, energy in keV, second column, 
+%       stopping power in keV/um.
+%       [defined from 2009(?) values in dEdx_ref.mat]
+%   plotflag
+%       ....define how to approach this...
+%       [false]
+%   cheat
+%       Structure of information from Geant4TrackHandling, providing true values
+%       for electron track.
+%       []
+% 
+% Also, call HtDefineDefaultRidgeFollowingOptions
+
+Options = struct;
+
+%first, parse input arguments
+argumentNo = 1;
+requiredArgs = 1;   %because varargin includes required arguments too
+while argumentNo <= (nArgs - requiredArgs);
+    argumentIncrement = 2;  %by default, increment the argumentNo by 2 each time
+    switch lower(varargs{argumentNo})
+        case {'pixelsizeum','pixelsize','pixsize','pixelpitch','pixel','pitch'}
+            thisValue = varargs{argumentNo+1};
+            if isnumeric(thisValue) && isfinite(thisValue) && ...
+                    length(thisValue)==1
+                Options.pixelSizeUm = thisValue;
+            else
+                error('pixelSizeUm must be a single value, numeric and finite');
+            end
+        case {'lowthresh','lt','lowthreshold','threshold','lowthresholdkev'}
+            thisValue = varargs{argumentNo+1};
+            if isnumeric(thisValue) && isfinite(thisValue) && ...
+                    length(thisValue)==1
+                Options.lowThreshold = thisValue;
+            else
+                error('lowThresholdKev must be a single value, numeric and finite')
+            end
+        case {'dedx_ref','dedx','deref','de_ref','dedxtable','dedx_table'}
+            thisValue = varargs{argumentNo+1};
+            if isnumeric(thisValue) && all(isfinite(thisValue(:))) && ...
+                    size(thisValue,2)>=2    %two columns of values
+                Options.dedxTable = thisValue;
+            else
+                error('dedxTable should be two columns, numeric and finite')
+            end
+        case {'plotflag', 'plotflags'}
+            if argumentNo+1 > (nArgs - requiredArgs) || ...
+                    ischar(varargs{argumentNo+1})
+                % no value is supplied. this means, set PlotStyle.single = true
+                Options.PlotStyle.single = true;
+                Options.PlotStyle.multiple = false(1,20);
+                argumentIncrement = 1;
+            elseif islogical(varargs{argumentNo+1}) && ...
+                    length(varargs{argumentNo+1})==1
+                Options.PlotStyle.single = varargs{argumentNo+1};
+                Options.PlotStyle.multiple = false(1,20);
+            elseif islogical(varargs{argumentNo+1}) && ...
+                    length(varargs{argumentNo+1}) > 1
+                Options.PlotStyle.single = false;
+                Options.PlotStyle.multiple = varargs{argumentNo+1};
+            elseif isnumeric(varargs{argumentNo+1})
+                Options.PlotStyle.single = false;
+                Options.PlotStyle.multiple = false(1,20);
+                Options.PlotStyle.multiple(varargs{argumentNo+1}) = true;
+            else
+                error('plotflag should be a boolean or numeric value')
+            end
+        case {'insetpix','inset','xylim'}
+            thisArg = varargs{argumentNo+1};
+            if isnumeric(thisArg) && ...
+                    length(thisArg)==4
+                Options.PlotStyle.insetPix = thisArg(1:4);
+            elseif ~isempty(thisArg)
+                error('insetpix should be a 1x4 numeric array')
+            end
+        case {'namestring','savename','name','string','plotname'}
+            thisArg = varargs{argumentNo+1};
+            if ischar(thisArg) && isempty(strfind(thisArg,'*'))
+                Options.PlotStyle.nameString = thisArg;
+                % Track_*_descriptor.{fig|png|eps}
+            elseif ischar(thisArg)
+                error('Don''t put special characters in the filename! (*)')
+            end
+        case {'cheat'}
+            thisValue = varargs{argumentNo+1};
+            if isstruct(thisValue) % && length(thisValue)==1
+                Options.cheat = thisValue;
+            else
+                error('cheat should be a structure')
+            end
+        case {'oneplot', 'plot'}
+            if argumentNo+1 > (nArgs - requiredArgs) || ischar(varargs{argumentNo+1})
+                Options.PlotStyle.single = true;
+                Options.PlotStyle.multiple = false(1,20);
+                argumentIncrement = 1;
+            elseif islogical(varargs{argumentNo+1}) || ...
+                    isnumeric(varargs{argumentNo+1})
+                Options.PlotStyle.single = varargs{argumentNo+1};
+                Options.PlotStyle.multiple = false(1,20);
+            else
+                error('unrecognized plot style')
+            end
+        otherwise
+            error('Unrecognized input argument')
+    end
+    argumentNo = argumentNo + argumentIncrement;
+end
+
+%now, assign default values where needed
+if ~isfield(Options,'pixelSizeUm')
+    Options.pixelSizeUm = 10.5;
+end
+if ~isfield(Options,'lowThresholdKev')
+    Options.lowThresholdKev = 0.5 * (Options.pixelSizeUm / 10.5)^2;
+end
+if ~isfield(Options,'dedxTable')
+    Options.dedxTable = HtConstructDedxTable;
+end
+if ~isfield(Options,'plotflag')
+    Options.plotflag = false;
+end
+if ~isfield(Options,'cheat')
+    Options.cheat = [];
+end
+if ~isfield(Options,'PlotStyle')
+    Options.PlotStyle.single = false;
+    Options.PlotStyle.multiple = false(1,20);
+end
+
+%assign additional options which are not actually inputs (yet)
+Options = HtDefineDefaultRidgeFollowingOptions(Options);
+Options = HtDefineMeasurementOptions(Options);
+
+Options.ridgeStartingDistanceFromTrackEndUm = 40;
+
+Options = HtDefinePlotOptions(Options);
+
+
+
+function dedxTable = HtConstructDedxTable
+% function dedxTable = constructDedxTable
+% 
+% Create a lookup table for dEdx_reference.
+% 
+% Column 1: electron energy [keV]
+% Column 2: dEdx_reference [keV/um]
+% 
+% Values from dEdx_ref.mat, from 2009(?) work.
+
+% TODO: Revisit this, preferably using theory.
+
+dedxTable(:,1) = 50:25:1400;    %keV
+dedxTable(:,2) = [ 1.2114       %keV / um
+    0.9185
+    0.7200
+    0.5800
+    0.5300
+    0.4400
+    0.3700
+    0.3600
+    0.3200
+    0.3100
+    0.2900
+    0.2900
+    0.2700
+    0.2700
+    0.2600
+    0.2500
+    0.2500
+    0.2400
+    0.2400
+    0.2400
+    0.2300
+    0.2300
+    0.2300
+    0.2300
+    0.2200
+    0.2200
+    0.2200
+    0.2200
+    0.2200
+    0.2200
+    0.2200
+    0.2200
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100
+    0.2100];
+
+
+
+function Options = HtDefineDefaultRidgeFollowingOptions(Options)
+% function Options = HtDefineDefaultRidgeFollowingOptions(Options)
+% 
+% Assign fixed parameters used for the ridge-following.
+% 
+% Input:
+%   Options structure defined in HtConstructOptions
+%   must include field pixelSizeUm
+% 
+% Output structure includes the following additional fields:
+%   positionStepSizePix
+%   cutSamplingIntervalPixPix
+%   cutTotalLengthPix
+%   cutAngleIncrementDegrees
+%   cutAngleIncrementRadians
+%   searchAngleIndices
+%   piIndices
+%   cutAngleDegrees
+%   cutAngleRadians
+%   cutInterpolationMethod
+%   cutDistanceFromCenterPix
+%   cutCoordinatesPix
+%   trackEndLowThresholdKev
+
+Options.positionStepSizePix = 0.25;
+Options.cutSamplingIntervalPix = 0.25;
+
+% (smaller cutTotalLengthPix will make code run faster)
+Options.cutTotalLengthPix = 105 / Options.pixelSizeUm;
+
+% This needs to be a factor of 45
+% Smaller cutAngleIncrementDegrees might give a more accurate measurement of 
+% alpha.
+% (larger cutAngleIncrementDegrees will make code run faster)
+Options.cutAngleIncrementDegrees = 3;
+
+% cutAngleIncrementDegrees is used as the base unit for all the other anglular
+% variables. So variables ending in "Indices" are in this unit.
+
+% This needs to be a multiple of 2. The units are, the number of indices of
+%  cutAngleIncrement.
+% The maximum angular change in a single step is searchAngleIndices/2.
+% TODO: this could be brought down for smaller pixsize, depending on PSS
+% Larger searchAngleIndices will allow the ridge-following to make a tighter 
+%  turn. However at 4 steps per pixel length, it does not need to make a very 
+%  tight turn. Regardless, searchAngleIndices/2 should always be much less than 
+%  90 degrees or else there is more potential for losing the ridge and walking 
+%  off an elbow or something.
+% (smaller searchAngleIndices will make code run faster)
+Options.searchAngleIndices = 48/Options.cutAngleIncrementDegrees;  
+
+Options.twoPiIndices = 360/Options.cutAngleIncrementDegrees;
+Options.piIndices = 180/Options.cutAngleIncrementDegrees;
+
+Options.cutAngleIncrementRadians = Options.cutAngleIncrementDegrees * pi/180;
+
+Options.cutAngleRadians(1:Options.twoPiIndices) = ...
+    Options.cutAngleIncrementRadians : ...
+    Options.cutAngleIncrementRadians : ...
+    Options.twoPiIndices*Options.cutAngleIncrementRadians;
+Options.cutAngleDegrees(1:Options.twoPiIndices) = ...
+    Options.cutAngleIncrementDegrees : ...
+    Options.cutAngleIncrementDegrees : ...
+    Options.twoPiIndices*Options.cutAngleIncrementDegrees;
+
+% TODO: Options.cutLowThresholdKev, for truncating cut width
+
+Options.cutInterpolationMethod = 'linear';
+% other options include 'cubic' and 'spline', which would be slower.
+
+% Define x,y of an angled cut for a step direction of 0 degrees, then rotate to
+% all possible step angles.
+cut0y = -Options.cutTotalLengthPix/2 : ...
+    Options.cutSamplingIntervalPix : ...
+    Options.cutTotalLengthPix/2;
+cut0x = zeros(size(cut0y));
+
+% distance from center to a point. This is used for measuring width, 
+%   width = sum_i (d_i * E_i)
+Options.cutDistanceFromCenterPix = abs(cut0y);
+Options.cutDistanceCoordinatePix = cut0y;
+
+Options.cutCoordinatesPix = cell(1,Options.twoPiIndices);
+for angleIndex=1:Options.twoPiIndices
+    % rotation matrix
+    R = [cos(Options.cutAngleRadians(angleIndex)), ...
+         sin(Options.cutAngleRadians(angleIndex)); ...
+        -sin(Options.cutAngleRadians(angleIndex)), ...
+         cos(Options.cutAngleRadians(angleIndex))];
+    Options.cutCoordinatesPix{angleIndex} = [cut0x',cut0y']*R;
+end
+
+baseCutLowThresholdKev = 0.05;
+Options.cutLowThresholdKev = baseCutLowThresholdKev * ...
+    (Options.pixelSizeUm / 10.5).^2;
+% cut points below this threshold, and beyond, are ignored
+
+baseTrackEndLowThresholdKev = 0.1;
+Options.trackEndLowThresholdKev = baseTrackEndLowThresholdKev * ...
+    (Options.pixelSizeUm / 10.5)^2;     % scale with pixel area.
+
+Options.infiniteLoopThresholdPix = Options.positionStepSizePix / 2;
+
+
+
+function Options = HtDefineMeasurementOptions(Options)
+% function Options = HtDefineMeasurementOptions(Options)
+
+minimumWidthMeasurementLengthUm = 30;   % roughly defined by diffusion
+preferredWidthMeasurementLengthPix = 2;
+Options.widthMeasurementLengthPix = ...
+    max(preferredWidthMeasurementLengthPix, ...
+        minimumWidthMeasurementLengthUm / Options.pixelSizeUm);
+
+Options.initialBetaGuessDegrees = 45;
+Options.shouldShortenMeasurementLength = true;
+Options.measurementFunctionHandle = @median;
+
+
+
+function Options = HtDefinePlotOptions(Options)
+% function Options = HtDefinePlotOptions(Options)
+
+Options.PlotStyle.axesPosition = [];    % gets set in first plot call
+if any(Options.PlotStyle.multiple)
+    load cmaps.mat;
+    Options.PlotStyle.cmap = cmaphotlog;
+    if ~isfield(Options.PlotStyle,'insetPix')
+        Options.PlotStyle.insetPix = [];
+    end
+    if ~isfield(Options.PlotStyle,'nameString')
+        Options.PlotStyle.nameString = [];
+    end
+end
+
+Options.PlotStyle.z0 = 50;
+
+% colors
+Options.PlotStyle.cutColor = 'y';
+Options.PlotStyle.bestCutColor = 'g';
+Options.PlotStyle.otherCutColor = 'c';
+Options.PlotStyle.ptColor = [0,0.6,1];
+Options.PlotStyle.measPtColor = 'g';
+Options.PlotStyle.measArrColor = 'g';
+Options.PlotStyle.trueArrColor = [0.5,0,1];
+
+
+
+function [trackEnergyKev, newImageKev, Options] = ...
+    HtPrepareImage(originalImageKev, Options)
+% function [trackEnergy, newImage, Options] = ...
+%     HtPrepareImage(originalImageKev, Options)
+% 
+% Add buffer around track image.
+% 
+% Inputs:
+%   Options structure defined in HtConstructOptions
+%   must include field cutTotalLengthPix
+
+% imageEdgeBuffer does not need to handle the cutTotalLength/2 in any direction.
+%   it only needs to handle the ridge points going off the edge.
+
+% TODO: but here, we operate under a misunderstanding. 
+imageEdgeBufferUm = 0.55 * Options.cutTotalLengthPix;
+imageEdgeBufferPix = ceil(imageEdgeBufferUm / Options.pixelSizeUm);
+
+newImageSize = [size(originalImageKev,1) + 2*imageEdgeBufferPix, ...
+                size(originalImageKev,2) + 2*imageEdgeBufferPix];
+newImageKev = zeros(newImageSize);
+
+xIndicesOfOriginalImage = imageEdgeBufferPix + (1:size(originalImageKev,1));
+yIndicesOfOriginalImage = imageEdgeBufferPix + (1:size(originalImageKev,2));
+newImageKev(xIndicesOfOriginalImage, yIndicesOfOriginalImage) = originalImageKev;
+
+trackEnergyKev = sum(newImageKev(:));
+
+
+
+function EdgeSegments = HtChooseInitialEnd(imgKev, Options)
+% function EdgeSegments = HtChooseInitialEnd(imgKev, Options)
+% 
+% Analyze CCD image to decide what end to measure.
+% 
+% Inputs:
+%   imgKev: CCD image.
+%   Options: structure from HtConstructOptions.
+% 
+% Outputs: EdgeSegments structure with the following fields:
+%   energiesKev: list of energies measured at each end
+%   coordinatesPix: Nx2 list of x,y coordinates for each end pixel
+%   chosenIndex: index for above two fields, of the selected end
+%   startCoordinatesPix: x,y coordinates to start the ridge following
+%   startDirectionIndices: direction to start ridge following, based on thinned
+%       track image, in units of cutAngleIncrementDegrees
+
+% first: locate all ends
+endLinearIndices = [];
+connectivity = ones(3);     %8-connectivity
+
+% if we are unsuccessful in finding ends, increase threshold to break loops.
+% Normally this loop will only run once.
+lowThresholdKev = Options.lowThresholdKev;    %initial value only
+while isempty(endLinearIndices) && lowThresholdKev <= 10*Options.lowThresholdKev;
+    binaryImage = +(imgKev > lowThresholdKev);
+    thinnedImage = +bwmorph(binaryImage,'thin',inf);
+    nNeighborsImage = conv2(thinnedImage,connectivity) - 1;
+    nNeighborsImage = nNeighborsImage(2:end-1,2:end-1); %reduce to original size
+    nNeighborsImage = nNeighborsImage .* thinnedImage;  %only pixels in the track
+    
+    endImage = (nNeighborsImage==1);
+    endLinearIndices = find(endImage);
+    
+    %if we have not found any ends, increment by the original threshold.
+    if isempty(endLinearIndices)
+        lowThresholdKev = lowThresholdKev + Options.lowThresholdKev;
+    end
+end
+
+if ~isempty(endLinearIndices)
+    lowThresholdUsed = lowThresholdKev;
+else
+    %error: no ends found
+    EdgeSegments.energiesKev = [];
+    EdgeSegments.coordinatesPix = zeros(0,2);
+    EdgeSegments.chosenIndex = nan;
+    EdgeSegments.startCoordinatesPix = zeros(0,2);
+    EdgeSegments.startDirectionIndices = nan;
+    EdgeSegments.lowThresholdUsed = nan;
+    return
+end
+
+% measure energies
+[psf,psfArrayRadiusPix] = HtConstructPsf(Options.pixelSizeUm);
+energySumImage = conv2(imgKev,psf);
+energySumImage = energySumImage(1+psfArrayRadiusPix:end-psfArrayRadiusPix, ...
+                                1+psfArrayRadiusPix:end-psfArrayRadiusPix);
+EdgeSegments.energiesKev = energySumImage(endLinearIndices);
+[EdgeSegments.coordinatesPix(:,1), EdgeSegments.coordinatesPix(:,2)] ...
+    = ind2sub(size(imgKev),endLinearIndices);
+[~,EdgeSegments.chosenIndex] = min(EdgeSegments.energiesKev);
+
+% Walk back up the track to get starting location. For each step, I count
+% neighbors to see if we're at an intersection. If not, I use a find operation
+% to get the position of the next pixel
+nStepsPixels = ceil(Options.ridgeStartingDistanceFromTrackEndUm / ...
+                    Options.pixelSizeUm);
+thisEnd = EdgeSegments.coordinatesPix(EdgeSegments.chosenIndex, :);
+imageTemp = thinnedImage;
+thisXY = thisEnd;
+% keep track of the direction of every step.
+% step #1 is from pixel #1 (end pixel) to pixel #2.
+xStep = nan(1,nStepsPixels);    
+yStep = nan(1,nStepsPixels);
+for stepNo = 1:nStepsPixels
+    imageTemp(thisXY(1), thisXY(2)) = 0;
+    neighbors = imageTemp(thisXY(1)-1:thisXY(1)+1, thisXY(2)-1:thisXY(2)+1);
+    nNeighbors = sum(neighbors(:));
+    if nNeighbors == 1
+        % take this step
+        % by definition, this must happen for the first step, since we start at
+        % an end.
+        [xStep(stepNo), yStep(stepNo)] = find(neighbors);
+        xStep(stepNo) = xStep(stepNo) - 2;  %from [1 2 3] to [-1 0 1]
+        yStep(stepNo) = yStep(stepNo) - 2;  %from [1 2 3] to [-1 0 1]
+        thisXY = thisXY + [xStep(stepNo), yStep(stepNo)];
+        lastStep = [xStep(stepNo), yStep(stepNo)];  %for direction
+    elseif nNeighbors > 1
+        % at an intersection.
+        % take a step back.
+        thisXY = thisXY - lastStep;
+        % lastStep can remain as is, pointing away from the intersection.
+        break
+    elseif nNeighbors == 0
+        % end of track. keep thisXY
+        break
+    end
+end
+EdgeSegments.startCoordinatesPix = thisXY;
+startDirectionDegrees = 180/pi * atan2(-lastStep(2), -lastStep(1));
+if startDirectionDegrees > 0    %atan2 returns a value on [-pi, pi]
+    EdgeSegments.startDirectionIndices = round(startDirectionDegrees / ...
+        Options.cutAngleIncrementDegrees);
+else
+    EdgeSegments.startDirectionIndices = round((startDirectionDegrees + 360) ...
+        / Options.cutAngleIncrementDegrees);
+end
+
+EdgeSegments.lowThresholdUsed = lowThresholdUsed;
+EdgeSegments.thinnedImage = thinnedImage;
+
+if Options.PlotStyle.multiple(1)
+    % original image
+    [~, Options.PlotStyle.axesPosition] = ...
+        HtPlotImage(imgKev, Options.PlotStyle.cmap, ...
+        Options.PlotStyle.axesPosition, []);
+    HtSavePlot(gcf, Options, '01_original');
+end
+if Options.PlotStyle.multiple(2)
+    % standard binary image
+    binImg = imgKev > Options.lowThresholdKev;
+    [~, Options.PlotStyle.axesPosition] = ...
+        HtPlotImage(binImg, 'gray', ...
+        Options.PlotStyle.axesPosition, []);
+    HtSavePlot(gcf, Options, '02_binary');
+end
+if Options.PlotStyle.multiple(3)
+    % high-threshold binary image
+    binImg = imgKev > 3*Options.lowThresholdKev;
+    [~, Options.PlotStyle.axesPosition] = ...
+        HtPlotImage(binImg, 'gray', ...
+        Options.PlotStyle.axesPosition, []);
+    HtSavePlot(gcf, Options, '03_binary_high');
+end
+if Options.PlotStyle.multiple(4)
+    % low-threshold binary image
+    binImg = imgKev > 0.1*Options.lowThresholdKev;
+    [~, Options.PlotStyle.axesPosition] = ...
+        HtPlotImage(binImg, 'gray', ...
+        Options.PlotStyle.axesPosition, []);
+    HtSavePlot(gcf, Options, '04_binary_low');
+end
+if Options.PlotStyle.multiple(5)
+    % thinned image
+    binImg = EdgeSegments.thinnedImage;
+    [~, Options.PlotStyle.axesPosition] = ...
+        HtPlotImage(binImg, 'gray', ...
+        Options.PlotStyle.axesPosition, []);
+    HtSavePlot(gcf, Options, '05_thinned');
+end
+if Options.PlotStyle.multiple(6)
+    % thinned image, ends highlighted
+    binImg = +EdgeSegments.thinnedImage;
+    binImg(endLinearIndices) = 2;
+    [~, Options.PlotStyle.axesPosition] = ...
+        HtPlotImage(binImg, 'gray', ...
+        Options.PlotStyle.axesPosition, []);
+    HtSavePlot(gcf, Options, '06_thinned_highlighted');
+end
+if Options.PlotStyle.multiple(7)
+    % image with ends circled
+    [h, Options.PlotStyle.axesPosition] = ...
+        HtPlotImage(imgKev, Options.PlotStyle.cmap, ...
+        Options.PlotStyle.axesPosition, []);
+    for i=1:size(EdgeSegments.coordinatesPix,1)
+        x0tmp = EdgeSegments.coordinatesPix(i,1);
+        y0tmp = EdgeSegments.coordinatesPix(i,2);
+        x0tmp = x0tmp + 0.5;
+        y0tmp = y0tmp + 0.5;
+        disp(['End #',num2str(i),' at (',num2str(x0tmp),', ',num2str(y0tmp),...
+            '): energy = ',num2str(EdgeSegments.energiesKev(i))])
+        %draw the outline, starting at lower left inside corner
+        xtmp = [x0tmp-1.5, x0tmp-2.5, x0tmp-2.5, x0tmp-1.5, x0tmp-1.5, x0tmp+1.5, x0tmp+1.5, ...
+            x0tmp+2.5, x0tmp+2.5, x0tmp+1.5, x0tmp+1.5, x0tmp-1.5, x0tmp-1.5]';
+        ytmp = [y0tmp-1.5, y0tmp-1.5, y0tmp+1.5, y0tmp+1.5, y0tmp+2.5, y0tmp+2.5, y0tmp+1.5, ...
+            y0tmp+1.5, y0tmp-1.5, y0tmp-1.5, y0tmp-2.5, y0tmp-2.5, y0tmp-1.5]';
+        hold on;
+        plot3(h, ytmp, xtmp, Options.PlotStyle.z0*ones(size(xtmp)), ...
+            'g','linewidth',1);
+    end
+    HtSavePlot(gcf, Options, '07_ends_circled');
+end
+
+
+
+function [psf, psfArrayRadiusPix] = HtConstructPsf(pixelSizeUm)
+% function [psf, psfArrayRadiusPix] = HtConstructPsf(pixelSizeUm)
+% 
+% Construct a convolution kernel covering a 25 um radius.
+% 
+% Inputs:
+%   pixelSizeUm: pixel size in microns
+% 
+% Outputs:
+%   psf: the convolution kernel, consisting of 0s and 1s.
+%   psfArrayRadiusPix: (size(psf,1)-1)/2
+
+%1.0
+%Sum energy from pixels within 25 um of end pixel.
+%   These are by no means tested or optimized . . this is something to work on.
+%
+% Viewing code for circle: (command window)
+% pixsize = 10.5; th = 0:360; x = 0.5+25/pixsize*cosd(th); y = 0.5+25/pixsize*sind(th); plot(x,y)
+% set(gca,'xtick',-ceil(1+25/pixsize):ceil(1+25/pixsize)); set(gca,'ytick',-ceil(1+25/pixsize):ceil(1+25/pixsize)); 
+% 
+% This code replicates the hard-coded psf's for 5, 10.5, 20, and 30+ um. 
+
+psfRadiusUm = 25;
+psfExactRadiusPix = psfRadiusUm / pixelSizeUm;
+psfArrayRadiusPix = ceil(psfExactRadiusPix) - 1;    %...
+psfDiameterPix = psfArrayRadiusPix * 2 + 1;  %odd integer
+x = -psfArrayRadiusPix : psfArrayRadiusPix;
+y = -psfArrayRadiusPix : psfArrayRadiusPix;
+psf = zeros(psfDiameterPix);
+for xInd = 1:length(x)
+    for yInd = 1:length(y)
+        if x(xInd)^2 + y(yInd)^2 < psfExactRadiusPix^2
+            psf(xInd,yInd) = 1;
+        end
+    end
+end
+
+
+
+function [h,axSize] = HtPlotImage(imageToPlot,cmap,axSize,insetPix)
+% function [h,axSize] = HtPlotImage(imageToPlot,cmap,axSize,insetPix)
+% 
+% imageToPlot: numeric or boolean
+% cmap: color map (use cmaphotlog from cmaps.mat)
+% 
+% h: axes handle
+
+axesFontSize = 18;
+xSizeScale = 1;
+ySizeScale = 1;
+figPosition = [851, 388, xSizeScale*560, ySizeScale*420];
+
+grayColorMap = ischar(cmap) && strcmpi(cmap,'gray');
+if isnumeric(imageToPlot) && ~grayColorMap
+    % normal track image
+    h = SurfElectronTrack(imageToPlot,'cmap',cmap);
+elseif islogical(imageToPlot) || grayColorMap
+    % binary image
+    h = SurfElectronTrack(+imageToPlot,'cmap',cmap);
+    colorbar('off');
+else
+    error('imageToPlot should be numeric or logical')
+end
+if ~isempty(insetPix)
+    xlim(h,insetPix(1:2));
+    ylim(h,insetPix(3:4));
+end
+set(h,'fontsize',axesFontSize);
+set(get(h,'parent'),'position',figPosition);
+drawnow;
+if isempty(axSize)
+    % first time only
+    axSize = get(h,'position');
+end
+set(h,'position',axSize);
+xlabel([]);
+ylabel([]);
+set(get(h,'parent'),'color','w');
+
+
+
+function HtSavePlot(figHandle, Options, suffix)
+% function HtSavePlot(figHandle, Options, suffix)
+
+if ~isempty(Options.PlotStyle.nameString)
+    saveName = ['Track_',Options.PlotStyle.nameString,'_',suffix];
+    printAll(figHandle,saveName);
+end
+
+
+
+function Ridge = HtRidgeFollow(EdgeSegments, Options, imgKev)
+% function Ridge = HtRidgeFollow(EdgeSegments, Options, imgKev)
+% 
+% Follow the "ridge" of an electron track image.
+% 
+% Inputs: {standard choice}
+%   EdgeSegments: structure requiring fields:
+%       startCoordinatesPix: coordinates of img to start at, in pixels
+%       startDirectionIndices: angle to start moving in, units of 
+%           Options.cutAngleIncrementDegrees
+%   Options: structure requiring fields:
+%       cutInterpolationMethod: for interp2. {'linear'}, 'spline'
+%       trackEndLowThresholdKev: for ending the ridge-following. {0.1}
+%       infiniteLoopThresholdPix: minimum distance from a previous point, 
+%           in order to stop ridge-following because of infinite loop.
+%           {0.5 * Options.xxxxxxx}
+%       cutAngleIncrementDegrees: angular resolution of step direction.
+%           (the actual recorded direction is after centroid adjustment.)
+%       twoPiIndices: 360 degrees, in units of Options.cutAngleIncrementDegrees
+%       searchAngleIndices: maximum turn per step = 0.5*searchAngleIndices.
+%       cutCoordinatesPix: cell array of vectors. Each represents the
+%           coordinates of one angled cut, relative to the ridge point.
+%       cutDistanceFromCenter: the distance from center for cutCoordinatesPix
+%          vectors.
+%       pixelSizeUm: the pixel pitch of the image.
+%       cutSamplingIntervalPix: the increment between neighboring
+%           cutCoordinatesPix points.
+%       cutAngleDegrees: [degrees] = cutAngleDegrees([indices])
+%       positionStepSizePix: nominal distance from one ridge point to the next.
+% 
+% Outputs:
+%   Ridge: structure containing the following fields:
+%       positionPix: n-by-2 array containing coordinate pairs of ridge points.
+%       fwhmUm: measured FWHM of the chosen cut, in um.
+%       dedxKevUm: energy integrated over cut, into units of keV/um.
+%       stepLengthPix: actual distance from the previous ridge point
+%       alphaDegrees: actual angle from the previous ridge point
+
+% set values for first step
+Ridge.positionPix(1,1:2) = EdgeSegments.startCoordinatesPix;
+startDirectionIndices = EdgeSegments.startDirectionIndices;
+isFinished = false;
+
+while ~isFinished
+    Ridge = HtTakeOneStep(imgKev, Ridge, Options, startDirectionIndices);
+    
+    if Options.PlotStyle.single
+        Options.PlotStyle.h = HtPlotRidgeStep(imgKev, Ridge, Options);
+    end
+    
+    % are we at the end of the track?
+    thisXPix = Ridge.positionPix(end,1);
+    thisYPix = Ridge.positionPix(end,2);
+    % there is a possibility (especially for noisy images)
+    %   that all the cut points were under threshold, and
+    %   this*Pix are NaN's. This happens at the end of the track.
+    if ~isnan(thisXPix) && ~isnan(thisYPix)
+        thisEnergyKev = interp2(imgKev, thisYPix, thisXPix, ...
+                            Options.cutInterpolationMethod);
+        isAtEndOfTrack = thisEnergyKev < Options.trackEndLowThresholdKev;
+    else
+        isAtEndOfTrack = true;
+        lastGoodRidgePoint = find(~isnan(Ridge.positionPix(:,1)),1,'last');
+        % erase NaN points
+        Ridge.positionPix(lastGoodRidgePoint+2:end,:) = []; % 2 b/c trimmed later
+        Ridge.fwhmUm(lastGoodRidgePoint+1:end) = [];
+        Ridge.dedxKevUm(lastGoodRidgePoint+1:end) = [];
+        Ridge.stepLengthPix(lastGoodRidgePoint+1:end) = [];
+        Ridge.alphaDegrees(lastGoodRidgePoint+1:end) = [];
+        Ridge.bestCutCoordinatesPix = ...
+            Ridge.bestCutCoordinatesPix(1:lastGoodRidgePoint);  % cell array
+    end
+    % are we stuck in an infinite loop?
+    % don't use the current point... it's going to move. use previous point.
+    previousPoints = 1 : size(Ridge.positionPix,1)-2;
+    prevXPix = Ridge.positionPix(end-1,1);
+    prevYPix = Ridge.positionPix(end-1,2);
+    dx = prevXPix - Ridge.positionPix(previousPoints,1);
+    dy = prevYPix - Ridge.positionPix(previousPoints,2);
+    threshold = Options.infiniteLoopThresholdPix;
+	isInInfiniteLoop = any(dx.^2 + dy.^2 < threshold^2);
+    
+    % set values for next step
+    isFinished = isAtEndOfTrack || isInInfiniteLoop;
+    startDirectionIndices = []; %only use it for the first step
+end
+
+if isInInfiniteLoop
+    Ridge.err = 'Infinite loop';
+end
+% trim last point
+Ridge.positionPix(end,:) = [];
+
+% plots
+if Options.PlotStyle.multiple(11)
+    % all ridge points
+    [~, Options.PlotStyle.axesPosition] = ...
+        HtPlotImage(imgKev, Options.PlotStyle.cmap, ...
+        Options.PlotStyle.axesPosition, ...
+        Options.PlotStyle.insetPix);
+    hold on
+    plot3(Ridge.positionPix(:,2)+0.5, Ridge.positionPix(:,1)+0.5, ...
+        Options.PlotStyle.z0*ones(size(Ridge.positionPix(:,1))), ...
+        'd','markerfacecolor',Options.PlotStyle.ptColor, ...
+        'markeredgecolor',Options.PlotStyle.ptColor, ...
+        'markersize',4);
+    HtSavePlot(gcf, Options, '11_finished_points');
+end
+if Options.PlotStyle.multiple(12)
+    % all ridge cuts
+    [~, Options.PlotStyle.axesPosition] = ...
+        HtPlotImage(imgKev, Options.PlotStyle.cmap, ...
+        Options.PlotStyle.axesPosition, ...
+        Options.PlotStyle.insetPix);
+    hold on
+    for i=1:length(Ridge.bestCutCoordinatesPix)
+        z0 = Options.PlotStyle.z0 * ...
+            ones(size(Ridge.bestCutCoordinatesPix{i}(:,1)));
+        plot3(Ridge.bestCutCoordinatesPix{i}(:,2)+0.5, ...
+            Ridge.bestCutCoordinatesPix{i}(:,1)+0.5, ...
+            z0, '-', 'color',Options.PlotStyle.bestCutColor);
+    end
+    HtSavePlot(gcf, Options, '12_finished_cuts');
+end
+
+
+
+
+function Ridge = HtTakeOneStep(preparedImageKev, Ridge, Options, ...
+    startDirectionIndices)
+% function Ridge = HtTakeOneStep(preparedImageKev, Ridge, Options, ...
+%     startDirectionIndices)
+% 
+% Take one step of ridge-following, making the accompanying measurements.
+% 
+% If it is the first step, startDirectionIndices must be supplied.
+% 
+% Ridge.position(end,:) should contain the point to start from and measure.
+% That point will be modified to fit the centroid of the energy cut.
+% Other Ridge properties should be one index shorter, because they have not been
+%   measured yet.
+
+thisRidgePointIndex = size(Ridge.positionPix,1);
+previousRidgePointIndex = thisRidgePointIndex - 1;  %may or may not exist
+
+thisXPix = Ridge.positionPix(thisRidgePointIndex,1);
+thisYPix = Ridge.positionPix(thisRidgePointIndex,2);
+
+if (nargin==3 || isempty(startDirectionIndices)) && previousRidgePointIndex > 0
+    % startDirectionIndices not supplied
+    % so, read it from the previous step
+    lastStepPix1 = Ridge.positionPix(thisRidgePointIndex, 1:2) - ...
+                   Ridge.positionPix(previousRidgePointIndex, 1:2);
+    % lastStep will change once we adjust to centroid. hence lastStep1.
+    startDirectionDegrees = 180/pi * atan2(lastStepPix1(2),lastStepPix1(1));
+    startDirectionIndices = round(startDirectionDegrees / ...
+        Options.cutAngleIncrementDegrees);
+    % wrap around to positive angles
+    if startDirectionIndices <= 0
+        startDirectionIndices = startDirectionIndices + Options.twoPiIndices;
+    end
+elseif nargin ==2 && previousRidgePointIndex == 0
+    % problem
+    error('I need a startDirection!')
+end
+minimumCutAngleIndices = startDirectionIndices - Options.searchAngleIndices / 2;
+maximumCutAngleIndices = startDirectionIndices + Options.searchAngleIndices / 2;
+theseCutAnglesIndices = minimumCutAngleIndices:maximumCutAngleIndices;
+%wrap around to positive angles in range
+theseCutAnglesIndices(theseCutAnglesIndices <= 0) = ...
+    theseCutAnglesIndices(theseCutAnglesIndices <=0) + ...
+    Options.twoPiIndices;
+theseCutAnglesIndices(theseCutAnglesIndices > Options.twoPiIndices) = ...
+    theseCutAnglesIndices(theseCutAnglesIndices > Options.twoPiIndices) - ...
+    Options.twoPiIndices;
+%initialize
+allCutsXPix                  = cell(1,length(theseCutAnglesIndices));
+allCutsYPix                  = cell(1,length(theseCutAnglesIndices));
+allCutsDistanceCoordinatePix = cell(1,length(theseCutAnglesIndices));
+allCutsEnergyKev             = cell(1,length(theseCutAnglesIndices));
+widthMetric                  =  nan(1,length(theseCutAnglesIndices));
+for cutAngleNo = 1:length(theseCutAnglesIndices)
+    thisCutXPix = thisXPix + ...
+        Options.cutCoordinatesPix{theseCutAnglesIndices(cutAngleNo)}(:,1);
+    thisCutYPix = thisYPix + ...
+        Options.cutCoordinatesPix{theseCutAnglesIndices(cutAngleNo)}(:,2);
+    
+    % exclude out-of-bounds points
+    minX = 1;
+    minY = 1;
+    maxX = size(preparedImageKev,1);
+    maxY = size(preparedImageKev,2);
+    isInBounds = thisCutXPix > minX & thisCutXPix < maxX & ...
+                 thisCutYPix > minY & thisCutYPix < maxY;
+    thisCutXPix = thisCutXPix(isInBounds);
+    thisCutYPix = thisCutYPix(isInBounds);
+    thisCutDistanceCoordinatePix = Options.cutDistanceCoordinatePix(isInBounds);
+    thisCutDistanceFromCenterPix = Options.cutDistanceFromCenterPix(isInBounds);
+    thisCutEnergyKev = interp2(preparedImageKev, thisCutYPix, thisCutXPix, ...
+        Options.cutInterpolationMethod);
+    
+    % check for cutLowThreshold and exclude points
+    pointIsIncluded = true(size(thisCutEnergyKev));
+    % each side separately
+    side1underThreshold = thisCutDistanceCoordinatePix < 0 & ...
+            thisCutEnergyKev' < Options.cutLowThresholdKev;
+    if any(side1underThreshold)
+        endIndex = 1;
+        pointsToExclude = endIndex:find(side1underThreshold,1,'last');
+        pointIsIncluded(pointsToExclude) = false;
+    end
+    side2underThreshold = thisCutDistanceCoordinatePix > 0 & ...
+            thisCutEnergyKev' < Options.cutLowThresholdKev;
+    if any(side2underThreshold)
+        endIndex = length(side2underThreshold);
+        pointsToExclude = find(side2underThreshold,1,'first'):endIndex;
+        pointIsIncluded(pointsToExclude) = false;
+    end
+    thisCutXPix = thisCutXPix(pointIsIncluded);
+    thisCutYPix = thisCutYPix(pointIsIncluded);
+    thisCutDistanceCoordinatePix = thisCutDistanceCoordinatePix(pointIsIncluded);
+    thisCutDistanceFromCenterPix = thisCutDistanceFromCenterPix(pointIsIncluded);
+    thisCutEnergyKev = thisCutEnergyKev(pointIsIncluded);
+    
+    % here, the previous algorithm excludes cut points less than 0.
+    widthMetric(cutAngleNo) = sum(thisCutEnergyKev .* ...
+        thisCutDistanceFromCenterPix');
+    %save for centroid calculation
+    allCutsXPix{cutAngleNo}                  = thisCutXPix;
+    allCutsYPix{cutAngleNo}                  = thisCutYPix;
+    allCutsDistanceCoordinatePix{cutAngleNo} = thisCutDistanceCoordinatePix;
+    allCutsEnergyKev{cutAngleNo}             = thisCutEnergyKev;
+end
+
+[~,bestCutIndex] = min(widthMetric);
+bestCutXPix                  = allCutsXPix{bestCutIndex};
+bestCutYPix                  = allCutsYPix{bestCutIndex};
+bestCutDistanceCoordinatePix = allCutsDistanceCoordinatePix{bestCutIndex};
+bestCutEnergyKev             = allCutsEnergyKev{bestCutIndex};
+
+% adjust to centroid
+centroidXPix = sum(bestCutEnergyKev .* bestCutXPix) / sum(bestCutEnergyKev);
+centroidYPix = sum(bestCutEnergyKev .* bestCutYPix) / sum(bestCutEnergyKev);
+thisXPix = centroidXPix;
+thisYPix = centroidYPix;
+
+% measure stuff
+thisFwhmUm = ...
+    HtMeasureCutWidth(bestCutDistanceCoordinatePix * Options.pixelSizeUm, ...
+    bestCutEnergyKev);
+thisDedxKevUm = sum(bestCutEnergyKev) * Options.cutSamplingIntervalPix / ...
+	Options.pixelSizeUm;
+% thisAlpha measures from the previous point to here
+if previousRidgePointIndex > 0
+    % not the first point
+    lastStepPix2 = Ridge.positionPix(thisRidgePointIndex, 1:2) - ...
+                   Ridge.positionPix(previousRidgePointIndex, 1:2);
+    thisAlphaDegrees = 180/pi * atan2(lastStepPix2(2), lastStepPix2(1));
+    thisStepLengthPix = sqrt(lastStepPix2(1)^2 + lastStepPix2(2)^2);
+else
+    % first point only
+    theseCutAnglesDegrees = Options.cutAngleDegrees(theseCutAnglesIndices);
+    thisAlphaDegrees = theseCutAnglesDegrees(bestCutIndex);
+    thisStepLengthPix = Options.positionStepSizePix;
+    
+    % plots
+    if Options.PlotStyle.multiple(8)
+        % image with all cuts through initial point
+        [~, Options.PlotStyle.axesPosition] = ...
+            HtPlotImage(preparedImageKev, Options.PlotStyle.cmap, ...
+            Options.PlotStyle.axesPosition, ...
+            Options.PlotStyle.insetPix);
+        hold on;
+        for i=1:length(theseCutAnglesDegrees)
+            z0 = Options.PlotStyle.z0*ones(size(allCutsXPix{i}));
+            plot3(allCutsYPix{i}+0.5, allCutsXPix{i}+0.5, z0, '-', ...
+                'color',Options.PlotStyle.cutColor);
+        end
+        z0 = Options.PlotStyle.z0*ones(size(bestCutXPix));
+        plot3(bestCutYPix+0.5, bestCutXPix+0.5, z0, '-', ...
+            'color', Options.PlotStyle.bestCutColor);
+        HtSavePlot(gcf, Options, '08_initialcuts_all');
+    end
+    if Options.PlotStyle.multiple(9)
+        % image with three example cuts, sample points shown
+        [~, Options.PlotStyle.axesPosition] = ...
+            HtPlotImage(preparedImageKev, Options.PlotStyle.cmap, ...
+            Options.PlotStyle.axesPosition, ...
+            Options.PlotStyle.insetPix);
+        hold on;
+        colors{1}                   = Options.PlotStyle.cutColor;
+        colors{bestCutIndex}        = Options.PlotStyle.bestCutColor;
+        colors{length(allCutsXPix)} = Options.PlotStyle.otherCutColor;
+        for i = [1, bestCutIndex, length(allCutsXPix)]
+            z0 = Options.PlotStyle.z0*ones(size(allCutsXPix{i}));
+            plot3(allCutsYPix{i}+0.5, allCutsXPix{i}+0.5, z0, 'd', ...
+                'markerfacecolor', colors{i}, 'markersize', 4, ...
+                'markeredgecolor', colors{i});
+        end
+        HtSavePlot(gcf, Options, '09_initialcuts_select');
+    end
+    if Options.PlotStyle.multiple(10)
+        % graph of interpolated energy in each cut from (9)
+        % first make axes object with proper settings...
+        HtPlotImage(ones(2),'gray',Options.PlotStyle.axesPosition,[]);
+        hold off
+        colors{1}                   = Options.PlotStyle.cutColor;
+        colors{bestCutIndex}        = Options.PlotStyle.bestCutColor;
+        colors{length(allCutsXPix)} = Options.PlotStyle.otherCutColor;
+        for i = [1, bestCutIndex, length(allCutsXPix)]
+            plot(allCutsDistanceCoordinatePix{i}, allCutsEnergyKev{i}, ...
+                '-o', 'color', colors{i}, ...
+                'markeredgecolor','k', 'markerfacecolor', colors{i}, ...
+                'linewidth',2, 'markersize',8);
+            hold on;
+        end
+        xlabel('Length along cut [pixel lengths]')
+        ylabel('Interpolated energy value [keV]')
+        HtSavePlot(gcf, Options, '10_initialcuts_energy');
+    end
+end
+
+% nextAlpha measures from here to where the next step will be
+theseCutAnglesDegrees = Options.cutAngleDegrees(theseCutAnglesIndices);
+nextAlphaDegrees = theseCutAnglesDegrees(bestCutIndex);
+% take the step!
+nextStepPix = Options.positionStepSizePix * ...
+              [cosd(nextAlphaDegrees), sind(nextAlphaDegrees)];
+nextXPix = thisXPix + nextStepPix(1);
+nextYPix = thisYPix + nextStepPix(2);
+nextRidgePointIndex = thisRidgePointIndex + 1;
+
+% construct output structure
+Ridge.positionPix          (thisRidgePointIndex,1:2) = [thisXPix, thisYPix];
+Ridge.positionPix          (nextRidgePointIndex,1:2) = [nextXPix, nextYPix];
+Ridge.fwhmUm               (thisRidgePointIndex)     = thisFwhmUm;
+Ridge.dedxKevUm            (thisRidgePointIndex)     = thisDedxKevUm;
+Ridge.stepLengthPix        (thisRidgePointIndex)     = thisStepLengthPix;
+Ridge.alphaDegrees         (thisRidgePointIndex)     = thisAlphaDegrees;
+Ridge.bestCutCoordinatesPix{thisRidgePointIndex}     = ...
+    [bestCutXPix(:), bestCutYPix(:)];
+
+
+
+function fwhm = HtMeasureCutWidth(cutXUm, cutEnergy)
+% function fwhm = HtMeasureCutWidth(cutXUm, cutEnergy)
+% 
+% Return the full width at half maximum of an interpolated energy cut.
+% 
+% Inputs should be row vectors, with cutXUm in *microns*.
+
+% Could either do a fit (traditional behavior), or a quick manual measurement.
+
+% Check for empty vectors
+if ~isempty(cutEnergy) && ~isempty(cutXUm)
+    %{
+    % Fit:
+    minX = min(cutXUm);
+    maxX = max(cutXUm);
+    meanX = (minX + maxX) / 2;
+    totalWidthX = maxX - minX;
+    f = fit(cutXUm', cutEnergy', 'gauss1', ...
+        'StartPoint', [max(cutEnergy),   meanX, totalWidthX/5], ...
+        'Lower',      [max(cutEnergy)/2, minX,  0], ...
+        'Upper',      [max(cutEnergy)*2, maxX,  totalWidthX]);
+    fwhm = (f.c1 / sqrt(2)) * 2.355;
+    %}
+    % Manual: use fit_copy.m
+    f = HtFitCopy(cutXUm', cutEnergy');
+    fwhm = (f.c1 / sqrt(2)) * 2.355;
+else
+    fwhm = NaN;
+end
+
+
+
+function f = HtFitCopy(varargin)
+%function f = HtFitCopy(xData, yData)
+%
+% Take gaussian-like data, and measure a FWHM/1.665 value.
+% This is similar to what a gaussian fit would result in, but without any
+%   actual fitting.
+%
+ 
+% %measure centroid
+% xCentroid = sum(xData.*yData) / sum(yData);
+% 
+% %find local maximum closest to centroid?
+% %...
+% 
+
+xData = varargin{1};
+yData = varargin{2};
+%ignore the rest
+
+%find global maximum
+[valMax, indMax] = max(yData);
+
+%find sides of FHWM
+fLeft =               find(yData(2:indMax)     > valMax/2 & yData(1:indMax-1)   < valMax/2, 1, 'last');   %left index of crossover point
+fRight = indMax - 1 + find(yData(indMax:end-1) > valMax/2 & yData(indMax+1:end) < valMax/2, 1, 'first');  %left index of crossover point
+% 
+% %ignore any crossovers on the wrong side
+% fLeft =   fLeft(fLeft < indMax);
+% fRight = fRight(fRight > indMax);
+% 
+% %just take the crossover closest to the middle
+% fLeft = fLeft(end);
+% fRight = fRight(1);
+
+%problematic cases
+if isempty(fLeft) || isempty(fRight)
+    %uhhh . . need to take some value or else alpha,beta calculation will fail completely
+    f.c1 = 0;
+else
+    %linear interpolation to get the half-max point
+    pos1 = xData(fRight) + (valMax/2 - yData(fRight)) / (yData(fRight+1) - yData(fRight)) * (xData(fRight+1) - xData(fRight));
+    pos2 = xData(fLeft)  + (valMax/2 - yData(fLeft))  / (yData(fLeft +1) - yData(fLeft))  * (xData(fLeft +1) - xData(fLeft));
+    f.c1 = (pos1 - pos2) / 2.355 * sqrt(2);    %matlab definition of c1 is sqrt(2)*sigma
+    %   units are image pixels
+end
+
+
+
+function h = HtPlotRidgeStep(imgKev, Ridge, Options)
+% function h = HtPlotRidgeStep(imgKev, Ridge, Options)
+
+OFFSET_PIX = 0.5;   % put the points in the center of the image pixels
+Z = 1;              % vertical distance from image plane
+
+if isfield(Options.PlotStyle,'h')
+    h = Options.PlotStyle.h;
+else
+    %first step plotted for this track: make new axes with electron track image
+    load cmaps
+    h = SurfElectronTrack(imgKev,'cmap',cmaphotlog);
+    Options.PlotStyle.h = h;
+    hold on;
+end
+
+axes(Options.PlotStyle.h);  % bring to focus, make current
+
+thisInd = length(Ridge.positionPix) - 1;
+thisXY = Ridge.positionPix(thisInd,[2,1]) + ones(1,2)*OFFSET_PIX;
+stepXY = Ridge.positionPix(thisInd+1,[2,1]) + ones(1,2)*OFFSET_PIX;
+cutXY = Ridge.bestCutCoordinatesPix{thisInd}(:,[2,1]);
+cutXY = cutXY + ones(size(cutXY))*OFFSET_PIX;
+
+% ridge point
+plot3(thisXY(1), thisXY(2), Z, '.g');
+% cut
+plot3(cutXY(:,1), cutXY(:,2), ones(size(cutXY,1),1)*Z, 'c');
+% step direction
+plot3([thisXY(1),stepXY(1)], [thisXY(2),stepXY(2)], [Z,Z], '-g');
+
+
+
+function [Measurement,Ridge] = HtComputeDirection(trackEnergy, Ridge, Options)
+% function [Measurement,Ridge] = HtComputeDirection(trackEnergy, Ridge, Options)
+
+finalRidgePointIndex = size(Ridge.positionPix,1);   %already trimmed
+reverseIndices = finalRidgePointIndex:-1:1;
+
+Ridge.positionPix      = Ridge.     positionPix(reverseIndices,:);
+Ridge.dedxKevUm        = Ridge.       dedxKevUm(reverseIndices);
+Ridge.fwhmUm           = Ridge.          fwhmUm(reverseIndices);
+Ridge.alphaDegrees     = Ridge.    alphaDegrees(reverseIndices);
+Ridge.stepLengthPix    = Ridge.   stepLengthPix(reverseIndices);
+
+% 1. Measure width of track so we know how many points to skip.
+preferredWidthMeasurementLengthPts = ...
+    round(Options.widthMeasurementLengthPix / Options.positionStepSizePix);
+if preferredWidthMeasurementLengthPts > 1 && ...
+        preferredWidthMeasurementLengthPts <= finalRidgePointIndex
+    actualWidthMeasurementLengthPts = preferredWidthMeasurementLengthPts;
+elseif preferredWidthMeasurementLengthPts < 1
+    actualWidthMeasurementLengthPts = 1;
+elseif preferredWidthMeasurementLengthPts > finalRidgePointIndex
+    actualWidthMeasurementLengthPts = finalRidgePointIndex;
+end
+measuredWidthUm = Options.measurementFunctionHandle(...
+    Ridge.fwhmUm(1:actualWidthMeasurementLengthPts));
+skipDiffusionPts = (measuredWidthUm - Options.pixelSizeUm) * ...
+    4 / Options.pixelSizeUm;    % logbook 11/1/2009....
+if skipDiffusionPts < 0
+    skipDiffusionPts = 0;
+end
+
+cosBeta(1) = cosd(Options.initialBetaGuessDegrees);
+
+% 2. get measurement selection range, assuming beta==0 and no diffusion
+[parallelMeasurementStartPointNo, parallelMeasurementEndPointNo] = ...
+    HtSelectMeasurementPoints(trackEnergy);
+
+% 3. get measurement selection range, for a given beta, and skipping diffusion
+actualMeasurementStartPointNo = ...
+    ceil(parallelMeasurementStartPointNo * cosBeta(1) + skipDiffusionPts);
+actualMeasurementEndPointNo = ...
+    ceil(parallelMeasurementEndPointNo * cosBeta(1) + skipDiffusionPts);
+if actualMeasurementStartPointNo > finalRidgePointIndex
+    % fix start and end... this is kinda bad, only one measurement point
+    actualMeasurementStartPointNo = finalRidgePointIndex;
+    actualMeasurementEndPointNo = finalRidgePointIndex;
+elseif actualMeasurementEndPointNo > finalRidgePointIndex
+    actualMeasurementEndPointNo = finalRidgePointIndex;
+end
+if actualMeasurementEndPointNo < 1
+    actualMeasurementStartPointNo = 1;
+    actualMeasurementEndPointNo = 1;
+elseif actualMeasurementStartPointNo < 1
+    actualMeasurementStartPointNo = 1;
+end
+measurementIndices = actualMeasurementStartPointNo:actualMeasurementEndPointNo;
+
+% 4. First estimate of beta, using selection which is calculated using beta0.
+energyIndex = 1;
+dedxIndex = 2;
+if trackEnergy > Options.dedxTable(1,energyIndex) && ...
+        trackEnergy < Options.dedxTable(end,energyIndex)
+    dedxReference = interp1(Options.dedxTable(:,energyIndex), ...
+                            Options.dedxTable(:,dedxIndex), ...
+                            trackEnergy);
+elseif trackEnergy <= Options.dedxTable(1,energyIndex)
+    % energy too low to interpolate
+    dedxReference = Options.dedxTable(1,dedxIndex);
+elseif trackEnergy >= Options.dedxTable(end,energyIndex)
+    % energy too high to interpolate
+    dedxReference = Options.dedxTable(end,dedxIndex);
+end
+dedxMeasured = Options.measurementFunctionHandle(...
+    Ridge.dedxKevUm(measurementIndices));
+cosBeta(2) = dedxReference / dedxMeasured;
+% closest physical solution
+if cosBeta(2) > 1
+    cosBeta(2) = 1;
+end
+
+% 5. Next selection calculation
+actualMeasurementStartPointNo = ...
+    ceil(parallelMeasurementStartPointNo * cosBeta(2) + skipDiffusionPts);
+actualMeasurementEndPointNo = ...
+    ceil(parallelMeasurementEndPointNo * cosBeta(2) + skipDiffusionPts);
+if actualMeasurementStartPointNo > finalRidgePointIndex
+    % fix start and end... this is kinda bad, only one measurement point
+    actualMeasurementStartPointNo = finalRidgePointIndex;
+    actualMeasurementEndPointNo = finalRidgePointIndex;
+elseif actualMeasurementEndPointNo > finalRidgePointIndex
+    actualMeasurementEndPointNo = finalRidgePointIndex;
+end
+if actualMeasurementEndPointNo < 1
+    actualMeasurementStartPointNo = 1;
+    actualMeasurementEndPointNo = 1;
+elseif actualMeasurementStartPointNo < 1
+    actualMeasurementStartPointNo = 1;
+end
+measurementIndices = actualMeasurementStartPointNo:actualMeasurementEndPointNo;
+
+% 6. Second and final estimate of beta, using selection calculated from 
+%       first estimate of beta.
+dedxMeasured = Options.measurementFunctionHandle(...
+    Ridge.dedxKevUm(measurementIndices));
+cosBeta(3) = dedxReference / dedxMeasured;
+% closest physical solution
+if cosBeta(3) > 1
+    cosBeta(3) = 1;
+end
+
+betaDegrees = acosd(cosBeta(3));
+
+% Measure alpha using selection calculated from first estimate of beta
+%       (same points as for final measurement of beta)
+
+alphaDegrees = Options.measurementFunctionHandle(...
+    Ridge.alphaDegrees(measurementIndices));
+% That was the alpha pointing TOWARD the beginning of the track.
+alphaDegrees = alphaDegrees + 180;
+if alphaDegrees > 360
+    alphaDegrees = alphaDegrees - 360;
+end
+
+% construct output
+Measurement.alphaDegrees = alphaDegrees;
+Measurement.betaDegrees = betaDegrees;
+Measurement.dedxReference = dedxReference;
+Measurement.dedxMeasured = dedxMeasured;
+Measurement.indices = measurementIndices;
+
+
+
+function [measurementStartPointNo, measurementEndPointNo] = ...
+    HtSelectMeasurementPoints(trackEnergy)
+% function [measurementStartPointNo, measurementEndPointNo] = ...
+%     HtSelectMeasurementPoints(trackEnergy)
+
+% see node 1875 on bearing.berkeley.edu.
+% "different indexing" refers to how the alpha value is saved in the ridge data.
+%   old code had each step saving the angle toward the next step;
+%   new code has each step saving the angle from the previous step.
+% TODO: change this and see what happens.
+measurementStartPointNo = sqrt(0.0825 * trackEnergy + 15.814) - 3.4;
+measurementStartPointNo = measurementStartPointNo - 1;  % different indexing
+measurementStartPointNo = max(measurementStartPointNo, 0);
+measurementEndPointNo = measurementStartPointNo * 2 + 3.4;
+measurementEndPointNo = measurementEndPointNo - 1;    % different indexing
+measurementEndPointNo = max(measurementEndPointNo, 0);
+
+
+
+function Output = HtSetOutput(preparedImageKev, Options, EdgeSegments, Ridge, ...
+    Measurement)
+% function Output = HtSetOutput(preparedImageKev, Options, EdgeSegments, Ridge, ...
+%     Measurement)
+
+Output.img = preparedImageKev; % image with 0 padding
+Output.Etot = sum(preparedImageKev(:)); % E total, summing all the pixels up
+% Output.ThSS = thetaStepSizeRadians;
+Output.pixsize = Options.pixelSizeUm; % record the pixel size
+
+Output.ends = length(EdgeSegments.energiesKev); % number of ends
+Output.Eend = EdgeSegments.energiesKev(EdgeSegments.chosenIndex); % energy of the choosen ends
+Output.thin = EdgeSegments.thinnedImage; % thinned image 
+Output.lt = EdgeSegments.lowThresholdUsed; % threhold being used
+Output.EdgeSegments = EdgeSegments; % ends structure
+
+Output.x = Ridge.positionPix(:,1); % ridge row value
+Output.y = Ridge.positionPix(:,2); % ridge col value
+Output.w = Ridge.fwhmUm; % width of the chosen cut, for diffusion
+Output.a0 = Ridge.alphaDegrees; % measured alpha along the ridge
+Output.dE = Ridge.dedxKevUm; % measured dedx(s)
+Output.Ridge = Ridge; % ridge structure
+
+Output.alpha = Measurement.alphaDegrees; % estimated alpha 
+Output.beta = Measurement.betaDegrees; % estimated beta
+Output.Measurement = Measurement;   % measured structure
+%dedxReference, dedxMeasured, indices
+
+
+
+
+if ~isempty(Options.cheat)
+    %pass the cheat structure back out.
+    Output.cheat = Options.cheat;
+    %already added to cheat structure:
+    %cosbeta using actual electron energy (e.g. if detector captured full energy of electron)
+
+    %this needs to be fixed. fields of 'cheat' have changed. and offsets must be included.
+    % Track.cheat.enddist = sqrt((Track.x(1)-cheat.x)^2 + (Track.y(1)-cheat.y)^2);  %2D distance from first algorithm point to true electron start
+
+end
+
+
+
+##### SOURCE END #####
+--></body></html>

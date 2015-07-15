@@ -81,7 +81,7 @@ Options = HtConstructOptions(nargin,varargin);
 % low threshold, thinning, identify ends.
 EdgeSegments = HtChooseInitialEnd(preparedImageKev, Options);
 
-%%% exception
+% exception
 if isnan(EdgeSegments.chosenIndex)
     % no end found
     % exit unsuccessfully
@@ -93,13 +93,13 @@ if isnan(EdgeSegments.chosenIndex)
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%% ridge following %%%%%
+%%% ridge following %%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % ridge following
 Ridge = HtRidgeFollow(EdgeSegments, Options, preparedImageKev);
 
-%%% exception
+% exception
 if isfield(Ridge,'err') && strcmpi(Ridge.err,'infinite loop')
     Output.img = preparedImageKev;
     Output.Etot = sum(preparedImageKev(:));
@@ -586,7 +586,7 @@ Options.widthMeasurementLengthPix = ...
     max(preferredWidthMeasurementLengthPix, ...
         minimumWidthMeasurementLengthUm / Options.pixelSizeUm);
 
-Options.initialBetaGuessDegrees = 45;
+Options.initialBetaGuessDegrees = 0;
 Options.shouldShortenMeasurementLength = true;
 Options.measurementFunctionHandle = @median;
 
@@ -1393,7 +1393,11 @@ reverseIndices = finalRidgePointIndex:-1:1;
 Ridge.positionPix      = Ridge.     positionPix(reverseIndices,:);
 Ridge.dedxKevUm        = Ridge.       dedxKevUm(reverseIndices);
 Ridge.fwhmUm           = Ridge.          fwhmUm(reverseIndices);
-Ridge.alphaDegrees     = Ridge.    alphaDegrees(reverseIndices);
+
+% correction for alpha degrees
+alpha_tmp = Ridge.alphaDegrees;
+alpha_tmp(alpha_tmp < -135) = alpha_tmp(alpha_tmp < -135) + 360;
+Ridge.alphaDegrees     = alpha_tmp(reverseIndices);
 Ridge.stepLengthPix    = Ridge.   stepLengthPix(reverseIndices);
 
 % 1. Measure width of track so we know how many points to skip.
