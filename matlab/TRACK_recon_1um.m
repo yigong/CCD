@@ -9,7 +9,7 @@ parfor i = 1:fileNum
     ['recon # ', num2str(i)]
     if ~isfield(recon_tmp, 'err')
         ['save # ', num2str(i)]
-        var = zeros(1,4);
+        var = zeros(1,8);
         var(1) = recon_tmp.alpha;
         var(2) = recon_tmp.beta;
         % convert relative start position to absolute position
@@ -23,9 +23,11 @@ parfor i = 1:fileNum
         alphaTrue = h.PrimaryData.Keywords{8,2};
         xInit_true = h.PrimaryData.Keywords{9,2};
         yInit_true = h.PrimaryData.Keywords{10,2};
+        eInit_true = h.PrimaryData.Keywords{11,2};
         var(5) = alphaTrue;
         var(6) = xInit_true;
         var(7) = yInit_true;
+        var(8) = eInit_true;
        % % save to file, then delete
         saveName = sprintf('../mat/%d.mat', i);
         saveParFor(saveName, var, '-v7.3');
