@@ -675,7 +675,7 @@ function EdgeSegments = HtChooseInitialEnd(imgKev, Options)
 %   energiesKev: list of energies measured at each end
 %   coordinatesPix: Nx2 list of x,y coordinates for each end pixel
 %   chosenIndex: index for above two fields, of the selected end
-%   startCoordinatesPix: x,y coordinates to start the ridge following
+%   startRidgePix: x,y coordinates to start the ridge following
 %   startDirectionIndices: direction to start ridge following, based on thinned
 %       track image, in units of cutAngleIncrementDegrees
 
@@ -709,7 +709,7 @@ else
     EdgeSegments.energiesKev = [];
     EdgeSegments.coordinatesPix = zeros(0,2);
     EdgeSegments.chosenIndex = nan;
-    EdgeSegments.startCoordinatesPix = zeros(0,2);
+    EdgeSegments.startRidgePix = zeros(0,2);
     EdgeSegments.startDirectionIndices = nan;
     EdgeSegments.lowThresholdUsed = nan;
     return
@@ -761,7 +761,7 @@ for stepNo = 1:nStepsPixels
         break
     end
 end
-EdgeSegments.startCoordinatesPix = thisXY;
+EdgeSegments.startRidgePix = thisXY;
 startDirectionDegrees = 180/pi * atan2(-lastStep(2), -lastStep(1));
 if startDirectionDegrees > 0    %atan2 returns a value on [-pi, pi]
     EdgeSegments.startDirectionIndices = round(startDirectionDegrees / ...
@@ -946,7 +946,7 @@ function Ridge = HtRidgeFollow(EdgeSegments, Options, imgKev)
 % 
 % Inputs: {standard choice}
 %   EdgeSegments: structure requiring fields:
-%       startCoordinatesPix: coordinates of img to start at, in pixels
+%       startRidgePix: coordinates of img to start at, in pixels
 %       startDirectionIndices: angle to start moving in, units of 
 %           Options.cutAngleIncrementDegrees
 %   Options: structure requiring fields:
@@ -978,7 +978,7 @@ function Ridge = HtRidgeFollow(EdgeSegments, Options, imgKev)
 %       alphaDegrees: actual angle from the previous ridge point
 
 % set values for first step
-Ridge.positionPix(1,1:2) = EdgeSegments.startCoordinatesPix;
+Ridge.positionPix(1,1:2) = EdgeSegments.startRidgePix ;
 startDirectionIndices = EdgeSegments.startDirectionIndices;
 isFinished = false;
 
@@ -1529,6 +1529,7 @@ Measurement.betaDegrees = betaDegrees;
 Measurement.dedxReference = dedxReference;
 Measurement.dedxMeasured = dedxMeasured;
 Measurement.indices = measurementIndices;
+Measurement.entrancePix = Ridge.positionPix(actualMeasurementStartPointNo, :);
 
 
 
