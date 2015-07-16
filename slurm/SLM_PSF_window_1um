@@ -13,14 +13,14 @@
 #SBATCH --partition=lr3
 #
 # QoS:
-#SBATCH --qos=lr_debug
+#SBATCH --qos=lr_normal
 #
 # Processors:
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=16
 #
 # Wall clock limit:
-#SBATCH --time=00:30:00
+#SBATCH --time=01:30:00
 #
 # Mail type:
 #SBATCH --mail-type=all

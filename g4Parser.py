@@ -39,7 +39,7 @@ def parse(psfTable, file):
                 yDir = float(lineSplit[8])
                 xInit = float(lineSplit[0]) 
                 yInit = float(lineSplit[1])
-                eInit = float(lineSplit[6])
+                eInit = float(lineSplit[11])
             x_tmp.append(float(lineSplit[0]))
             y_tmp.append(float(lineSplit[1]))
             z_tmp.append(float(lineSplit[2]))
