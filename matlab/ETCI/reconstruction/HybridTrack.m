@@ -364,6 +364,14 @@ while argumentNo <= (nArgs - requiredArgs);
             else
                 error('unrecognized plot style')
             end
+        case {'einit', 'energy'}
+            thisValue = varargs{argumentNo+1};
+            if isnumeric(thisValue) && isfinite(thisValue) ...
+                    && length(thisValue)==1
+                Options.energy = thisValue; % in keV
+            else
+                error('unrecognized energy')
+            end
         otherwise
             error('Unrecognized input argument')
     end
@@ -645,8 +653,12 @@ newImageKev = zeros(newImageSize);
 xIndicesOfOriginalImage = imageEdgeBufferPix + (1:size(originalImageKev,1));
 yIndicesOfOriginalImage = imageEdgeBufferPix + (1:size(originalImageKev,2));
 newImageKev(xIndicesOfOriginalImage, yIndicesOfOriginalImage) = originalImageKev;
-
-trackEnergyKev = sum(newImageKev(:));
+if isfield(Options, 'energy')
+    trackEnergyKev = Options.energy;
+else
+    trackEnergyKev = sum(newImageKev(:));
+    Options.energy = trackEnergyKev;
+end
 
 
 
@@ -1543,9 +1555,9 @@ function Output = HtSetOutput(preparedImageKev, Options, EdgeSegments, Ridge, ..
     Measurement)
 % function Output = HtSetOutput(preparedImageKev, Options, EdgeSegments, Ridge, ...
 %     Measurement)
-
+Output.input = Options;
 Output.img = preparedImageKev; % image with 0 padding
-Output.Etot = sum(preparedImageKev(:)); % E total, summing all the pixels up
+Output.Etot = Options.energy; % E total, summing all the pixels up
 % Output.ThSS = thetaStepSizeRadians;
 Output.pixsize = Options.pixelSizeUm; % record the pixel size
 
