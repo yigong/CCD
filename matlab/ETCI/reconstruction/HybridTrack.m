@@ -364,7 +364,7 @@ while argumentNo <= (nArgs - requiredArgs);
             else
                 error('unrecognized plot style')
             end
-        case {'einit', 'energy'}
+        case {'einit', 'energyt'}
             thisValue = varargs{argumentNo+1};
             if isnumeric(thisValue) && isfinite(thisValue) ...
                     && length(thisValue)==1
@@ -725,7 +725,7 @@ EdgeSegments.energiesKev = energySumImage(endLinearIndices);
 [EdgeSegments.coordinatesPix(:,1), EdgeSegments.coordinatesPix(:,2)] ...
     = ind2sub(size(imgKev),endLinearIndices);
 [~,EdgeSegments.chosenIndex] = min(EdgeSegments.energiesKev);
-EdgeSegments.chosenEnd = EdgeSegments.coordinatesPix(EdgeSegments.chosenIndex);
+EdgeSegments.chosenEnd = EdgeSegments.coordinatesPix(EdgeSegments.chosenIndex, :);
 % Walk back up the track to get starting location. For each step, I count
 % neighbors to see if we're at an intersection. If not, I use a find operation
 % to get the position of the next pixel

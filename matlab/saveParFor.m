@@ -1,4 +1,4 @@
-function saveParFor(fName, var, ver)
+function saveParFor(fName, result, ver)
 % save to use in parfor to avoid transparency violation
-    save(fName, 'var', ver);
+    save(fName, '-struct', 'result', ver);
 end

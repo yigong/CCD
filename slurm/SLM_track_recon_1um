@@ -28,7 +28,6 @@
 # Mail user:
 #SBATCH --mail-user=ygzhang@lbl.gov
 #
-module load matlab
 MatlabDir=/global/scratch/ygzhang/PyBeamDiag/matlab
 cd $MatlabDir
 matlab -nodisplay -nosplash -r "TRACK_recon_1um"
