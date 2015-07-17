@@ -368,7 +368,7 @@ while argumentNo <= (nArgs - requiredArgs);
             thisValue = varargs{argumentNo+1};
             if isnumeric(thisValue) && isfinite(thisValue) ...
                     && length(thisValue)==1
-                Options.energy = thisValue; % in keV
+                Options.energyT = thisValue; % in keV
             else
                 error('unrecognized energy')
             end
@@ -653,11 +653,12 @@ newImageKev = zeros(newImageSize);
 xIndicesOfOriginalImage = imageEdgeBufferPix + (1:size(originalImageKev,1));
 yIndicesOfOriginalImage = imageEdgeBufferPix + (1:size(originalImageKev,2));
 newImageKev(xIndicesOfOriginalImage, yIndicesOfOriginalImage) = originalImageKev;
-if isfield(Options, 'energy')
-    trackEnergyKev = Options.energy;
+if isfield(Options, 'energyT')
+    trackEnergyKev = Options.energyT;
+    Options.energyM = sum(newImageKev(:));
 else
     trackEnergyKev = sum(newImageKev(:));
-    Options.energy = trackEnergyKev;
+    
 end
 
 
@@ -724,7 +725,7 @@ EdgeSegments.energiesKev = energySumImage(endLinearIndices);
 [EdgeSegments.coordinatesPix(:,1), EdgeSegments.coordinatesPix(:,2)] ...
     = ind2sub(size(imgKev),endLinearIndices);
 [~,EdgeSegments.chosenIndex] = min(EdgeSegments.energiesKev);
-
+EdgeSegments.chosenEnd = EdgeSegments.coordinatesPix(EdgeSegments.chosenIndex);
 % Walk back up the track to get starting location. For each step, I count
 % neighbors to see if we're at an intersection. If not, I use a find operation
 % to get the position of the next pixel
@@ -1529,7 +1530,7 @@ Measurement.betaDegrees = betaDegrees;
 Measurement.dedxReference = dedxReference;
 Measurement.dedxMeasured = dedxMeasured;
 Measurement.indices = measurementIndices;
-Measurement.entrancePix = Ridge.positionPix(actualMeasurementStartPointNo, :);
+% Measurement.entrancePix = Ridge.positionPix(actualMeasurementStartPointNo, :);
 
 
 
@@ -1558,7 +1559,9 @@ function Output = HtSetOutput(preparedImageKev, Options, EdgeSegments, Ridge, ..
 %     Measurement)
 Output.input = Options;
 Output.img = preparedImageKev; % image with 0 padding
-Output.Etot = Options.energy; % E total, summing all the pixels up
+Output.energyT = Options.energyT;
+Output.energyM = Options.energyM;
+% Output.Etot = Options.energy; % E total, summing all the pixels up
 % Output.ThSS = thetaStepSizeRadians;
 Output.pixsize = Options.pixelSizeUm; % record the pixel size
 
