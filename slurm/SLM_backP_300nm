@@ -1,10 +1,7 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=PSF100nm
-#
-# Error file:
-#SBATCH --error=ERR_PSF_window_100nm
+#SBATCH --job-name=RECON_300nm
 #
 # Account:
 #SBATCH  --account=ac_etci
@@ -20,7 +17,7 @@
 #SBATCH --ntasks-per-node=16
 #
 # Wall clock limit:
-#SBATCH --time=10:30:00
+#SBATCH --time=72:00:00
 #
 # Mail type:
 #SBATCH --mail-type=all
@@ -29,11 +26,24 @@
 #SBATCH --mail-user=ygzhang@lbl.gov
 #
 
+G4OutDir=/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/300nm
 PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
-cd $PyBeamDiagDir
-python PSF_window_100nm.py
+MatlabDir=/global/scratch/ygzhang/PyBeamDiag/matlab
 
-FAIL=n
+echo 'parsing G4 output'
+python PARSING_300nm.py bottom fits_backP
+
+echo 'track reconstruction' 
+cd $MatlabDir
+matlab -nodisplay -nosplash -r 'TRACK_recon_300nm'
+
+echo 'compute PSF at window'
+cd $PyBeamDiagDir
+python PSF_window_300nm.py
+
+echo 'Done'
+
+FAIL=0
 for job in `jobs -p`
 do
 echo $job

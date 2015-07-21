@@ -1,0 +1,60 @@
+#!/bin/bash -I
+#
+# Job name:
+#SBATCH --job-name=1um_backP
+#
+# Account:
+#SBATCH  --account=ac_etci
+#
+# Partition
+#SBATCH --partition=lr3
+#
+# QoS:
+#SBATCH --qos=lr_normal
+#
+# Processors:
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#
+# Wall clock limit:
+#SBATCH --time=72:00:00
+#
+# Mail type:
+#SBATCH --mail-type=all
+#
+# Mail user:
+#SBATCH --mail-user=ygzhang@lbl.gov
+#
+
+PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
+MatlabDir=/global/scratch/ygzhang/PyBeamDiag/matlab
+
+echo 'parsing G4 output'
+cd $PyBeamDiagDir
+python PARSING.py       1um     fits_backP    bottom              # args: | step length | fits directory | pixel-plane facing |
+
+echo 'track reconstruction' 
+cd $MatlabDir
+matlab -nodisplay -nosplash -r 'TRACK_recon     1um     fits_backP'         # args: | step length | fits directory |
+
+echo 'compute PSF at window'
+cd $PyBeamDiagDir
+python PSF_window.py    1um     fits_backP    PSF_backP_1um      # args: | step length | fits directory | outName: %s.p |
+
+echo 'Done'
+
+FAIL=0
+for job in `jobs -p`
+do
+echo $job
+    wait $job || let "FAIL+=1"
+done
+
+echo $FAIL
+
+if [ "$FAIL" == "0" ];
+then
+echo "YAY!"
+else
+echo "FAIL! ($FAIL)"
+fi

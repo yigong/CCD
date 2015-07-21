@@ -1,7 +1,7 @@
 from glob import glob
 from os import chdir, getcwd
 CWD = getcwd()
-G4OutDir = '/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/100nm'
+G4OutDir = '/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/300nm'
 chdir(G4OutDir)
 fileList = glob('./G4W_*.out')
 fId = 0
