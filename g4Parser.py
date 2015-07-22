@@ -5,7 +5,7 @@ from PyBeamDiag.diffuse import XYZdE2track
 from astropy.io import fits
 from numpy import arctan, rad2deg
 
-def parse(psfTable, file):
+def parse(file, psfTable, outFolder, pixelPlane):
     '''
     a parser for G4output.
     It's easier to parallelize if written as a separate function.
@@ -39,7 +39,7 @@ def parse(psfTable, file):
                 yDir = float(lineSplit[8])
                 xInit = float(lineSplit[0]) 
                 yInit = float(lineSplit[1])
-                eInit = float(lineSplit[11])
+                eInit = float(lineSplit[5])
             x_tmp.append(float(lineSplit[0]))
             y_tmp.append(float(lineSplit[1]))
             z_tmp.append(float(lineSplit[2]))
@@ -60,7 +60,7 @@ def parse(psfTable, file):
             if alpha_true < 0:
                 alpha_true += 360.   
             del x_tmp, y_tmp, z_tmp, dE_tmp
-            track, rowMin, colMin = XYZdE2track(x, y, z, dE, psfTable, pixelPlane='top')
+            track, rowMin, colMin = XYZdE2track(x, y, z, dE, psfTable, pixelPlane)
             h = fits.Header()
             h['rowMin'] = rowMin
             h['colMin'] = colMin
@@ -68,5 +68,5 @@ def parse(psfTable, file):
             h['xInit'] = xInit
             h['yInit'] = yInit 
             h['eInit'] = eInit
-            fits.writeto('../fits/%s.fits' % (fileIdx), track, h, clobber=True)
+            fits.writeto('../%s/%s.fits' % (outFolder, fileIdx), track, h, clobber=True)
         f.close()   

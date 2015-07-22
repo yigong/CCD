@@ -11,11 +11,12 @@ def main():
 
     # parse input arguments
     args = sys.argv
-    fitsFdr = args[1]       # fits file folder, eg: 3um/fits_backP
-    outFile = args[2]       # pickle name, eg: PSF_window_3um 
+    stepLen = args[1]       # step length,      eg: 3um
+    fitsFdr = args[2]       # fits file folder, eg: fits_backP
+    outFile = args[3]       # pickle file name, eg: PSF_window_3um 
 
     currentDir = getcwd()
-    dataDir = '/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/%s' %(fitsFdr)
+    dataDir = '/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/%s/%s' %(stepLen, fitsFdr)
     chdir(dataDir)
     Files = glob('*.mat')
     numTracks = len(Files)

@@ -33,7 +33,7 @@ def XYZdE2track(xArray, yArray, zArray, dEArray, psfTable, pixelPlane):
     for i, (x_1step, y_1step, z_1step,dE_1step) in enumerate(zip(xArray, yArray, zArray, dEArray)):
         rows = y_1step + rowPSF1d
         cols = x_1step + colPSF1d
-        dE = (dE_1step * computePSF(z_1step, psfTable, pixelPlane='top'))
+        dE = (dE_1step * computePSF(z_1step, psfTable, pixelPlane))
         track_1step, a, b = np.histogram2d(rows, cols, [rowEdges, colEdges], weights=dE)
         track += track_1step
     del track_1step
@@ -43,11 +43,13 @@ def XYZdE2track(xArray, yArray, zArray, dEArray, psfTable, pixelPlane):
 def computePSF(z, psfTable, pixelPlane):
     ''' compute the point spread function given the z value '''
     if pixelPlane == 'bottom':
+        # print 'back-plane irradiation'
         zTable = np.arange(0, 650.5, 0.5)
         zAdjusted = min(zTable, key=lambda x:abs(x-z))        
         return psfTable[int(2*zAdjusted)].flatten()
     
     elif pixelPlane == 'top':
+        # print 'pixel-plane irradiation'
         zTable = np.arange(0, 650.5, 0.5)
         zAdjusted = 650 - min(zTable, key=lambda x:abs(x-z))    
         return psfTable[int(2*zAdjusted)].flatten()

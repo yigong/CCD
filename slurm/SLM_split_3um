@@ -1,10 +1,10 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=PSF100nm
+#SBATCH --job-name=3um_split
 #
 # Error file:
-#SBATCH --error=ERR_PSF_window_100nm
+#SBATCH --error=ERR_split_3um
 #
 # Account:
 #SBATCH  --account=ac_etci
@@ -13,14 +13,14 @@
 #SBATCH --partition=lr3
 #
 # QoS:
-#SBATCH --qos=lr_normal
+#SBATCH --qos=lr_debug
 #
 # Processors:
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=16
 #
 # Wall clock limit:
-#SBATCH --time=10:30:00
+#SBATCH --time=00:30:00
 #
 # Mail type:
 #SBATCH --mail-type=all
@@ -31,9 +31,9 @@
 
 PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
 cd $PyBeamDiagDir
-python PSF_window_100nm.py
+python myText_3um.py
 
-FAIL=n
+FAIL=0
 for job in `jobs -p`
 do
 echo $job
