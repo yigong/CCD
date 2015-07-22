@@ -1,7 +1,7 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=RECON_300nm
+#SBATCH --job-name=10um_G4
 #
 # Account:
 #SBATCH  --account=ac_etci
@@ -10,14 +10,14 @@
 #SBATCH --partition=lr3
 #
 # QoS:
-#SBATCH --qos=lr_normal
+#SBATCH --qos=lr_debug
 #
 # Processors:
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=16
 #
 # Wall clock limit:
-#SBATCH --time=72:00:00
+#SBATCH --time=00:30:00
 #
 # Mail type:
 #SBATCH --mail-type=all
@@ -26,20 +26,16 @@
 #SBATCH --mail-user=ygzhang@lbl.gov
 #
 
-G4OutDir=/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/300nm
+G4OutDir=/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/10um
 PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
-MatlabDir=/global/scratch/ygzhang/PyBeamDiag/matlab
 
-echo 'parsing G4 output'
-python PARSING_300nm.py bottom fits_backP
+# echo 'running G4'
+# cd $G4OutDir
+# ../../build_LRC/exe_BeamDiag ../../macro/10um.mac
 
-echo 'track reconstruction' 
-cd $MatlabDir
-matlab -nodisplay -nosplash -r 'TRACK_recon_300nm'
-
-echo 'compute PSF at window'
+echo 'splitting G4 output'
 cd $PyBeamDiagDir
-python PSF_window_300nm.py
+python SPLIT.py     10um
 
 echo 'Done'
 

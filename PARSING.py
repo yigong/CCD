@@ -31,7 +31,7 @@ def main():
     ## map(partial(parse, psfTable), fileList[:10])
     
     # partial func
-    parse_partial = partial(parse, psfTable=psf, pixelPlane=pfacing, outFolder='%s/%s' %(stepLen, fitsFdr))
+    parse_partial = partial(parse, psfTable=psf, pixelPlane=pfacing, outFolder='%s' %(fitsFdr))
 
     # parallel
     pool = multiprocessing.Pool(15)
