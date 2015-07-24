@@ -514,7 +514,7 @@ Options.cutTotalLengthPix = 105 / Options.pixelSizeUm;
 % Smaller cutAngleIncrementDegrees might give a more accurate measurement of 
 % alpha.
 % (larger cutAngleIncrementDegrees will make code run faster)
-Options.cutAngleIncrementDegrees = 3;
+Options.cutAngleIncrementDegrees = 1;
 
 % cutAngleIncrementDegrees is used as the base unit for all the other anglular
 % variables. So variables ending in "Indices" are in this unit.
