@@ -1,6 +1,6 @@
 import re
 import numpy as np
-from scipy.io import loadmat
+from scipy.io import loadmat, savemat
 from PyBeamDiag.diffuse import XYZdE2track
 from astropy.io import fits
 from numpy import arctan, rad2deg
@@ -70,3 +70,36 @@ def parse(file, psfTable, outFolder, pixelPlane):
             h['eInit'] = eInit
             fits.writeto('../%s/%s.fits' % (outFolder, fileIdx), track, h, clobber=True)
         f.close()   
+
+def parse_E_phi(g4Out, outFolder):
+    '''
+    parse electron energy and angle phi
+    '''
+    f = open(g4Out, 'r')
+    lines = f.readlines()
+    E_create = []
+    cosPhi_create = []
+    E_scatterOut = []
+    cosPhi_scatterOut = []
+    for line in lines:
+        if ('3500' in line) and ('compt' in line) and ('physiScatter' in line) :
+            lineSplit = re.split(r'\s*[(), \s]\s*', line)
+            if lineSplit[0] == '':
+                lineSplit = lineSplit[1:]
+            E_create.append(lineSplit[5])
+            cosPhi_create.append(lineSplit[8])
+            
+        if ('10' in line) and ('physiScatter' in line) and ('Transportation' in line): 
+            lineSplit = re.split(r'\s*[(), \s]\s*', line)
+            if lineSplit[0] == '':
+                lineSplit = lineSplit[1:]
+            E_scatterOut.append(lineSplit[5])
+            cosPhi_scatterOut.append(lineSplit[8])
+
+    data_dict = dict()
+    data_dict['E_create'] = E_create
+    data_dict['cosPhi_create'] = cosPhi_create
+    data_dict['E_scatterOut'] = E_scatterOut
+    data_dict['cosPhi_scatterOut'] = cosPhi_scatterOut
+    savemat(@.mat file name@, data_dict)
+
