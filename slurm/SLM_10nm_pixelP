@@ -1,7 +1,7 @@
 #!/bin/bash -I
 #
 # Job name:
-#SBATCH --job-name=1um_backP
+#SBATCH --job-name=10nm_pixelP
 #
 # Account:
 #SBATCH  --account=ac_etci
@@ -29,17 +29,38 @@
 PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
 MatlabDir=/global/scratch/ygzhang/PyBeamDiag/matlab
 
+step=10nm
+plane=pixelP
+
+if  [ $plane == backP ]; then
+    facing=bottom
+elif  [ $plane == pixelP ]; then
+    facing=top
+else
+    echo 'WRONG $plane !!!'
+    echo "plane = $plane"
+fi
+fitsDir=fits_${plane}
+pickle=PSF_${step}_${plane}
+
+echo "  step  = $step"
+echo " plane  = $plane"
+echo "facing  = $facing"
+echo "fitsDir = $fitsDir"
+echo "pickle  = $pickle"
+
+
 echo 'parsing G4 output'
 cd $PyBeamDiagDir
-python PARSING.py       1um     fits_backP    bottom              # args: | step length | fits directory | pixel-plane facing |
+python PARSING.py        $step     $fitsDir    $facing              # args: | step length | fits directory | pixel-plane facing |
 
 echo 'track reconstruction' 
 cd $MatlabDir
-matlab -nodisplay -nosplash -r 'TRACK_recon     1um     fits_backP'         # args: | step length | fits directory |
+matlab -nodisplay -nosplash -r "TRACK_recon     $step     $fitsDir"         # args: | step length | fits directory |
 
 echo 'compute PSF at window'
 cd $PyBeamDiagDir
-python PSF_window.py    1um     fits_backP    PSF_backP_1um      # args: | step length | fits directory | outName: %s.p |
+python PSF_window.py    $step     $fitsDir    $pickle      # args: | step length | fits directory | outName: %s.p |
 
 echo 'Done'
 

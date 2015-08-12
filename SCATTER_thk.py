@@ -10,13 +10,14 @@ def main():
     # arguments
     args = sys.argv
     outDir = args[1]
+    t = args[2]
     print outDir
 
-    G4Dir = '/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/mat'
+    G4Dir = '/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/thk'
     chdir(G4Dir)
-    fileList = glob('G4W_*_Pb.out')
+    fileList = glob('G4W_*_thk%sum.out'%(t))
     
-    Ephi_partial = partial(parse_E_phi, outFolder=outDir)
+    Ephi_partial = partial(parse_E_phi, outFolder=outDir, thk=t)
     
     pool = multiprocessing.Pool(15)
     pool.map(Ephi_partial, fileList)

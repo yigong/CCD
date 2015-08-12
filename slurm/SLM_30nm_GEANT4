@@ -1,0 +1,57 @@
+#!/bin/bash -I
+#
+# Job name:
+#SBATCH --job-name=30nm_G4
+#
+# Account:
+#SBATCH  --account=ac_etci
+#
+# Partition
+#SBATCH --partition=lr3
+#
+# QoS:
+#SBATCH --qos=lr_normal
+#
+# Processors:
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#
+# Wall clock limit:
+#SBATCH --time=01:30:00
+#
+# Mail type:
+#SBATCH --mail-type=all
+#
+# Mail user:
+#SBATCH --mail-user=ygzhang@lbl.gov
+#
+step=30nm
+
+G4OutDir=/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/$step
+PyBeamDiagDir=/global/scratch/ygzhang/PyBeamDiag
+
+echo 'running G4'
+cd $G4OutDir
+../../build_LRC/exe_BeamDiag ../../macro/${step}.mac
+
+echo 'splitting G4 output'
+cd $PyBeamDiagDir
+python SPLIT.py    $step 
+
+echo 'Done'
+
+FAIL=0
+for job in `jobs -p`
+do
+echo $job
+    wait $job || let "FAIL+=1"
+done
+
+echo $FAIL
+
+if [ "$FAIL" == "0" ];
+then
+echo "YAY!"
+else
+echo "FAIL! ($FAIL)"
+fi

@@ -71,35 +71,49 @@ def parse(file, psfTable, outFolder, pixelPlane):
             fits.writeto('../%s/%s.fits' % (outFolder, fileIdx), track, h, clobber=True)
         f.close()   
 
-def parse_E_phi(g4Out, outFolder):
+def parse_E_phi(g4Out, outFolder, thk):
     '''
     parse electron energy and angle phi
     '''
+    thk = ' ' + thk + ' '
     f = open(g4Out, 'r')
+    fNameSplit = re.split(r'[_\.]', g4Out)
+    matrl = fNameSplit[2]
+    fId   = fNameSplit[1]
+
     lines = f.readlines()
     E_create = []
     cosPhi_create = []
     E_scatterOut = []
     cosPhi_scatterOut = []
+    x_scatterOut = []
+    y_scatterOut = []
+    z_scatterOut = []
     for line in lines:
         if ('3500' in line) and ('compt' in line) and ('physiScatter' in line) :
             lineSplit = re.split(r'\s*[(), \s]\s*', line)
             if lineSplit[0] == '':
                 lineSplit = lineSplit[1:]
-            E_create.append(lineSplit[5])
-            cosPhi_create.append(lineSplit[8])
+            E_create.append(float(lineSplit[5]))
+            cosPhi_create.append(float(lineSplit[8]))
             
-        if ('10' in line) and ('physiScatter' in line) and ('Transportation' in line): 
+        if (thk in line) and ('physiScatter' in line) and ('Transportation' in line): 
             lineSplit = re.split(r'\s*[(), \s]\s*', line)
             if lineSplit[0] == '':
                 lineSplit = lineSplit[1:]
-            E_scatterOut.append(lineSplit[5])
-            cosPhi_scatterOut.append(lineSplit[8])
-
+            E_scatterOut.append(float(lineSplit[5]))
+            cosPhi_scatterOut.append(float(lineSplit[8]))
+            x_scatterOut.append(float(lineSplit[0]))
+            y_scatterOut.append(float(lineSplit[1]))
+            z_scatterOut.append(float(lineSplit[2]))
     data_dict = dict()
     data_dict['E_create'] = E_create
     data_dict['cosPhi_create'] = cosPhi_create
     data_dict['E_scatterOut'] = E_scatterOut
     data_dict['cosPhi_scatterOut'] = cosPhi_scatterOut
-    savemat(@.mat file name@, data_dict)
+    data_dict['x_scatterOut'] = x_scatterOut
+    data_dict['y_scatterOut'] = y_scatterOut
+    data_dict['z_scatterOut'] = z_scatterOut
+
+    savemat('%s/%s_%s.mat' %(outFolder, matrl, fId), data_dict)
 

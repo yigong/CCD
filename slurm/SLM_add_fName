@@ -1,0 +1,47 @@
+#!/bin/bash -I
+#
+#SBATCH --job-name=1um_backP_fName
+#
+#SBATCH --account=ac_etci
+#
+#SBATCH --partition=lr3
+#
+#SBATCH --qos=lr_debug
+#
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=16
+#
+#SBATCH --time=00:30:00
+#
+#SBATCH --mail-type=all
+#SBATCH --mail-user=ygzhang@lbl.gov
+
+PyBeamDiag=/global/scratch/ygzhang/PyBeamDiag
+G4BeamDiag=/global/scratch/ygzhang/G4BeamDiag
+
+step=1um
+plane=backP
+
+if [ $plane == backP ]; then
+    facing=bottom
+elif [ $plane == pixelP ]; then
+    facing=top
+else
+    echo 'WRONG $plane !!!'
+    echo "plane = $plane"
+fi
+
+fitsDir=${G4BeamDiag}/step_size/out_LRC/${step}/fits_${plane}
+pickle=${PyBeamDiag}/data/step_size/PSF_${step}_${plane}.p
+
+echo "step    = $step"
+echo "plane   = $plane" 
+echo "facing  = $facing"
+echo "fitsDir = $fitsDir"
+echo "pickle  = $pickle"
+
+echo 'Compute PSF at window'
+cd $PyBeamDiag
+python PSF_window.py    $fitsDir    $pickle
+
+
