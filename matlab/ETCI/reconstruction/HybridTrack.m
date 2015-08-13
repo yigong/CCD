@@ -979,7 +979,7 @@ function Ridge = HtRidgeFollow(EdgeSegments, Options, imgKev)
 %       alphaDegrees: actual angle from the previous ridge point
 
 % set values for first step
-Ridge.positionPix(1,1:2) = EdgeSegments.startRidgePix ;
+Ridge.positionPix(1,1:2) = EdgeSegments.startRidgePix + 0.5 ;
 startDirectionIndices = EdgeSegments.startDirectionIndices;
 isFinished = false;
 
@@ -1085,6 +1085,8 @@ function Ridge = HtTakeOneStep(preparedImageKev, Ridge, Options, ...
 thisRidgePointIndex = size(Ridge.positionPix,1);
 previousRidgePointIndex = thisRidgePointIndex - 1;  %may or may not exist
 
+% X is 1st dimension, row
+% Y is 2nd dimension, col
 thisXPix = Ridge.positionPix(thisRidgePointIndex,1);
 thisYPix = Ridge.positionPix(thisRidgePointIndex,2);
 
@@ -1121,6 +1123,7 @@ allCutsYPix                  = cell(1,length(theseCutAnglesIndices));
 allCutsDistanceCoordinatePix = cell(1,length(theseCutAnglesIndices));
 allCutsEnergyKev             = cell(1,length(theseCutAnglesIndices));
 widthMetric                  =  nan(1,length(theseCutAnglesIndices));
+centroidIdx                  =  nan(1, length(theseCutAnglesIndices));
 for cutAngleNo = 1:length(theseCutAnglesIndices)
     thisCutXPix = thisXPix + ...
         Options.cutCoordinatesPix{theseCutAnglesIndices(cutAngleNo)}(:,1);
@@ -1138,7 +1141,10 @@ for cutAngleNo = 1:length(theseCutAnglesIndices)
     thisCutYPix = thisCutYPix(isInBounds);
     thisCutDistanceCoordinatePix = Options.cutDistanceCoordinatePix(isInBounds);
     thisCutDistanceFromCenterPix = Options.cutDistanceFromCenterPix(isInBounds);
-    thisCutEnergyKev = interp2(preparedImageKev, thisCutYPix, thisCutXPix, ...
+    [colGV, rowGV] = meshgrid(minY:maxY, minX:maxX);
+    colGV = colGV + 0.5;
+    rowGV = rowGV + 0.5;
+    thisCutEnergyKev = interp2(colGV, rowGV, preparedImageKev, thisCutYPix, thisCutXPix, ...
         Options.cutInterpolationMethod);
     
     % check for cutLowThreshold and exclude points
@@ -1163,10 +1169,12 @@ for cutAngleNo = 1:length(theseCutAnglesIndices)
     thisCutDistanceCoordinatePix = thisCutDistanceCoordinatePix(pointIsIncluded);
     thisCutDistanceFromCenterPix = thisCutDistanceFromCenterPix(pointIsIncluded);
     thisCutEnergyKev = thisCutEnergyKev(pointIsIncluded);
-    
+    [thisCentroidIdx, thisFWHM] = fwhm(thisCutDistanceCoordinatePix, thisCutEnergyKev);
     % here, the previous algorithm excludes cut points less than 0.
-    widthMetric(cutAngleNo) = sum(thisCutEnergyKev .* ...
-        thisCutDistanceFromCenterPix');
+    %widthMetric(cutAngleNo) = sum(thisCutEnergyKev .* ...
+    %    thisCutDistanceFromCenterPix');
+    widthMetric(cutAngleNo) = thisFWHM;
+    centroidIdx(cutAngleNo) = thisCentroidIdx;
     %save for centroid calculation
     allCutsXPix{cutAngleNo}                  = thisCutXPix;
     allCutsYPix{cutAngleNo}                  = thisCutYPix;
@@ -1409,7 +1417,7 @@ Ridge.fwhmUm           = Ridge.          fwhmUm(reverseIndices);
 
 % correction for alpha degrees
 alpha_tmp = Ridge.alphaDegrees;
-alpha_tmp(alpha_tmp < -135) = alpha_tmp(alpha_tmp < -135) + 360;
+alpha_tmp(alpha_tmp < -90) = alpha_tmp(alpha_tmp < -90) + 360;
 Ridge.alphaDegrees     = alpha_tmp(reverseIndices);
 Ridge.stepLengthPix    = Ridge.   stepLengthPix(reverseIndices);
 
