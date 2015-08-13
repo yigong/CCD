@@ -1,8 +1,0 @@
-figEph, axEph = plt.subplots()
-axEph.scatter(edata.phi*180./np.pi, edata.gammaEnergy)
-axEph.hlines([1173.2, 1332.5], 0, 90, color='m')
-axEph.set_xlabel(r'$\hat{\phi}$')
-axEph.set_ylabel(r'$\hat{E_{ph}}$ (keV)')
-axEph.set_ylim(0, 1600)
-axEph.set_xlim(0, 90)
-plt.show()
