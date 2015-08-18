@@ -68,7 +68,7 @@ def parse(file, psfTable, outFolder, pixelPlane):
             h['xInit'] = xInit
             h['yInit'] = yInit 
             h['eInit'] = eInit
-            fits.writeto('../%s/%s.fits' % (outFolder, fileIdx), track, h, clobber=True)
+            fits.writeto('%s/%s.fits' % (outFolder, fileIdx), track, h, clobber=True)
         f.close()   
 
 def parse_E_phi(g4Out, outFolder, thk):

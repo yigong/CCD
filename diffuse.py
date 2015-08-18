@@ -42,16 +42,16 @@ def XYZdE2track(xArray, yArray, zArray, dEArray, psfTable, pixelPlane):
     
 def computePSF(z, psfTable, pixelPlane):
     ''' compute the point spread function given the z value '''
+    zTable = np.arange(-650.5, 0., 0.5) 
     if pixelPlane == 'bottom':
         # print 'back-plane irradiation'
-        zTable = np.arange(0, 650.5, 0.5)
-        zAdjusted = min(zTable, key=lambda x:abs(x-z))        
+        zAdjusted = 650 + min(zTable, key=lambda x:abs(x-z))        
         return psfTable[int(2*zAdjusted)].flatten()
     
     elif pixelPlane == 'top':
         # print 'pixel-plane irradiation'
-        zTable = np.arange(0, 650.5, 0.5)
-        zAdjusted = 650 - min(zTable, key=lambda x:abs(x-z))    
+       #  zTable = np.arange(0, 650.5, 0.5)
+        zAdjusted = min(zTable, key=lambda x:abs(x-z))    
         return psfTable[int(2*zAdjusted)].flatten()
     else:
         print 'pixelPlane is neither bottom nor top'
