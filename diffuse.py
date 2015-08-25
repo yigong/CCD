@@ -7,8 +7,8 @@ def XYZdE2track(xArray, yArray, zArray, dEArray, psfTable, pixelPlane):
     # find minimum and maximum locations in x and y
     xMin = min(xArray)
     xMax = max(xArray)
-    yMin = min(yArray - 2000.)
-    yMax = max(yArray - 2000.)
+    yMin = min(yArray)
+    yMax = max(yArray)
     # find the row number and col number to use in the track
     rowMin = yMin // 10.5 - 3
     rowMax = yMax // 10.5 + 4
@@ -38,8 +38,8 @@ def XYZdE2track(xArray, yArray, zArray, dEArray, psfTable, pixelPlane):
         track += track_1step
     del track_1step
     del rows, cols, dE
-    row0_pos_um = rowEdge[0]+5.25
-    col0_pos_um = colEdge[0]+5.25
+    row0_pos_um = rowEdges[0]+5.25
+    col0_pos_um = colEdges[0]+5.25
     return track, row0_pos_um, col0_pos_um
     
 def computePSF(z, psfTable, pixelPlane):
