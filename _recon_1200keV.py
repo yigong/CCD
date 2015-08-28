@@ -12,7 +12,7 @@ def main():
 #     for f in f_files:
 #         ridge_follow(f, recon_dir, plot_flag=True)
     partial_func = partial(ridge_follow, outdir=recon_dir, plotflag=True, pickleflag=True)
-    pool = multiprocessing.Pool(15)
+    pool = multiprocessing.Pool(30)
     pool.map(partial_func, f_files)
 
 if __name__ == '__main__':
