@@ -29,9 +29,10 @@ try:
     alpha_median_counts, _    = np.histogram(alpha_median[1:],    bins=bin_edges)
     alpha_BP_counts, _        = np.histogram(alpha_BP[1:], bins=bin_edges)
     figure();
-    plot(bin_centers, alpha_linearReg_counts, 'bs-', lw=2, label='linear regression-7')
-    plot(bin_centers, alpha_BP_counts, 'ro-', lw=2, label='HybridTrack')
+    plot(bin_centers, alpha_linearReg_counts, 'bs-', lw=2, label='Y. Zhang linear reg.')
+    plot(bin_centers, alpha_median_counts, 'cD-', lw=2, label='Y. Zhang median')
+    plot(bin_centers, alpha_BP_counts, 'ro-', lw=2, label='B. Plimley')
     legend()
-    savefig('%s/LinearReg_HybridTrack.png' %pickle_dir)
+    savefig('%s/linearReg_Hybridtrack.png' %pickle_dir)
 except:
     traceback.print_exc()

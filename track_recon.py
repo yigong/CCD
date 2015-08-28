@@ -17,7 +17,10 @@ def adjust_angles(angles_array):
 
     result =  angles_array - (abs(angles_array)>180) * np.sign(angles_array) * 360
     if np.any(result==180):
-        result[result==180] = -180
+        if isinstance(result, (float, int)):
+            result = -180
+        else:
+            result[result==180] = -180
     return result
 
 
@@ -26,8 +29,8 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
     # if True:
         # initialization
         neighbr_matrix = np.ones([3,3])
-        threshold = 0.2;
-        num_step_back = 5;
+        binThreshold = 0.5;
+        num_step_back = 4;
 
         # find init
         file_idx = re.split(r'[/\.]', fitsfile)[-2]
@@ -36,7 +39,7 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         image = f[0].data 
         true_pos = f[1].data
         image = image + normal(scale=0.025, size=np.shape(image))
-        binary_image = (image > threshold).astype(np.int8)    # binary image
+        binary_image = (image > binThreshold).astype(np.int8)    # binary image
         thinned_image = skeletonize(binary_image).astype(np.int8)
         neighbr_num_image = convolve2d(thinned_image, neighbr_matrix, 'same')
         neighbr_num_thinned_image = neighbr_num_image * thinned_image
@@ -61,15 +64,18 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
             neighbors = thinned_copy[row_col[0]-1:row_col[0]+2, 
                                      row_col[1]-1:row_col[1]+2]
             row_col_rel = np.array(np.where(neighbors==1)) - 1
-            row_col += row_col_rel[:,0]
-        row_col_ridge = row_col.astype('float')
+            if len(row_col_rel) > 1:
+                row_col_rel = row_col_rel[:,0]
+            row_col += row_col_rel
+        ridge_row_col = row_col.astype('float')
         rad2deg = lambda x : x*180./pi
-        step_angle = rad2deg(np.arctan2(*(-row_col_rel)))
-        alpha_guess = rad2deg(np.arctan2(*(end_row_col - row_col_ridge)))
+        stepD = rad2deg(np.arctan2(*(-row_col_rel)))
+        alpha_guess = rad2deg(np.arctan2(*(end_row_col - ridge_row_col)))
+        [curRow, curCol] = ridge_row_col
 
         ## start ridge follow
         # initialization    
-        num_transects = 60;
+        nCut = 48;
         row_num, col_num = np.shape(image)
         f_interp2d = RectBivariateSpline(range(row_num), range(col_num), image/16.) # 1/16 come from 0.25 grid size
         # pre-compute cuts
@@ -83,55 +89,63 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         col_rotations = length_v * cos_v
 
         # ridge follow
+        ridge_cut = np.zeros([50, 41])
         ridge_pos = np.zeros([50, 2])
-        ridge_pos[0, :] = row_col_ridge
+        ridge_pos[0, :] = np.array([curRow, curCol])
         ridge_angles = np.zeros(50)
-        ridge_angles[0] = step_angle
+        ridge_angles[0] = stepD
         ridge_dEdx = np.zeros(50)
-        ridge_centroid = np.zeros(50)
-        transect_width = np.zeros(50)
+        ridge_dE   = np.zeros(50)
+        ridge_width = np.zeros(50)
+        ridgeThreshold = 0.2/16. # threshold to stop ridge following
+        cutThreshold = 0.2/16. # cut points below what value to assign 0
         for step_num in xrange(1, 50):
-            transects_angle_center = adjust_angles(step_angle+90) 
-            transects_angle_array = adjust_angles(np.arange(int(transects_angle_center-num_transects/2), int(transects_angle_center+num_transects/2)+0.1)).astype(int)
-            row_transects = row_rotations[transects_angle_array] + row_col_ridge[0]
-            col_transects = col_rotations[transects_angle_array] + row_col_ridge[1]
-            transects_shape = np.shape(col_transects)
-            energy_transects = f_interp2d(row_transects.flatten(), col_transects.flatten(), grid=False).reshape(transects_shape)
-            widths = np.ones_like(transects_angle_array) * 100
-            for i, (angle, dE) in enumerate(zip(transects_angle_array, energy_transects)):
-                spline = UnivariateSpline(col_0deg, dE - max(dE)/2.)
-                roots = spline.roots()
-                if len(roots) == 2:
-                    widths[i] = roots[1] - roots[0]
-            # useful arrays: transects_angle_array, centroid_indices, centroid_values, width
-            w = np.min(widths)
-            transect_chosen_index = np.argmin(widths)
-            transect_chosen = energy_transects[transect_chosen_index]
-            transect_angle_chosen = transects_angle_array[transect_chosen_index]
-            centroid_value = np.max(transect_chosen)
-            centroid_index = np.argmax(transect_chosen)
-            centroid_pos   = [row_transects[transect_chosen_index, centroid_index], col_transects[transect_chosen_index, centroid_index]]
-            step_angle = (transect_angle_chosen-90)
-            step_vector = 0.25*np.array([np.sin(deg2rad(step_angle)), np.cos(deg2rad(step_angle))])
-            row_col_ridge = centroid_pos + step_vector
-            # row_col_ridge = row_col_ridge + step_vector
-            dEdx = np.sum(transect_chosen) / (0.25 * 10.5) # in keV/um
+            cutAngle0 = adjust_angles(stepD+90) 
+            cutAngles = np.arange(int(cutAngle0-nCut/2), cutAngle0+nCut/2+0.1)
+            cutAngles = adjust_angles(cutAngles).astype('int')
+            row_cuts = row_rotations[cutAngles] + curRow # row matrix 
+            col_cuts = col_rotations[cutAngles] + curCol # col matrix
+            cuts_shape = np.shape(col_cuts)
+            energy_cuts = f_interp2d(row_cuts.flatten(), col_cuts.flatten(), grid=False).reshape(cuts_shape)
+            energy_cuts[abs(energy_cuts)<cutThreshold] = 0
+            dis = np.abs(col_0deg)
+            width_cuts = np.sum(energy_cuts * dis, axis=1)/np.sum(energy_cuts, axis=1)
+            w = np.min(width_cuts)  # min width
+            index = np.argmin(width_cuts)   # min width index
+            cutE = energy_cuts[index]      # cut energy vector
+            cutEtot = np.sum(cutE)
+            cutRow = row_cuts[index]
+            cutCol = col_cuts[index]
+            momentumRow = np.sum(cutRow*cutE)
+            momentumCol = np.sum(cutCol*cutE)
+            centerRow = momentumRow/cutEtot
+            centerCol = momentumCol/cutEtot
+            dEdx = cutEtot / (0.25 * 10.5) # in keV/um
+            dE = f_interp2d(centerRow, centerCol, grid=False)
+            cutD = cutAngles[index] # cut direction scalar
+            stepD = (cutD-90)
+            dRow = 0.25 * np.sin(deg2rad(stepD))
+            dCol = 0.25 * np.cos(deg2rad(stepD))
+            curRow = centerRow + dRow 
+            curCol = centerCol + dCol
 
-            transect_width[step_num-1] = w
-            ridge_centroid[step_num] = centroid_value
-            ridge_pos[step_num] = row_col_ridge
-            ridge_angles[step_num] = step_angle
+            ridge_pos[step_num] = np.array([curRow, curCol])
+            ridge_angles[step_num] = stepD
             ridge_dEdx[step_num-1] = dEdx
-            threshold = .5
-            if centroid_value < threshold/16.:
-                break
-        ridge_pos = ridge_pos[:step_num+1][:-10] # ignore last 10 ridge points
-        ridge_angles = ridge_angles[:step_num+1]
-        ridge_dEdx = ridge_dEdx[:step_num]
-        ridge_centroid = ridge_centroid[1:step_num+1]
-        transect_width = transect_width[:step_num]
+            ridge_dE[step_num] = dE
+            ridge_width[step_num-1] = w
+            ridge_cut[step_num-1] = cutE
 
-        alpha_median = np.median(ridge_angles[1:-10])
+            if dE < ridgeThreshold:
+                break
+        ridge_pos = ridge_pos[:step_num+1][:-5] # ignore last N ridge points
+        ridge_angles = ridge_angles[:step_num+1][:-5]
+        ridge_dEdx = ridge_dEdx[:step_num]
+        ridge_dE  = ridge_dE[:step_num+1]
+        ridge_width = ridge_width[:step_num]
+        ridge_cut = ridge_cut[:step_num]
+
+        alpha_median = np.median(ridge_angles[1:]) 
         cov_matrix = np.cov(ridge_pos[1:, 1], ridge_pos[1:, 0])
         var_y = cov_matrix[1, 1]
         cov_xy = cov_matrix[0, 1]
@@ -143,10 +157,12 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         result['pos'] = ridge_pos
         result['angles'] = ridge_angles
         result['dEdx'] = ridge_dEdx
-        result['centroid_value'] = ridge_centroid
+        result['dE'] = ridge_dE
+        result['width'] = ridge_width
         result['alpha_median'] = alpha_median
         result['alpha_linearReg'] = alpha_linearReg
-        result['transect_width'] = transect_width
+        if int(file_idx) > 101:
+            plotflag = False
 
         # plot
         if plotflag:
@@ -157,23 +173,23 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
             ax.imshow(image, interpolation='nearest', origin='lower')
             ax.scatter(ridge_pos[:,1], ridge_pos[:,0], c='g', edgecolor='none')
             ax.plot(true_pos['col'], true_pos['row'], 'ro-', markersize=1.5, markeredgewidth=0)
-            true_col_min = np.floor(min(true_pos['col']))
-            true_col_max = np.ceil(max(true_pos['col']))
-            true_row_min = np.floor(min(true_pos['row']))
-            true_row_max = np.ceil(max(true_pos['row']))
-            ax.set_xlim([true_col_min-2.5, true_col_max+2.5])
-            ax.set_ylim([true_row_min-2.5, true_row_max+2.5])
-            ax.set_title('threshold = %s || linear_reg: %.1f || median: %s  ' %(threshold, alpha_linearReg, alpha_median))
+            ridge_col_min = np.floor(min(ridge_pos[:,1]))
+            ridge_col_max = np.ceil(max(ridge_pos[:,1]))
+            ridge_row_min = np.floor(min(ridge_pos[:,0]))
+            ridge_row_max = np.ceil(max(ridge_pos[:,0]))
+            ax.set_xlim([ridge_col_min-2.5, ridge_col_max+2.5])
+            ax.set_ylim([ridge_row_min-2.5, ridge_row_max+2.5])
+            ax.set_title('ridgeThreshold = %s || linear_reg: %.1f || median: %s  ' %(ridgeThreshold, alpha_linearReg, alpha_median))
             canvas.print_figure('%s/%s_%s.png' %(outdir, 'ridge', file_idx))
 
             fig = Figure()
             canvas = FigureCanvasAgg(fig)
             ax = fig.add_subplot(111)
-            ax.plot(ridge_dEdx, 'bs-', lw=2)
+            ax.plot(ridge_dE, 'bs-', lw=2)
             ax.set_xlabel('ridge #')
-            ax.set_ylabel('keV/um')
-            ax.set_title('de/dx', fontsize=24)
-            canvas.print_figure('%s/%s_%s.png' %(outdir, 'dEdx', file_idx))
+            ax.set_ylabel('keV')
+            ax.set_title('dE', fontsize=24)
+            canvas.print_figure('%s/%s_%s.png' %(outdir, 'dE', file_idx))
 
             fig = Figure()
             canvas = FigureCanvasAgg(fig)
@@ -197,12 +213,22 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
             fig = Figure()
             canvas = FigureCanvasAgg(fig)
             ax = fig.add_subplot(111)
-            ax.plot(np.arange(len(transect_width)), transect_width, 'bo-', lw=2)
+            ax.plot(np.arange(len(ridge_width)), ridge_width, 'bo-', lw=2)
             ax.set_xlabel('ridge #')
             ax.set_ylabel('pix')
             ax.set_title('Cut width')
             canvas.print_figure('%s/%s_%s.png' %(outdir, 'width', file_idx))
-
+            
+            fig = Figure()
+            canvas = FigureCanvasAgg(fig)
+            ax = fig.add_subplot(111)
+            ax.plot(np.arange(np.shape(ridge_cut)[1]), np.transpose(ridge_cut))
+            ax.set_xlabel('ridge #')
+            ax.set_ylabel('keV')
+            ax.set_title('cut energy')
+            canvas.print_figure('%s/%s_%s.png' %(outdir, 'cutE', file_idx))
+        
+    
         # output
         if pickleflag:
             pickle.dump(result, open('%s/%s.p' %(outdir, file_idx), 'wb'))
