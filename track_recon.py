@@ -44,6 +44,8 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         neighbr_num_image = convolve2d(thinned_image, neighbr_matrix, 'same')
         neighbr_num_thinned_image = neighbr_num_image * thinned_image
         ends_row, ends_col = np.where(neighbr_num_thinned_image == 2) 
+        if not ends_row:        # if ends_row is empty
+            raise RuntimeError('no end found')
         sum_matrix = np.ones([6,6])
         sum_matrix[0, (0,1,-2,-1)] = 0
         sum_matrix[1, (0,-1)] = 0
@@ -64,9 +66,12 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
             neighbors = thinned_copy[row_col[0]-1:row_col[0]+2, 
                                      row_col[1]-1:row_col[1]+2]
             row_col_rel = np.array(np.where(neighbors==1)) - 1
-            if len(row_col_rel) > 1:
-                row_col_rel = row_col_rel[:,0]
-            row_col += row_col_rel
+            if row_col_rel:
+                if len(row_col_rel) > 1:
+                    row_col_rel = row_col_rel[:,0]
+                row_col += row_col_rel
+            else:
+                pass
         ridge_row_col = row_col.astype('float')
         rad2deg = lambda x : x*180./pi
         stepD = rad2deg(np.arctan2(*(-row_col_rel)))
@@ -239,4 +244,5 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         traceback.print_exc()
         tb = traceback.format_exc()
         open('%s/%s.err' %(outdir, file_idx), 'w').write(tb)
+        print '-'*80
         return 0
