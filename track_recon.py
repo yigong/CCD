@@ -143,8 +143,8 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
 
             if dE < ridgeThreshold:
                 break
-        ridge_pos = ridge_pos[:step_num+1][:-5] # ignore last N ridge points
-        ridge_angles = ridge_angles[:step_num+1][:-5]
+        ridge_pos = ridge_pos[:step_num+1][:] # ignore last N ridge points
+        ridge_angles = ridge_angles[:step_num+1][:]
         ridge_dEdx = ridge_dEdx[:step_num]
         ridge_dE  = ridge_dE[:step_num+1]
         ridge_width = ridge_width[:step_num]
@@ -155,7 +155,7 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         var_y = cov_matrix[1, 1]
         cov_xy = cov_matrix[0, 1]
         slope = var_y/cov_xy
-        alpha_linearReg = adjust_angles(rad2deg(np.arctan2(-slope, -1)))
+        alpha_linearReg = (rad2deg(np.arctan2(-slope, -1)))
 
         # result dictionary
         result = dict()
