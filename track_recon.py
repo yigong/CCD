@@ -77,14 +77,11 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         ridge_row_col = row_col.astype('float')
         rad2deg = lambda x : x*180./pi
         stepD = rad2deg(np.arctan2(*(-row_col_rel)))
-        # print row_col_rel
-        # print stepD
-        # if len(stepD) > 1:
-        #     stepD = stepD[0]
-        #     print stepD 
-        # if stepD.size > 1:
-        #     print row_col_rel
-        #     print stepD
+        if np.size(stepD) > 1:
+            print 'row_col_rel: ', row_col_rel
+            print 'arctan2: ', np.arctan2(*(-row_col_rel))
+            print 'stepD: ', stepD
+
         alpha_guess = rad2deg(np.arctan2(*(end_row_col - ridge_row_col)))
         [curRow, curCol] = ridge_row_col
 

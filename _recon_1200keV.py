@@ -11,7 +11,7 @@ def main():
     f_files = glob('%s/*.fits' %(fits_dir))
 #     for f in f_files:
 #         ridge_follow(f, outdir=recon_dir, plotflag=True, pickleflag=True)
-    partial_func = partial(ridge_follow, outdir=recon_dir, plotflag=True, pickleflag=True)
+    partial_func = partial(ridge_follow, outdir=recon_dir, plotflag=False, pickleflag=False)
     pool = multiprocessing.Pool(60)
     pool.map(partial_func, f_files)
 
