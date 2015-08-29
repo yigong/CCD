@@ -125,6 +125,9 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
             energy_cuts[abs(energy_cuts)<cutThreshold] = 0
             dis = np.abs(col_0deg)
             width_cuts = np.sum(energy_cuts * dis, axis=1)/np.sum(energy_cuts, axis=1)
+            if np.all(np.isnan(width_cuts)):
+                step_num = step_num - 1
+                break
             w = np.nanmin(width_cuts)  # min width
             index = np.nanargmin(width_cuts)   # min width index
             cutE = energy_cuts[index]      # cut energy vector cutEtot = np.sum(cutE)
@@ -141,40 +144,6 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
             stepD = (cutD-90)
             dRow = 0.25 * np.sin(deg2rad(stepD))
             dCol = 0.25 * np.cos(deg2rad(stepD))
-            # print '-'*80
-            # print energy_cuts
-            # print 'width_cuts'
-            # print width_cuts
-            # print 'min_width'
-            # print w
-            # print 'min_index'
-            # print index
-            # print 'cutE'
-            # print cutE
-            # print 'cutEtot'
-            # print cutEtot
-            # print 'cutRow'
-            # print cutRow
-            # print 'cutCol'
-            # print cutCol
-            # print 'momentumRow'
-            # print momentumRow
-            # print 'centerRow' 
-            # print centerRow
-            # print '-'*80
-            if np.any(np.isnan(width_cuts)):
-                p = dict() 
-                p['row_cuts'] = row_cuts
-                p['col_cuts'] = col_cuts
-                p['energy_cuts'] = energy_cuts
-                p['energy_cuts_sum'] = np.sum(energy_cuts, axis=1)
-                p['width_cuts'] = width_cuts
-                p['momentumRow'] = momentumRow
-                p['momentumCol'] = momentumCol
-                p['centerRow'] = centerRow
-                p['centerCol'] = centerCol
-                pickle.dump(p, open('%s/bug_%s_%s.p' %(outdir, file_idx, step_num), 'wb'))
-
             curRow = centerRow + dRow 
             curCol = centerCol + dCol
 
@@ -195,17 +164,10 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         ridge_cut = ridge_cut[:step_num]
 
         alpha_median = np.median(ridge_angles[1:]) 
-        print 'ridge_pos'
-        print ridge_pos
         cov_matrix = np.cov(ridge_pos[1:, 1], ridge_pos[1:, 0])
         var_y = cov_matrix[1, 1]
         cov_xy = cov_matrix[0, 1]
         slope = var_y/cov_xy
-        print 'cov_xy'
-        print cov_xy
-        print 'slope'
-        print slope
-        print np.arctan2(-slope, -1)
         alpha_linearReg = rad2deg(np.arctan2(-slope, -1))
 
         # result dictionary
