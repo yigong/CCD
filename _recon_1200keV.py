@@ -10,9 +10,9 @@ def main():
     recon_dir = args[2]
     f_files = glob('%s/*.fits' %(fits_dir))
 #     for f in f_files:
-#         ridge_follow(f, recon_dir, plot_flag=True)
+#         ridge_follow(f, outdir=recon_dir, plotflag=True, pickleflag=True)
     partial_func = partial(ridge_follow, outdir=recon_dir, plotflag=True, pickleflag=True)
-    pool = multiprocessing.Pool(30)
+    pool = multiprocessing.Pool(60)
     pool.map(partial_func, f_files)
 
 if __name__ == '__main__':
