@@ -28,6 +28,7 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
     try:
     # if True:
         # initialization
+        np.seterr(divide='ignore', invalid='ignore')
         neighbr_matrix = np.ones([3,3])
         binThreshold = 0.5;
         num_step_back = 4;
@@ -53,9 +54,6 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         sum_matrix[-1, (0,1,-2,-1)] = 0
         ends_energy = convolve2d(image, sum_matrix, 'same')[ends_row, ends_col]
         end_idx = np.argmin(ends_energy)
-        # for i, row_col in enumerate(zip(ends_row, ends_col)):
-        #     print 'end %s: %s keV at (%s, %s)' %(i, ends_energy[i], ends_row[i], ends_col[i])
-        # 'We pick end %s' %(end_idx)
 
         # step back 
         end_row_col= np.array((ends_row[end_idx], ends_col[end_idx])).astype('float')
@@ -73,17 +71,11 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
                     row_col_rel = row_col_rel[:,0]
                 row_col += row_col_rel
             else:
-                row_col_rel = [-1, 0] # default stepD = -90
+                row_col_rel = np.array([-1, 0]) # default stepD = -90
                 break
         ridge_row_col = row_col.astype('float')
         rad2deg = lambda x : x*180./pi
         stepD = rad2deg(np.arctan2(*(-row_col_rel)))
-#         print 'stepD: ', stepD
-#         if np.size(stepD) > 1:
-#             print 'row_col_rel: ', row_col_rel
-#             print 'arctan2: ', np.arctan2(*(-row_col_rel))
-#             print 'stepD: ', stepD
-#         alpha_guess = rad2deg(np.arctan2(*(end_row_col - ridge_row_col)))
         [curRow, curCol] = ridge_row_col
 
         ## start ridge follow
