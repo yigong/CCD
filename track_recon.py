@@ -106,11 +106,6 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         cutThreshold = 0.2/16. # cut points below what value to assign 0
         for step_num in xrange(1, 50):
 
-            dRow = 0.25 * np.sin(deg2rad(stepD))
-            dCol = 0.25 * np.cos(deg2rad(stepD))
-            curRow = curRow + dRow 
-            curCol = curCol + dCol
-
             cutAngle0 = adjust_angles(stepD+90) 
             cutAngles = np.arange(int(cutAngle0-nCut/2), cutAngle0+nCut/2+0.1)
             cutAngles = adjust_angles(cutAngles).astype('int')
@@ -139,6 +134,11 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
             cutD = cutAngles[index] # cut direction scalar
             stepD = (cutD-90)
 
+            dRow = 0.25 * np.sin(deg2rad(stepD))
+            dCol = 0.25 * np.cos(deg2rad(stepD))
+            curRow = curRow + dRow 
+            curCol = curCol + dCol
+
             ridge_pos[step_num] = np.array([curRow, curCol])
             ridge_angles[step_num] = stepD
             ridge_dEdx[step_num-1] = dEdx
@@ -148,7 +148,7 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
 
             if dE < ridgeThreshold:
                 break
-        ridge_pos = ridge_pos[:step_num+1][:-5] # ignore last N ridge points
+        ridge_pos = ridge_pos[:step_num+1] # ignore last N ridge points
         ridge_angles = ridge_angles[:step_num+1]
         ridge_dEdx = ridge_dEdx[:step_num]
         ridge_dE  = ridge_dE[:step_num+1]
