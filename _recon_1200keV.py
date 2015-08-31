@@ -1,9 +1,11 @@
 from glob import glob
 import sys
 from PyBeamDiag.track_recon import ridge_follow
+from PyBeamDiag.fit_func import gauss
 import multiprocessing
 from functools import partial
 from scipy.io import loadmat
+from scipy.optimize import curve_fit
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 import pickle
@@ -42,6 +44,26 @@ def main():
     ax = fig.add_subplot(111)
     ax.plot(binCenters, LLSE_counts, 'bo-', lw=2, label='LLSE')
     ax.plot(binCenters, HT_counts, 'rs-', lw=2, label='HT')
+
+    # compute FWHM
+    p0 = [10000, -120, 10]
+    LLSE_fit, LLSE_cov = curve_fit(gauss, binCenters, LLSE_counts, p0)
+    HT_fit, HT_cov = curve_fit(gauss, binCenters, HT_counts, p0)
+    x = np.arange(-150, -90.01, 0.1)
+    ax.plot(x, gauss(x, *(LLSE_fit)), 'b-', lw=1) 
+    ax.plot(x, gauss(x, *(HT_fit)), 'r-', lw=1)
+
+    # write result to file
+    f = open('%s/Result.print' %(recon_dir), 'w')
+    f.write('LLSE \n')
+    f.write('    FWHM = %.1f \n' %(LLSE_fit[-1]*2.35))
+    f.write('    Total= %s \n' %(np.sum(LLSE_counts)))
+    f.write('HT \n')
+    f.write('    FWHM = %.1f \n' %(HT_fit[-1]*2.35))
+    f.write('    Total= %s \n' %(np.sum(HT_counts)))
+    f.close()
+
+    # print figure
     canvas.print_figure('%s/LLSE_vs_HT.png' %(recon_dir))
 
 if __name__ == '__main__':
