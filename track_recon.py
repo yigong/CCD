@@ -76,7 +76,7 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         ridge_row_col = row_col.astype('float')
         rad2deg = lambda x : x*180./pi
         stepD = rad2deg(np.arctan2(*(-row_col_rel)))
-        [centerRow, centerCol] = ridge_row_col
+        [curRow, curCol] = ridge_row_col
 
         ## start ridge follow
         # initialization    
@@ -96,7 +96,7 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         # ridge follow
         ridge_cut = np.zeros([50, 41])
         ridge_pos = np.zeros([50, 2])
-        ridge_pos[0, :] = np.array([centerRow, centerCol])
+        ridge_pos[0, :] = np.array([curRow, curCol])
         ridge_angles = np.zeros(50)
         ridge_angles[0] = stepD
         ridge_dEdx = np.zeros(50)
@@ -108,8 +108,8 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
 
             dRow = 0.25 * np.sin(deg2rad(stepD))
             dCol = 0.25 * np.cos(deg2rad(stepD))
-            curRow = centerRow + dRow 
-            curCol = centerCol + dCol
+            curRow = curRow + dRow 
+            curCol = curCol + dCol
 
             cutAngle0 = adjust_angles(stepD+90) 
             cutAngles = np.arange(int(cutAngle0-nCut/2), cutAngle0+nCut/2+0.1)
@@ -132,14 +132,14 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
             cutCol = col_cuts[index]
             momentumRow = np.sum(cutRow*cutE)
             momentumCol = np.sum(cutCol*cutE)
-            centerRow = momentumRow/cutEtot
-            centerCol = momentumCol/cutEtot
+            curRow = momentumRow/cutEtot
+            curCol = momentumCol/cutEtot
             dEdx = cutEtot / (0.25 * 10.5) # in keV/um
-            dE = f_interp2d(centerRow, centerCol, grid=False)
+            dE = f_interp2d(curRow, curCol, grid=False)
             cutD = cutAngles[index] # cut direction scalar
             stepD = (cutD-90)
 
-            ridge_pos[step_num] = np.array([centerRow, centerCol])
+            ridge_pos[step_num] = np.array([curRow, curCol])
             ridge_angles[step_num] = stepD
             ridge_dEdx[step_num-1] = dEdx
             ridge_dE[step_num] = dE
