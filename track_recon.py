@@ -148,7 +148,7 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
 
             if dE < ridgeThreshold:
                 break
-        ridge_pos = ridge_pos[:step_num+1] # ignore last N ridge points
+        ridge_pos = ridge_pos[:step_num+1][:-5] # ignore last N ridge points
         ridge_angles = ridge_angles[:step_num+1]
         ridge_dEdx = ridge_dEdx[:step_num]
         ridge_dE  = ridge_dE[:step_num+1]
