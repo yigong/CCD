@@ -35,7 +35,7 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
 
         # find init
         file_idx = re.split(r'[/\.]', fitsfile)[-2]
-        print 'recon #%s\n' %(file_idx)
+        # print 'recon #%s\n' %(file_idx)
         f = fits.open(fitsfile)
         image = f[0].data 
         true_pos = f[1].data
@@ -102,7 +102,7 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         ridge_dEdx = np.zeros(50)
         ridge_dE   = np.zeros(50)
         ridge_width = np.zeros(50)
-        ridgeThreshold = 0.2/16. # threshold to stop ridge following
+        ridgeThreshold = 0.5/16. # threshold to stop ridge following
         cutThreshold = 0.2/16. # cut points below what value to assign 0
         for step_num in xrange(1, 50):
             cutAngle0 = adjust_angles(stepD+90) 
@@ -146,7 +146,7 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
 
             if dE < ridgeThreshold:
                 break
-        ridge_pos = ridge_pos[:step_num+1] # ignore last N ridge points
+        ridge_pos = ridge_pos[:step_num+1][:-7] # ignore last N ridge points
         ridge_angles = ridge_angles[:step_num+1]
         ridge_dEdx = ridge_dEdx[:step_num]
         ridge_dE  = ridge_dE[:step_num+1]
@@ -240,7 +240,8 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         # output
         if pickleflag:
             pickle.dump(result, open('%s/%s.p' %(outdir, file_idx), 'wb'))
-        return result
+
+        return alpha_linearReg
 
     except: 
    #  else:
@@ -248,4 +249,4 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         tb = traceback.format_exc()
         open('%s/%s.err' %(outdir, file_idx), 'w').write(tb)
         print '-'*80
-        return 0
+        return np.nan
