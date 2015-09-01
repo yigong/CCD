@@ -25,6 +25,9 @@ def parse(file, psfTable, outFolder, pixelPlane):
     xDir = -1
     yDir = -1
 
+    if os.path.isfile('%s/%s.fits' %(outFolder, fileIdx)):
+        return
+
     for line in lines:
         if line[0] == '*' and x_tmp:
             print 'see * in ',file 
