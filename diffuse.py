@@ -10,10 +10,10 @@ def XYZdE2track(xArray, yArray, zArray, dEArray, psfTable, pixelPlane):
     yMin = min(yArray)
     yMax = max(yArray)
     # find the row number and col number to use in the track
-    rowMin = np.ceil(yMin/10.5) - 3
-    rowMax = np.ceil(yMax/10.5) + 3
-    colMin = np.ceil(xMin/10.5) - 3
-    colMax = np.ceil(xMax/10.5) + 3
+    rowMin = yMin // 10.5 - 3
+    rowMax = yMax // 10.5 + 4
+    colMin = xMin // 10.5 - 3
+    colMax = xMax // 10.5 + 4
     nrow = rowMax - rowMin
     ncol = colMax - colMin
     # create a track array: nrow x ncol
@@ -38,20 +38,22 @@ def XYZdE2track(xArray, yArray, zArray, dEArray, psfTable, pixelPlane):
         track += track_1step
     del track_1step
     del rows, cols, dE
-    return track, rowMin, colMin
+    row0_pos_um = rowEdges[0]+5.25
+    col0_pos_um = colEdges[0]+5.25
+    return track, row0_pos_um, col0_pos_um
     
 def computePSF(z, psfTable, pixelPlane):
     ''' compute the point spread function given the z value '''
+    zTable = np.arange(-650., 0.001 , 0.5) 
     if pixelPlane == 'bottom':
         # print 'back-plane irradiation'
-        zTable = np.arange(0, 650.5, 0.5)
-        zAdjusted = min(zTable, key=lambda x:abs(x-z))        
+        zAdjusted = 650 + min(zTable, key=lambda x:abs(x-z))        
         return psfTable[int(2*zAdjusted)].flatten()
     
     elif pixelPlane == 'top':
         # print 'pixel-plane irradiation'
-        zTable = np.arange(0, 650.5, 0.5)
-        zAdjusted = 650 - min(zTable, key=lambda x:abs(x-z))    
+       #  zTable = np.arange(0, 650.5, 0.5)
+        zAdjusted = -min(zTable, key=lambda x:abs(x-z))    
         return psfTable[int(2*zAdjusted)].flatten()
     else:
         print 'pixelPlane is neither bottom nor top'

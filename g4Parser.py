@@ -4,6 +4,7 @@ from scipy.io import loadmat, savemat
 from PyBeamDiag.diffuse import XYZdE2track
 from astropy.io import fits
 from numpy import arctan, rad2deg
+import os
 
 def parse(file, psfTable, outFolder, pixelPlane):
     '''
@@ -24,6 +25,9 @@ def parse(file, psfTable, outFolder, pixelPlane):
     dE_tmp = []
     xDir = -1
     yDir = -1
+
+    if os.path.isfile('%s/%s.fits' %(outFolder, fileIdx)):
+        return
 
     for line in lines:
         if line[0] == '*' and x_tmp:
@@ -52,7 +56,7 @@ def parse(file, psfTable, outFolder, pixelPlane):
             y = []
             z = []
             dE = []
-            x = np.array(x_tmp) + 37000./2
+            x = np.array(x_tmp)
             y = np.array(y_tmp) - 2000.
             z = np.array(z_tmp)
             dE = np.array(dE_tmp)
@@ -60,15 +64,22 @@ def parse(file, psfTable, outFolder, pixelPlane):
             if alpha_true < 0:
                 alpha_true += 360.   
             del x_tmp, y_tmp, z_tmp, dE_tmp
-            track, rowMin, colMin = XYZdE2track(x, y, z, dE, psfTable, pixelPlane)
+            track, row0_pos_um, col0_pos_um = XYZdE2track(x, y, z, dE, psfTable, pixelPlane)
             h = fits.Header()
-            h['rowMin'] = rowMin
-            h['colMin'] = colMin
+            h['row0_um'] = row0_pos_um
+            h['col0_um'] = col0_pos_um
             h['alphaT'] = alpha_true
             h['xInit'] = xInit
             h['yInit'] = yInit 
             h['eInit'] = eInit
-            fits.writeto('../%s/%s.fits' % (outFolder, fileIdx), track, h, clobber=True)
+            prihdu = fits.PrimaryHDU(track, header=h)
+            row_pix = (y - row0_pos_um)/10.5
+            col_pix = (x - col0_pos_um)/10.5
+            row = fits.Column(name='row', format='F', array=row_pix) 
+            col = fits.Column(name='col', format='F', array=col_pix)
+            tbhdu = fits.BinTableHDU.from_columns(fits.ColDefs([row,col]))
+            hdulist = fits.HDUList([prihdu, tbhdu])
+            hdulist.writeto('%s/%s.fits' % (outFolder, fileIdx))
         f.close()   
 
 def parse_E_phi(g4Out, outFolder, thk):

@@ -12,14 +12,13 @@ def main():
 
     # arguments
     args = sys.argv
-    stepLen = args[1]         # step length,            eg: 3um
-    fitsFdr = args[2]         # fits file folder,       eg: fits_backP 
-    pfacing = args[3]         # pixel-plane facing,     eg: top | bottom 
+    splitDir = args[1]
+    fitsDir = args[2]
+    pfacing = args[3]
 
     # get current working dir
     CWD = os.getcwd()
     # cd to G4out dir
-    splitDir = '/global/scratch/ygzhang/G4BeamDiag/step_size/out_LRC/%s/split' %(stepLen)
     os.chdir(splitDir)
     fileList = glob.glob('*.G4track')
     
@@ -31,10 +30,10 @@ def main():
     ## map(partial(parse, psfTable), fileList[:10])
     
     # partial func
-    parse_partial = partial(parse, psfTable=psf, pixelPlane=pfacing, outFolder='%s' %(fitsFdr))
+    parse_partial = partial(parse, psfTable=psf, pixelPlane=pfacing, outFolder='%s' %(fitsDir))
 
     # parallel
-    pool = multiprocessing.Pool(15)
+    pool = multiprocessing.Pool(16)
     pool.map(parse_partial, fileList)
 
     # go back to initial directory

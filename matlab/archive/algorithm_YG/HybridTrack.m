@@ -134,14 +134,14 @@ if Options.PlotStyle.multiple(13)
         Options.PlotStyle.insetPix);
     hold on
     % points
-    plot3(Ridge.positionPix(:,2)+0.5, Ridge.positionPix(:,1)+0.5, ...
+    plot3(Ridge.positionPix(:,2), Ridge.positionPix(:,1), ...
         Options.PlotStyle.z0*ones(size(Ridge.positionPix(:,1))), ...
         'd','markerfacecolor',Options.PlotStyle.ptColor, ...
         'markeredgecolor',Options.PlotStyle.ptColor, ...
         'markersize',4);
     % highlighted measurement
     measInd = Measurement.indices;
-    plot3(Ridge.positionPix(measInd,2)+0.5, Ridge.positionPix(measInd,1)+0.5, ...
+    plot3(Ridge.positionPix(measInd,2), Ridge.positionPix(measInd,1), ...
         Options.PlotStyle.z0*ones(size(Ridge.positionPix(measInd,1))), ...
         'd','markerfacecolor',Options.PlotStyle.measPtColor, ...
         'markeredgecolor',Options.PlotStyle.measPtColor, ...
@@ -188,14 +188,14 @@ if Options.PlotStyle.multiple(15)
         Options.PlotStyle.insetPix);
     hold on
     % points
-    plot3(Ridge.positionPix(:,2)+0.5, Ridge.positionPix(:,1)+0.5, ...
+    plot3(Ridge.positionPix(:,2), Ridge.positionPix(:,1), ...
         Options.PlotStyle.z0*ones(size(Ridge.positionPix(:,1))), ...
         'd','markerfacecolor',Options.PlotStyle.ptColor, ...
         'markeredgecolor',Options.PlotStyle.ptColor, ...
         'markersize',4);
     % measurement highlighted
     measInd = Measurement.indices;
-    plot3(Ridge.positionPix(measInd,2)+0.5, Ridge.positionPix(measInd,1)+0.5, ...
+    plot3(Ridge.positionPix(measInd,2), Ridge.positionPix(measInd,1), ...
         Options.PlotStyle.z0*ones(size(Ridge.positionPix(measInd,1))), ...
         'd','markerfacecolor',Options.PlotStyle.measPtColor, ...
         'markeredgecolor',Options.PlotStyle.measPtColor, ...
@@ -204,10 +204,10 @@ if Options.PlotStyle.multiple(15)
     arr_length1 = 4;    %pixels. main stem.
     arr_length2 = .75;  %pixels. Side prongs.
     arrowLineWidth = 2;
-    xTmp0 = Ridge.positionPix(measInd(1),1)+0.5;
-    yTmp0 = Ridge.positionPix(measInd(1),2)+0.5;
+    xTmp0 = Ridge.positionPix(measInd(1),1);
+    yTmp0 = Ridge.positionPix(measInd(1),2);
     %   draw arrow from base to tip to two prongs
-    a = Measurement.alphaDegrees;
+    a = 90 - Measurement.alphaDegrees;
     xMeasArrow = xTmp0 + [0, ...
         cosd(a)*arr_length1, ...
         cosd(a)*arr_length1 - cosd(a+45)*arr_length2, ...
@@ -403,7 +403,7 @@ end
 Options = HtDefineDefaultRidgeFollowingOptions(Options);
 Options = HtDefineMeasurementOptions(Options);
 
-Options.ridgeStartingDistanceFromTrackEndUm = 40;
+Options.ridgeStartingDistanceFromTrackEndUm = 30;
 
 Options = HtDefinePlotOptions(Options);
 
@@ -563,21 +563,21 @@ Options.cutDistanceFromCenterPix = abs(cut0y);
 Options.cutDistanceCoordinatePix = cut0y;
 
 Options.cutCoordinatesPix = cell(1,Options.twoPiIndices);
-for angleIndex=1:Options.twoPiIndices
+for angleIndex=1:360
     % rotation matrix
-    R = [cos(Options.cutAngleRadians(angleIndex)), ...
-         sin(Options.cutAngleRadians(angleIndex)); ...
-        -sin(Options.cutAngleRadians(angleIndex)), ...
-         cos(Options.cutAngleRadians(angleIndex))];
-    Options.cutCoordinatesPix{angleIndex} = [cut0x',cut0y']*R;
+    R = [cosd((angleIndex)), ...
+         sind((angleIndex)); ...
+         -sind((angleIndex)), ...
+         cosd((angleIndex))];
+    Options.cutCoordinatesPix{angleIndex} = [cut0y',cut0x']*R;
 end
 
-baseCutLowThresholdKev = 0.05;
+baseCutLowThresholdKev = -0.1;
 Options.cutLowThresholdKev = baseCutLowThresholdKev * ...
     (Options.pixelSizeUm / 10.5).^2;
 % cut points below this threshold, and beyond, are ignored
 
-baseTrackEndLowThresholdKev = 0.1;
+baseTrackEndLowThresholdKev = 0.2;
 Options.trackEndLowThresholdKev = baseTrackEndLowThresholdKev * ...
     (Options.pixelSizeUm / 10.5)^2;     % scale with pixel area.
 
@@ -763,15 +763,24 @@ for stepNo = 1:nStepsPixels
     end
 end
 EdgeSegments.startRidgePix = thisXY;
-startDirectionDegrees = 180/pi * atan2(-lastStep(2), -lastStep(1));
+startDirectionDegrees = 180/pi * atan2(-lastStep(1), -lastStep(2));
+% EdgeSegments.startDirectionIndices = round(EdgeSegments.startDirectionDegrees / ...
+%     Options.cutAngleIncrementDegrees);
 if startDirectionDegrees > 0    %atan2 returns a value on [-pi, pi]
     EdgeSegments.startDirectionIndices = round(startDirectionDegrees / ...
         Options.cutAngleIncrementDegrees);
+    EdgeSegments.startDirectionDegrees = startDirectionDegrees;
 else
     EdgeSegments.startDirectionIndices = round((startDirectionDegrees + 360) ...
         / Options.cutAngleIncrementDegrees);
+    EdgeSegments.startDirectionDegrees = startDirectionDegrees + 360;
 end
-
+vecGuess = EdgeSegments.chosenEnd - EdgeSegments.startRidgePix;
+alphaGuess = 180/pi * atan2(vecGuess(1), vecGuess(2));
+if alphaGuess < 0
+    alphaGuess = alphaGuess + 360;
+end
+EdgeSegments.alphaGuess = alphaGuess;
 EdgeSegments.lowThresholdUsed = lowThresholdUsed;
 EdgeSegments.thinnedImage = thinnedImage;
 
@@ -895,7 +904,6 @@ function [h,axSize] = HtPlotImage(imageToPlot,cmap,axSize,insetPix)
 % cmap: color map (use cmaphotlog from cmaps.mat)
 % 
 % h: axes handle
-
 axesFontSize = 18;
 xSizeScale = 1;
 ySizeScale = 1;
@@ -929,7 +937,6 @@ ylabel([]);
 set(get(h,'parent'),'color','w');
 
 
-
 function HtSavePlot(figHandle, Options, suffix)
 % function HtSavePlot(figHandle, Options, suffix)
 
@@ -937,6 +944,7 @@ if ~isempty(Options.PlotStyle.nameString)
     saveName = ['Track_',Options.PlotStyle.nameString,'_',suffix];
     printAll(figHandle,saveName);
 end
+
 
 
 
@@ -980,6 +988,7 @@ function Ridge = HtRidgeFollow(EdgeSegments, Options, imgKev)
 
 % set values for first step
 Ridge.positionPix(1,1:2) = EdgeSegments.startRidgePix + 0.5 ;
+Ridge.alphaGuess = EdgeSegments.alphaGuess;
 startDirectionIndices = EdgeSegments.startDirectionIndices;
 isFinished = false;
 
@@ -997,9 +1006,10 @@ while ~isFinished
     %   that all the cut points were under threshold, and
     %   this*Pix are NaN's. This happens at the end of the track.
     if ~isnan(thisXPix) && ~isnan(thisYPix)
-        thisEnergyKev = interp2(imgKev, thisYPix, thisXPix, ...
+        thisEnergyKev = interp2(imgKev, thisYPix-0.5, thisXPix-0.5, ...
                             Options.cutInterpolationMethod);
         isAtEndOfTrack = thisEnergyKev < Options.trackEndLowThresholdKev;
+        isFinished = isAtEndOfTrack;
     else
         isAtEndOfTrack = true;
         lastGoodRidgePoint = find(~isnan(Ridge.positionPix(:,1)),1,'last');
@@ -1012,24 +1022,26 @@ while ~isFinished
         Ridge.bestCutCoordinatesPix = ...
             Ridge.bestCutCoordinatesPix(1:lastGoodRidgePoint);  % cell array
     end
-    % are we stuck in an infinite loop?
-    % don't use the current point... it's going to move. use previous point.
-    previousPoints = 1 : size(Ridge.positionPix,1)-2;
-    prevXPix = Ridge.positionPix(end-1,1);
-    prevYPix = Ridge.positionPix(end-1,2);
-    dx = prevXPix - Ridge.positionPix(previousPoints,1);
-    dy = prevYPix - Ridge.positionPix(previousPoints,2);
-    threshold = Options.infiniteLoopThresholdPix;
-	isInInfiniteLoop = any(dx.^2 + dy.^2 < threshold^2);
     
-    % set values for next step
-    isFinished = isAtEndOfTrack || isInInfiniteLoop;
-    startDirectionIndices = []; %only use it for the first step
+    
+%     % are we stuck in an infinite loop?
+%     % don't use the current point... it's going to move. use previous point.
+%     previousPoints = 1 : size(Ridge.positionPix,1)-2;
+%     prevXPix = Ridge.positionPix(end-1,1);
+%     prevYPix = Ridge.positionPix(end-1,2);
+%     dx = prevXPix - Ridge.positionPix(previousPoints,1);
+%     dy = prevYPix - Ridge.positionPix(previousPoints,2);
+%     threshold = Options.infiniteLoopThresholdPix;
+% 	isInInfiniteLoop = any(dx.^2 + dy.^2 < threshold^2);
+%     
+%     % set values for next step
+%     isFinished = isAtEndOfTrack || isInInfiniteLoop;
+%     startDirectionIndices = []; %only use it for the first step
 end
 
-if isInInfiniteLoop
-    Ridge.err = 'Infinite loop';
-end
+% if isInInfiniteLoop
+%     Ridge.err = 'Infinite loop';
+% end
 % trim last point
 Ridge.positionPix(end,:) = [];
 
@@ -1041,7 +1053,7 @@ if Options.PlotStyle.multiple(11)
         Options.PlotStyle.axesPosition, ...
         Options.PlotStyle.insetPix);
     hold on
-    plot3(Ridge.positionPix(:,2)+0.5, Ridge.positionPix(:,1)+0.5, ...
+    plot3(Ridge.positionPix(:,2), Ridge.positionPix(:,1), ...
         Options.PlotStyle.z0*ones(size(Ridge.positionPix(:,1))), ...
         'd','markerfacecolor',Options.PlotStyle.ptColor, ...
         'markeredgecolor',Options.PlotStyle.ptColor, ...
@@ -1058,13 +1070,12 @@ if Options.PlotStyle.multiple(12)
     for i=1:length(Ridge.bestCutCoordinatesPix)
         z0 = Options.PlotStyle.z0 * ...
             ones(size(Ridge.bestCutCoordinatesPix{i}(:,1)));
-        plot3(Ridge.bestCutCoordinatesPix{i}(:,2)+0.5, ...
-            Ridge.bestCutCoordinatesPix{i}(:,1)+0.5, ...
+        plot3(Ridge.bestCutCoordinatesPix{i}(:,2), ...
+            Ridge.bestCutCoordinatesPix{i}(:,1), ...
             z0, '-', 'color',Options.PlotStyle.bestCutColor);
     end
     HtSavePlot(gcf, Options, '12_finished_cuts');
 end
-
 
 
 
@@ -1081,7 +1092,6 @@ function Ridge = HtTakeOneStep(preparedImageKev, Ridge, Options, ...
 % That point will be modified to fit the centroid of the energy cut.
 % Other Ridge properties should be one index shorter, because they have not been
 %   measured yet.
-
 thisRidgePointIndex = size(Ridge.positionPix,1);
 previousRidgePointIndex = thisRidgePointIndex - 1;  %may or may not exist
 
@@ -1107,8 +1117,17 @@ elseif nargin ==2 && previousRidgePointIndex == 0
     % problem
     error('I need a startDirection!')
 end
-minimumCutAngleIndices = startDirectionIndices - Options.searchAngleIndices / 2;
-maximumCutAngleIndices = startDirectionIndices + Options.searchAngleIndices / 2;
+if thisRidgePointIndex ~= 1
+    startDirectionIndices = Ridge.alphaDegrees(previousRidgePointIndex);
+end
+if startDirectionIndices > 180
+    cutDirectionIndices = startDirectionIndices - 90;
+else
+    cutDirectionIndices = startDirectionIndices + 90;
+end
+    
+minimumCutAngleIndices = cutDirectionIndices - Options.searchAngleIndices / 2;
+maximumCutAngleIndices = cutDirectionIndices + Options.searchAngleIndices / 2;
 theseCutAnglesIndices = minimumCutAngleIndices:maximumCutAngleIndices;
 %wrap around to positive angles in range
 theseCutAnglesIndices(theseCutAnglesIndices <= 0) = ...
@@ -1126,9 +1145,9 @@ widthMetric                  =  nan(1,length(theseCutAnglesIndices));
 centroidIdx                  =  nan(1, length(theseCutAnglesIndices));
 for cutAngleNo = 1:length(theseCutAnglesIndices)
     thisCutXPix = thisXPix + ...
-        Options.cutCoordinatesPix{theseCutAnglesIndices(cutAngleNo)}(:,1);
-    thisCutYPix = thisYPix + ...
         Options.cutCoordinatesPix{theseCutAnglesIndices(cutAngleNo)}(:,2);
+    thisCutYPix = thisYPix + ...
+        Options.cutCoordinatesPix{theseCutAnglesIndices(cutAngleNo)}(:,1);
     
     % exclude out-of-bounds points
     minX = 1;
@@ -1148,7 +1167,7 @@ for cutAngleNo = 1:length(theseCutAnglesIndices)
         Options.cutInterpolationMethod);
     
     % check for cutLowThreshold and exclude points
-    pointIsIncluded = true(size(thisCutEnergyKev));
+    pointIsIncluded = ~isnan(thisCutEnergyKev);
     % each side separately
     side1underThreshold = thisCutDistanceCoordinatePix < 0 & ...
             thisCutEnergyKev' < Options.cutLowThresholdKev;
@@ -1182,38 +1201,35 @@ for cutAngleNo = 1:length(theseCutAnglesIndices)
     allCutsEnergyKev{cutAngleNo}             = thisCutEnergyKev;
 end
 
-[~,bestCutIndex] = min(widthMetric);
+if all(isinf(widthMetric))
+    return
+end
+[thisFwhmUm,bestCutIndex] = min(widthMetric);
+
 bestCutXPix                  = allCutsXPix{bestCutIndex};
 bestCutYPix                  = allCutsYPix{bestCutIndex};
 bestCutDistanceCoordinatePix = allCutsDistanceCoordinatePix{bestCutIndex};
 bestCutEnergyKev             = allCutsEnergyKev{bestCutIndex};
+bestCutCentroidIdx = centroidIdx(bestCutIndex);
 
 % adjust to centroid
-centroidXPix = sum(bestCutEnergyKev .* bestCutXPix) / sum(bestCutEnergyKev);
-centroidYPix = sum(bestCutEnergyKev .* bestCutYPix) / sum(bestCutEnergyKev);
-thisXPix = centroidXPix;
-thisYPix = centroidYPix;
-
-% measure stuff
-thisFwhmUm = ...
-    HtMeasureCutWidth(bestCutDistanceCoordinatePix * Options.pixelSizeUm, ...
-    bestCutEnergyKev);
+centroidXPix = bestCutXPix(bestCutCentroidIdx);
+centroidYPix = bestCutYPix(bestCutCentroidIdx);
+% centroidXPix = sum(bestCutEnergyKev .* bestCutXPix) / sum(bestCutEnergyKev);
+% centroidYPix = sum(bestCutEnergyKev .* bestCutYPix) / sum(bestCutEnergyKev);
+thisXPix = centroidXPix; % X : row    x : x
+thisYPix = centroidYPix; % Y : col    y : y
+theseCutAnglesDegrees = Options.cutAngleDegrees(theseCutAnglesIndices);
+bestCutDegree = theseCutAnglesDegrees(bestCutIndex);
+alphaOpts = [bestCutDegree - 90, bestCutDegree + 90];
+[~, minArg] = min(abs(alphaOpts - Ridge.alphaGuess));
+thisAlphaDegree = alphaOpts(minArg); 
+step = Options.positionStepSizePix * [sind(thisAlphaDegree), cosd(thisAlphaDegree)];
+afterStepXY = [thisXPix, thisYPix] + step;
+thisStepLengthPix = sqrt((thisXPix - afterStepXY(1))^2 + (thisYPix - afterStepXY(2))^2);
 thisDedxKevUm = sum(bestCutEnergyKev) * Options.cutSamplingIntervalPix / ...
 	Options.pixelSizeUm;
-% thisAlpha measures from the previous point to here
-if previousRidgePointIndex > 0
-    % not the first point
-    lastStepPix2 = Ridge.positionPix(thisRidgePointIndex, 1:2) - ...
-                   Ridge.positionPix(previousRidgePointIndex, 1:2);
-    thisAlphaDegrees = 180/pi * atan2(lastStepPix2(2), lastStepPix2(1));
-    thisStepLengthPix = sqrt(lastStepPix2(1)^2 + lastStepPix2(2)^2);
-else
-    % first point only
-    theseCutAnglesDegrees = Options.cutAngleDegrees(theseCutAnglesIndices);
-    thisAlphaDegrees = theseCutAnglesDegrees(bestCutIndex);
-    thisStepLengthPix = Options.positionStepSizePix;
-    
-    % plots
+if thisRidgePointIndex == 1
     if Options.PlotStyle.multiple(8)
         % image with all cuts through initial point
         [~, Options.PlotStyle.axesPosition] = ...
@@ -1223,11 +1239,11 @@ else
         hold on;
         for i=1:length(theseCutAnglesDegrees)
             z0 = Options.PlotStyle.z0*ones(size(allCutsXPix{i}));
-            plot3(allCutsYPix{i}+0.5, allCutsXPix{i}+0.5, z0, '-', ...
+            plot3(allCutsYPix{i}, allCutsXPix{i}, z0, '-', ...
                 'color',Options.PlotStyle.cutColor);
         end
         z0 = Options.PlotStyle.z0*ones(size(bestCutXPix));
-        plot3(bestCutYPix+0.5, bestCutXPix+0.5, z0, '-', ...
+        plot3(bestCutYPix, bestCutXPix, z0, '-', ...
             'color', Options.PlotStyle.bestCutColor);
         HtSavePlot(gcf, Options, '08_initialcuts_all');
     end
@@ -1243,7 +1259,7 @@ else
         colors{length(allCutsXPix)} = Options.PlotStyle.otherCutColor;
         for i = [1, bestCutIndex, length(allCutsXPix)]
             z0 = Options.PlotStyle.z0*ones(size(allCutsXPix{i}));
-            plot3(allCutsYPix{i}+0.5, allCutsXPix{i}+0.5, z0, 'd', ...
+            plot3(allCutsYPix{i}, allCutsXPix{i}, z0, 'd', ...
                 'markerfacecolor', colors{i}, 'markersize', 4, ...
                 'markeredgecolor', colors{i});
         end
@@ -1270,25 +1286,19 @@ else
     end
 end
 
-% nextAlpha measures from here to where the next step will be
-theseCutAnglesDegrees = Options.cutAngleDegrees(theseCutAnglesIndices);
-nextAlphaDegrees = theseCutAnglesDegrees(bestCutIndex);
-% take the step!
-nextStepPix = Options.positionStepSizePix * ...
-              [cosd(nextAlphaDegrees), sind(nextAlphaDegrees)];
-nextXPix = thisXPix + nextStepPix(1);
-nextYPix = thisYPix + nextStepPix(2);
 nextRidgePointIndex = thisRidgePointIndex + 1;
 
 % construct output structure
-Ridge.positionPix          (thisRidgePointIndex,1:2) = [thisXPix, thisYPix];
-Ridge.positionPix          (nextRidgePointIndex,1:2) = [nextXPix, nextYPix];
+% Ridge.positionPix          (thisRidgePointIndex,1:2) = [thisXPix, thisYPix];
+Ridge.positionPix          (nextRidgePointIndex,1:2) = [afterStepXY(1), afterStepXY(2)];
 Ridge.fwhmUm               (thisRidgePointIndex)     = thisFwhmUm;
 Ridge.dedxKevUm            (thisRidgePointIndex)     = thisDedxKevUm;
 Ridge.stepLengthPix        (thisRidgePointIndex)     = thisStepLengthPix;
-Ridge.alphaDegrees         (thisRidgePointIndex)     = thisAlphaDegrees;
+Ridge.alphaDegrees         (thisRidgePointIndex)     = thisAlphaDegree;
 Ridge.bestCutCoordinatesPix{thisRidgePointIndex}     = ...
     [bestCutXPix(:), bestCutYPix(:)];
+
+
 
 
 
@@ -1321,6 +1331,7 @@ if ~isempty(cutEnergy) && ~isempty(cutXUm)
 else
     fwhm = NaN;
 end
+
 
 
 
@@ -1411,13 +1422,13 @@ function [Measurement,Ridge] = HtComputeDirection(trackEnergy, Ridge, Options)
 finalRidgePointIndex = size(Ridge.positionPix,1);   %already trimmed
 reverseIndices = finalRidgePointIndex:-1:1;
 
-Ridge.positionPix      = Ridge.     positionPix(reverseIndices,:);
+% Ridge.positionPix      = Ridge.     positionPix(reverseIndices,:);
 Ridge.dedxKevUm        = Ridge.       dedxKevUm(reverseIndices);
 Ridge.fwhmUm           = Ridge.          fwhmUm(reverseIndices);
 
 % correction for alpha degrees
 alpha_tmp = Ridge.alphaDegrees;
-alpha_tmp(alpha_tmp < -90) = alpha_tmp(alpha_tmp < -90) + 360;
+% alpha_tmp(alpha_tmp < -90) = alpha_tmp(alpha_tmp < -90) + 360;
 Ridge.alphaDegrees     = alpha_tmp(reverseIndices);
 Ridge.stepLengthPix    = Ridge.   stepLengthPix(reverseIndices);
 
@@ -1508,6 +1519,7 @@ elseif actualMeasurementStartPointNo < 1
     actualMeasurementStartPointNo = 1;
 end
 measurementIndices = actualMeasurementStartPointNo:actualMeasurementEndPointNo;
+measurementIndices = 1:length(Ridge.alphaDegrees);
 
 % 6. Second and final estimate of beta, using selection calculated from 
 %       first estimate of beta.
@@ -1524,13 +1536,9 @@ betaDegrees = acosd(cosBeta(3));
 % Measure alpha using selection calculated from first estimate of beta
 %       (same points as for final measurement of beta)
 
+% this gives alpha pointing TOWARD the beginning of the track
 alphaDegrees = Options.measurementFunctionHandle(...
     Ridge.alphaDegrees(measurementIndices));
-% That was the alpha pointing TOWARD the beginning of the track.
-alphaDegrees = alphaDegrees + 180;
-if alphaDegrees > 360
-    alphaDegrees = alphaDegrees - 360;
-end
 
 % construct output
 Measurement.alphaDegrees = alphaDegrees;
@@ -1538,7 +1546,6 @@ Measurement.betaDegrees = betaDegrees;
 Measurement.dedxReference = dedxReference;
 Measurement.dedxMeasured = dedxMeasured;
 Measurement.indices = measurementIndices;
-% Measurement.entrancePix = Ridge.positionPix(actualMeasurementStartPointNo, :);
 
 
 
@@ -1587,6 +1594,10 @@ Output.dE = Ridge.dedxKevUm; % measured dedx(s)
 Output.Ridge = Ridge; % ridge structure
 
 Output.alpha = Measurement.alphaDegrees; % estimated alpha 
+covYX = cov(Ridge.positionPix(:,2), Ridge.positionPix(:,1));
+% varX = var(Ridge.positionPix(:,1))
+slope = covYX(2,2)/covYX(1,2);
+Output.alpha_LR = atan2(-slope, -1)*180/pi + 360;
 Output.beta = Measurement.betaDegrees; % estimated beta
 Output.Measurement = Measurement;   % measured structure
 %dedxReference, dedxMeasured, indices
