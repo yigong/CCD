@@ -162,6 +162,33 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         slope = var_y/cov_xy
         alpha_linearReg = rad2deg(np.arctan2(-slope, -1))
 
+        # estimate dE/dx
+        _x = ridge_pos[1,1] # x is col
+        _y = ridge_pos[1,0] # y is row
+        _slope = -1/slope
+        # xs = np.arange(col_num)
+        # ys = -1*_slope*xs + (_y + _slope*_x)
+        yv, xv = np.meshgrid(np.arange(row_num), np.arange(col_num), indexing='ij')
+        _mask = (_slope*xv + (_y - _slope*_x)) > yv
+        ridge_row_min, ridge_col_min = np.floor(np.min(ridge_pos, axis=0))
+        ridge_row_min = max(ridge_row_min - 3, 0)
+        ridge_col_min = max(ridge_col_min - 3, 0)
+        ridge_row_max, ridge_col_max = np.ceil(np.max(ridge_pos, axis=0)) + 3
+        ridge_mask = np.zeros((row_num, col_num))
+        ridge_mask[ridge_row_min:ridge_row_max+1, ridge_col_min:ridge_col_max+1] = 1
+        dE_mask = _mask.astype(bool) & ridge_mask.astype(bool) & binary_image.astype(bool)
+        dE_image = image[dE_mask]
+        dE_tot = np.sum(dE_image)
+        dx = np.linalg.norm(ridge_pos[1]-ridge_pos[-1]) * 10.5
+        dEdx_test = dE_tot/dx
+        # mask = dict()
+        # mask['alpha'] = _mask
+        # mask['ridge'] = ridge_mask
+        # mask['binary']= binary_image
+        # mask['dE'] = dE_mask
+        # mask['image']  = image
+        # pickle.dump(mask, open('%s/%s.p' %(outdir, file_idx), 'wb')) 
+
         # result dictionary
         result = dict()
         result['pos'] = ridge_pos
@@ -238,11 +265,18 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
             ax.set_title('cut energy')
             canvas.print_figure('%s/%s_%s.png' %(outdir, 'cutE', file_idx))
         
+            fig = Figure()
+            canvas = FigureCanvasAgg(fig)
+            ax = fig.add_subplot(111)
+            ax.imshow(dE_mask, interpolation='nearest', origin='lower')
+            ax.set_title('dE/dx = %s | dE=%.1f | dx=%.1f' %(dEdx_test, dE_tot, dx))
+            canvas.print_figure('%s/%s_%s.png' %(outdir, 'mask', file_idx))
     
         # output
         if pickleflag:
             pickle.dump(result, open('%s/%s.p' %(outdir, file_idx), 'wb'))
 
+        # return dEdx_test
         return alpha_linearReg
 
     except: 

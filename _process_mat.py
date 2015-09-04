@@ -4,9 +4,12 @@ import os
 import pickle
 import traceback
 import numpy as np
+import sys
+
+args = sys.argv
 
 try:
-    matDir = '/global/scratch/ygzhang/G4BeamDiag/track_recon/out/1200keV1um/mat'
+    matDir = args[1]
     os.chdir(matDir)
     alpha_BP = np.zeros(10001)
     for i in xrange(1, 10001):

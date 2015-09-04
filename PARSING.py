@@ -33,7 +33,7 @@ def main():
     parse_partial = partial(parse, psfTable=psf, pixelPlane=pfacing, outFolder='%s' %(fitsDir))
 
     # parallel
-    pool = multiprocessing.Pool(15)
+    pool = multiprocessing.Pool(16)
     pool.map(parse_partial, fileList)
 
     # go back to initial directory

@@ -15,21 +15,21 @@ def main():
     args = sys.argv
     fits_dir = args[1]
     recon_dir = args[2]
+    try:
+        HTout = args[3]
+    except IndexError:
+        HTout = '/global/scratch/ygzhang/G4BeamDiag/track_recon/out/1200keV1um/alpha_px.mat'
 
     # recon LLSE
     f_files = glob('%s/*.fits' %(fits_dir))
-#     for f in f_files:
-#         ridge_follow(f, outdir=recon_dir, plotflag=True, pickleflag=True)
     partial_func = partial(ridge_follow, outdir=recon_dir, plotflag=True, 
                            pickleflag=False)
-    pool = multiprocessing.Pool(60)
+    pool = multiprocessing.Pool(16)
     LLSE = pool.map(partial_func, f_files)
-    # print LLSE
-    pickle.dump(LLSE, open('%s/LLSE.p' %(recon_dir), 'wb'))
-    
+    pickle.dump(LLSE, open('%s/alpha_px.p' %(recon_dir), 'wb'))
+
     # load mat
-    HTout = '/global/scratch/ygzhang/G4BeamDiag/track_recon/out/1200keV1um/mat/alpha.p'
-    HT = pickle.load(open('%s' %(HTout), 'rb'))
+    HT = loadmat(HTout, squeeze_me=True)['result_arr']
     HT[HT<90] = -90 - HT[HT<90] 
     HT[HT>90] = 270 - HT[HT>90]
 
@@ -48,19 +48,25 @@ def main():
     # compute FWHM
     p0 = [10000, -120, 10]
     LLSE_fit, LLSE_cov = curve_fit(gauss, binCenters, LLSE_counts, p0)
+    LLSE_fit_std = np.sqrt(np.diag(LLSE_cov))
     HT_fit, HT_cov = curve_fit(gauss, binCenters, HT_counts, p0)
+    HT_fit_std = np.sqrt(np.diag(HT_cov))
     x = np.arange(-150, -90.01, 0.1)
     ax.plot(x, gauss(x, *(LLSE_fit)), 'b-', lw=1) 
     ax.plot(x, gauss(x, *(HT_fit)), 'r-', lw=1)
 
+    
     # write result to file
     f = open('%s/Result.print' %(recon_dir), 'w')
     f.write('LLSE \n')
-    f.write('    FWHM = %.1f \n' %(LLSE_fit[-1]*2.35))
-    f.write('    Total= %s \n' %(np.sum(LLSE_counts)))
+    f.write('    FWHM     = %.1f (%.2f)\n' %(LLSE_fit[-1]*2.35, LLSE_fit_std[-1]*2.35))
+    f.write('    Centroid = %.1f (%.2f)\n' %(LLSE_fit[-2], LLSE_fit_std[-2]))
+    f.write('    Total    = %s   \n' %(np.sum(LLSE_counts)))
     f.write('HT \n')
-    f.write('    FWHM = %.1f \n' %(HT_fit[-1]*2.35))
-    f.write('    Total= %s \n' %(np.sum(HT_counts)))
+    f.write('    FWHM     = %.1f (%.2f)\n' %(HT_fit[-1]*2.35, HT_fit_std[-1]*2.35))
+    f.write('    Centroid = %.1f (%.2f)\n' %(HT_fit[-2], HT_fit_std[-2]))
+    f.write('    Total    = %s   \n' %(np.sum(HT_counts)))
+    f.write('HTout: %s' %(HTout))
     f.close()
 
     # print figure

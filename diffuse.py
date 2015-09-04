@@ -53,7 +53,7 @@ def computePSF(z, psfTable, pixelPlane):
     elif pixelPlane == 'top':
         # print 'pixel-plane irradiation'
        #  zTable = np.arange(0, 650.5, 0.5)
-        zAdjusted = min(zTable, key=lambda x:abs(x-z))    
+        zAdjusted = -min(zTable, key=lambda x:abs(x-z))    
         return psfTable[int(2*zAdjusted)].flatten()
     else:
         print 'pixelPlane is neither bottom nor top'

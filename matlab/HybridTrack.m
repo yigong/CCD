@@ -623,7 +623,7 @@ xIndicesOfOriginalImage = imageEdgeBufferPix + (1:size(originalImageKev,1));
 yIndicesOfOriginalImage = imageEdgeBufferPix + (1:size(originalImageKev,2));
 newImageKev(xIndicesOfOriginalImage, yIndicesOfOriginalImage) = originalImageKev;
 
-trackEnergyKev = Options.trueEnergy
+trackEnergyKev = Options.trueEnergy;
 % trackEnergyKev = sum(newImageKev(:));
 
 
@@ -1539,7 +1539,6 @@ Output.Ridge = Ridge;
 Output.alpha = Measurement.alphaDegrees;
 Output.beta = Measurement.betaDegrees;
 Output.Measurement = Measurement;   %dedxReference, dedxMeasured, indices
-
 
 
 

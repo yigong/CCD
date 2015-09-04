@@ -4,6 +4,7 @@ from scipy.io import loadmat, savemat
 from PyBeamDiag.diffuse import XYZdE2track
 from astropy.io import fits
 from numpy import arctan, rad2deg
+import os
 
 def parse(file, psfTable, outFolder, pixelPlane):
     '''
