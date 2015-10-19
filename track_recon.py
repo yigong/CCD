@@ -38,6 +38,11 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         # print 'recon #%s\n' %(file_idx)
         f = fits.open(fitsfile)
         image = f[0].data 
+        alphaT = f[0].header['ALPHAT']
+        row0 = f[0].header['ROW0']
+        col0 = f[0].header['COL0']
+        E0 = f[0].header['EINIT']
+
         true_pos = f[1].data
         image = image + normal(scale=0.025, size=np.shape(image))
         binary_image = (image > binThreshold).astype(np.int8)    # binary image
@@ -57,6 +62,8 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
 
         # step back 
         end_row_col= np.array((ends_row[end_idx], ends_col[end_idx])).astype('float')
+        end_x = col0 + 5.25 + end_row_col[1] * 10.5
+        end_y = row0 + 5.25 + end_row_col[0] * 10.5
         row_col = np.copy(end_row_col)
         thinned_copy= np.copy(thinned_image)
         for _ in xrange(num_step_back):
@@ -74,8 +81,7 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
                 row_col_rel = np.array([-1, 0]) # default stepD = -90
                 break
         ridge_row_col = row_col.astype('float')
-        rad2deg = lambda x : x*180./pi
-        stepD = rad2deg(np.arctan2(*(-row_col_rel)))
+        stepD = np.rad2deg(np.arctan2(*(-row_col_rel)))
         [curRow, curCol] = ridge_row_col
 
         ## start ridge follow
@@ -86,8 +92,7 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         # pre-compute cuts
         col_0deg = np.arange(-5, 5.001, 0.25)
         row_0deg = np.zeros_like(col_0deg)
-        deg2rad = lambda x : x/180.*pi
-        angles_rad = deg2rad(np.arange(180))
+        angles_rad = np.deg2rad(np.arange(180))
         cos_v, length_v = np.meshgrid(np.cos(angles_rad), col_0deg, indexing='ij')
         sin_v, _        = np.meshgrid(np.sin(angles_rad), col_0deg, indexing='ij')
         row_rotations = length_v * sin_v
@@ -134,8 +139,8 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
             cutD = cutAngles[index] # cut direction scalar
             stepD = (cutD-90)
 
-            dRow = 0.25 * np.sin(deg2rad(stepD))
-            dCol = 0.25 * np.cos(deg2rad(stepD))
+            dRow = 0.25 * np.sin(np.deg2rad(stepD))
+            dCol = 0.25 * np.cos(np.deg2rad(stepD))
             curRow = curRow + dRow 
             curCol = curCol + dCol
 
@@ -160,7 +165,9 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         var_y = cov_matrix[1, 1]
         cov_xy = cov_matrix[0, 1]
         slope = var_y/cov_xy
-        alpha_linearReg = rad2deg(np.arctan2(-slope, -1))
+        alpha_linearReg = np.rad2deg(np.arctan2(-slope, -1))
+        if alpha_linearReg > 90:
+            alpha_linearReg -= 180
 
         # estimate dE/dx
         _x = ridge_pos[1,1] # x is col
@@ -209,7 +216,7 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
             ax = fig.add_subplot(111)
             ax.imshow(image, interpolation='nearest', origin='lower')
             ax.scatter(ridge_pos[:,1], ridge_pos[:,0], c='g', edgecolor='none')
-            ax.plot(true_pos['col'], true_pos['row'], 'ro-', markersize=1.5, markeredgewidth=0)
+            ax.plot(true_pos['col']-0.5, true_pos['row']-0.5, 'ro', markersize=1.5, markeredgewidth=0)
             ridge_col_min = np.floor(min(ridge_pos[:,1]))
             ridge_col_max = np.ceil(max(ridge_pos[:,1]))
             ridge_row_min = np.floor(min(ridge_pos[:,0]))
@@ -219,65 +226,67 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
             ax.set_title('ridgeThreshold = %s || linear_reg: %.1f || median: %s  ' %(ridgeThreshold, alpha_linearReg, alpha_median))
             canvas.print_figure('%s/%s_%s.png' %(outdir, 'ridge', file_idx))
 
-            fig = Figure()
-            canvas = FigureCanvasAgg(fig)
-            ax = fig.add_subplot(111)
-            ax.plot(ridge_dE, 'bs-', lw=2)
-            ax.set_xlabel('ridge #')
-            ax.set_ylabel('keV')
-            ax.set_title('dE', fontsize=24)
-            canvas.print_figure('%s/%s_%s.png' %(outdir, 'dE', file_idx))
+            # fig = Figure()
+            # canvas = FigureCanvasAgg(fig)
+            # ax = fig.add_subplot(111)
+            # ax.plot(ridge_dE, 'bs-', lw=2)
+            # ax.set_xlabel('ridge #')
+            # ax.set_ylabel('keV')
+            # ax.set_title('dE', fontsize=24)
+            # canvas.print_figure('%s/%s_%s.png' %(outdir, 'dE', file_idx))
 
-            fig = Figure()
-            canvas = FigureCanvasAgg(fig)
-            ax = fig.add_subplot(111)
-            ax.plot(np.arange(len(ridge_angles)), ridge_angles, 'bo-', lw=2)
-            ax.set_xlabel('ridge #')
-            ax.set_ylabel('alpha (deg)', color='blue')
-            ax.set_ylim([-200, -120])
-            for label in ax.get_yticklabels():
-               label.set_color('blue')
-            ax.set_title('alpha angles', fontsize=22)
-            derivatives = np.diff(ridge_angles)
-            ax1 = ax.twinx()
-            ax1.plot(np.arange(len(derivatives))+0.5, derivatives, 'rs-', lw=1)
-            ax1.set_ylabel('derivative of Alpha (deg)', color='red')
-            ax1.set_ylim([-30, 80])
-            for label in ax1.get_yticklabels():
-                label.set_color('red')
-            canvas.print_figure('%s/%s_%s.png' %(outdir, 'alpha', file_idx))
+            # fig = Figure()
+            # canvas = FigureCanvasAgg(fig)
+            # ax = fig.add_subplot(111)
+            # ax.plot(np.arange(len(ridge_angles)), ridge_angles, 'bo-', lw=2)
+            # ax.set_xlabel('ridge #')
+            # ax.set_ylabel('alpha (deg)', color='blue')
+            # ax.set_ylim([-200, -120])
+            # for label in ax.get_yticklabels():
+            #    label.set_color('blue')
+            # ax.set_title('alpha angles', fontsize=22)
+            # derivatives = np.diff(ridge_angles)
+            # ax1 = ax.twinx()
+            # ax1.plot(np.arange(len(derivatives))+0.5, derivatives, 'rs-', lw=1)
+            # ax1.set_ylabel('derivative of Alpha (deg)', color='red')
+            # ax1.set_ylim([-30, 80])
+            # for label in ax1.get_yticklabels():
+            #     label.set_color('red')
+            # canvas.print_figure('%s/%s_%s.png' %(outdir, 'alpha', file_idx))
 
-            fig = Figure()
-            canvas = FigureCanvasAgg(fig)
-            ax = fig.add_subplot(111)
-            ax.plot(np.arange(len(ridge_width)), ridge_width, 'bo-', lw=2)
-            ax.set_xlabel('ridge #')
-            ax.set_ylabel('pix')
-            ax.set_title('Cut width')
-            canvas.print_figure('%s/%s_%s.png' %(outdir, 'width', file_idx))
-            
-            fig = Figure()
-            canvas = FigureCanvasAgg(fig)
-            ax = fig.add_subplot(111)
-            ax.plot(np.arange(np.shape(ridge_cut)[1]), np.transpose(ridge_cut))
-            ax.set_xlabel('ridge #')
-            ax.set_ylabel('keV')
-            ax.set_title('cut energy')
-            canvas.print_figure('%s/%s_%s.png' %(outdir, 'cutE', file_idx))
+            # fig = Figure()
+            # canvas = FigureCanvasAgg(fig)
+            # ax = fig.add_subplot(111)
+            # ax.plot(np.arange(len(ridge_width)), ridge_width, 'bo-', lw=2)
+            # ax.set_xlabel('ridge #')
+            # ax.set_ylabel('pix')
+            # ax.set_title('Cut width')
+            # canvas.print_figure('%s/%s_%s.png' %(outdir, 'width', file_idx))
+            # 
+            # fig = Figure()
+            # canvas = FigureCanvasAgg(fig)
+            # ax = fig.add_subplot(111)
+            # ax.plot(np.arange(np.shape(ridge_cut)[1]), np.transpose(ridge_cut))
+            # ax.set_xlabel('ridge #')
+            # ax.set_ylabel('keV')
+            # ax.set_title('cut energy')
+            # canvas.print_figure('%s/%s_%s.png' %(outdir, 'cutE', file_idx))
         
-            fig = Figure()
-            canvas = FigureCanvasAgg(fig)
-            ax = fig.add_subplot(111)
-            ax.imshow(dE_mask, interpolation='nearest', origin='lower')
-            ax.set_title('dE/dx = %s | dE=%.1f | dx=%.1f' %(dEdx_test, dE_tot, dx))
-            canvas.print_figure('%s/%s_%s.png' %(outdir, 'mask', file_idx))
+            # fig = Figure()
+            # canvas = FigureCanvasAgg(fig)
+            # ax = fig.add_subplot(111)
+            # ax.imshow(dE_mask, interpolation='nearest', origin='lower')
+            # ax.set_title('dE/dx = %s | dE=%.1f | dx=%.1f' %(dEdx_test, dE_tot, dx))
+            # canvas.print_figure('%s/%s_%s.png' %(outdir, 'mask', file_idx))
     
         # output
         if pickleflag:
             pickle.dump(result, open('%s/%s.p' %(outdir, file_idx), 'wb'))
 
         # return dEdx_test
-        return alpha_linearReg
+        dis = end_y/np.sin(np.deg2rad(abs(alpha_median)))
+        beta_est = np.rad2deg(np.arctan((3+np.random.random(1)[0])*1000/dis))
+        return int(file_idx), E0, end_x, end_y, alpha_median, alpha_linearReg, alphaT, beta_est
 
     except: 
    #  else:
@@ -285,4 +294,3 @@ def ridge_follow(fitsfile, outdir , plotflag=True, pickleflag=True):
         tb = traceback.format_exc()
         open('%s/%s.err' %(outdir, file_idx), 'w').write(tb)
         print '-'*80
-        return np.nan

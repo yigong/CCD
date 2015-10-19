@@ -3,7 +3,7 @@ import glob
 import multiprocessing
 import numpy as np
 from scipy.io import loadmat
-from PyBeamDiag.g4Parser import parse
+from PyBeamDiag.g4Parser_2 import parse
 from functools import partial
 import sys
 
@@ -27,7 +27,7 @@ def main():
     psf = np.array(loadmat(psfDir)['psf'])
 
     ## serial
-    ## map(partial(parse, psfTable), fileList[:10])
+    # map(partial(parse, psfTable=psf, pixelPlane=pfacing, outFolder='%s' %(fitsDir)), fileList)
     
     # partial func
     parse_partial = partial(parse, psfTable=psf, pixelPlane=pfacing, outFolder='%s' %(fitsDir))

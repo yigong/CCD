@@ -38,7 +38,9 @@ def XYZdE2track(xArray, yArray, zArray, dEArray, psfTable, pixelPlane):
         track += track_1step
     del track_1step
     del rows, cols, dE
-    return track, rowEdges[0], colEdges[0]
+    row0_pos_um = rowEdges[0]+5.25
+    col0_pos_um = colEdges[0]+5.25
+    return track, row0_pos_um, col0_pos_um
     
 def computePSF(z, psfTable, pixelPlane):
     ''' compute the point spread function given the z value '''
